@@ -3,7 +3,7 @@
 # Base image
 FROM node:20-alpine AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat git
 
 # --- Dependencies stage ---
 FROM base AS deps
@@ -23,6 +23,9 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=3000
+
+# Install git for npm ci with GitHub dependencies
+RUN apk add --no-cache git
 
 # Install only production dependencies
 COPY package.json package-lock.json ./
