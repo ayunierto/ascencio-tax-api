@@ -1,254 +1,173 @@
-# Ascencio Tax Inc
+# Ascencio Tax API
 
-Welcome to the **Ascencio Tax Inc** monorepository. This repository contains the backend API, web application, mobile app, and shared packages, all organized and orchestrated with **Turborepo** for efficient development and builds.
+Backend API for Ascencio Tax Inc - A comprehensive tax management and appointment booking platform.
 
-## Repository Structure
+## 🚀 Quick Start
 
-```
-ascencio-tax-monorepo/
-├── apps/
-│   ├── api/          # Backend service (NestJS) — Port 3000
-│   ├── web/          # Web application (Next.js) — Port 4000
-│   └── mobile/       # Mobile app (Expo + React Native)
-├── packages/
-│   └── shared/       # Shared TypeScript library (types, Zod schemas, utilities)
-└── postgres-data/    # PostgreSQL data directory (Docker volume)
-```
+### Prerequisites
 
-This structure provides clear separation of concerns while enabling seamless code sharing across web, mobile, and backend applications.
+- Node.js 20.x
+- PostgreSQL 14+
+- Docker (optional, for containerized deployment)
 
-## Prerequisites
+### Installation
 
-Before getting started, ensure you have the following installed:
-
-- **Node.js** (LTS version recommended — v18 or higher)
-- **Docker** & **Docker Compose**
-- **npm** (or `pnpm`/`yarn` if preferred — adjust commands accordingly)
-- **EAS CLI** (for mobile builds): `npm install -g eas-cli`
-- **iOS Simulator** (macOS with Xcode) or **Android Studio with emulator** (for mobile testing)
-- **Development Build** required (app uses native modules, not compatible with Expo Go)
-
-## Quick Start (Development)
-
-Follow these steps to set up your local development environment:
-
-### 1. Clone and Navigate to the Repository
-
-```pwsh
-git clone <repository-url>
-cd ascencio-tax-monorepo
-```
-
-### 2. Configure Environment Variables
-
-Create your local environment file from the example template:
-
-```pwsh
-cp .env.example .env
-```
-
-**Important:** Edit `.env` with your actual credentials and configuration settings before proceeding.
-
-### 3. Start the Database Container
-
-Launch the PostgreSQL database using Docker Compose:
-
-```pwsh
-docker-compose up -d
-```
-
-This will start the database in detached mode. Verify it's running with `docker-compose ps`.
-
-### 4. Install Dependencies
-
-Install all dependencies for the monorepo:
-
-```pwsh
+\\\ash
+# Install dependencies
 npm install
-```
 
-### 5. Build the Shared Package
+# Copy environment variables
+cp .env.example .env
+# Edit .env with your credentials
 
-**Critical:** Build the shared package before starting development. The `@ascencio/shared` package must be compiled first since both `api` and `web` applications depend on it:
-
-```pwsh
-npm run build --filter=@ascencio/shared
-```
-
-This compiles the TypeScript code in `packages/shared` to the `dist/` directory, making it available for import by other packages.
-
-### 6. Start Development Mode
-
-Start all applications in development mode:
-
-```pwsh
+# Start development
 npm run dev
-```
+\\\
 
-This will start:
+The API will be available at \http://localhost:3000\
 
-- **API** at `http://localhost:3000`
-- **Web** at `http://localhost:4000`
-- **Mobile** with Expo Metro bundler (requires development build)
+## 🐳 Docker Deployment
 
-**Note:** The TurboRepo TUI (Terminal UI) mode provides separated log panels for each application, preserving the Expo QR code visibility.
+### Build and Run
 
-### 7. Build and Run Mobile App (Development Build)
+\\\ash
+# Build image
+docker build -t ascencio-api .
 
-Since the mobile app uses native modules, you need to create a development build:
+# Run container
+docker run -p 3000:3000 --env-file .env ascencio-api
+\\\
 
-#### First Time Setup:
+### Using Docker Compose
 
-```pwsh
-cd apps/mobile
+\\\ash
+docker-compose up -d
+\\\
 
-# Login to Expo account
-eas login
+## 📦 Project Structure
 
-# Configure the project (if not already done)
-eas build:configure
+\\\
+src/
+├── accounting/       # Expense tracking, reports
+├── appointments/     # Booking system
+├── auth/            # Authentication & authorization
+├── bookings/        # Services, schedules, staff
+├── calendar/        # Google Calendar integration
+├── files/           # File upload (Cloudinary)
+├── mail/            # Email service (Mailersend)
+├── notification/    # Appointment notifications
+├── openai/          # AI-powered features
+├── seed/            # Database seeding
+└── zoom/            # Video meeting integration
+\\\
 
-# Create development build for iOS
-eas build --profile development --platform ios
+## 🔑 Environment Variables
 
-# Create development build for Android
-eas build --profile development --platform android
+Create a \.env\ file with these variables:
 
-# Or build for both platforms
-eas build --profile development --platform all
-```
+\\\nv
+# Server
+PORT=3000
+STAGE=prod
 
-#### Running the Development Build:
+# Database (automatically provided by Railway)
+DATABASE_URL=postgresql://...
 
-- **React Version:** The monorepo uses React 19.1.0 across all apps (unified for Next.js and React Native compatibility).
-- **Mobile Metro Config:** The mobile app is configured for monorepo structure with proper node_modules resolution order.
-- **Native Modules:** The mobile app uses native modules and requires development builds (EAS Build). It cannot run on Expo Go.
-- **Development Builds:** After creating a development build once, you can reuse it for development. Rebuild only when native dependencies change.
-- **Environment Variables:**
-  - API uses `.env` in the root
-  - Mobile uses `apps/mobile/.env` (includes API versioning `/v1`)
-- **Package Managers:** If using `pnpm` or `yarn`, replace `npm` commands accordingly.
+# JWT
+JWT_SECRET=your-secret
+JWT_EXPIRY=60m
 
-# - For iOS: Install the .app file on simulator or .ipa on physical device
+# Email (Mailersend)
+MAILERSEND_API_KEY=mlsn...
+MAILERSEND_SENDER_EMAIL=support@ascenciotax.com
 
-# - For Android: Install the .apk on emulator or physical device
+# Google Calendar
+GOOGLE_SERVICE_ACCOUNT_EMAIL=...
+GOOGLE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----...
+GOOGLE_CALENDAR_ID=...
 
-# - Scan the QR code from the development build app (not Expo Go)
+# Cloudinary (File Storage)
+CLOUDINARY_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
 
-````
+# Zoom
+ZOOM_ACCOUNT_ID=...
+ZOOM_CLIENT_ID=...
+ZOOM_CLIENT_SECRET=...
 
-### 8. (Optional) Run a Single Application
+# OpenAI
+OPENAI_API_KEY=sk-proj-...
+\\\
 
-For focused development on a specific app:
+## 📚 API Documentation
 
-```pwsh
-# Backend only
-npx turbo run dev --filter=api
+Once running, access Swagger documentation at:
+\\\
+http://localhost:3000/api/docs
+\\\
 
-# Frontend only
-npx turbo run dev --filter=web
+## 🛠️ Available Scripts
 
-# Mobile only
-cd apps/mobile && npm run dev
-# or
-npx turbo run dev --filter=mobile
-````
+\\\ash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm start            # Start production server
+npm run lint         # Run ESLint
+npm run format       # Format code with Prettier
+\\\
 
-## Development Notes
+## 🗄️ Database
 
-- **Turborepo** manages task orchestration and caching across the monorepo. The `--filter` flag scopes commands to specific packages.
-- **Hot Reload:** All applications support hot module replacement (HMR) in development mode.
-- **Shared Package Changes:** When modifying `packages/shared`, run it in watch mode for automatic rebuilds:
-  ```pwsh
-  npx turbo run dev --filter=@ascencio/shared
-  ```
-- **React Version:** The monorepo uses React 19.1.0 across all apps (unified for Next.js and React Native compatibility).
-- **Mobile Metro Config:** The mobile app is configured for monorepo structure with proper node_modules resolution order.
-- **Environment Variables:**
-  - API uses `.env` in the root
-  - Mobile uses `apps/mobile/.env` (includes API versioning `/v1`)
-- **Package Managers:** If using `pnpm` or `yarn`, replace `npm` commands accordingly.
+### Initialization
 
-## Available Scripts
+The API uses TypeORM with \synchronize: true\ in development mode to automatically create tables.
 
-The following npm scripts are available at the monorepo root level:
+### Seeding
 
-| Command         | Description                                                |
-| --------------- | ---------------------------------------------------------- |
-| `npm run dev`   | Start all applications in development mode with hot reload |
-| `npm run build` | Build all applications and packages for production         |
-| `npm run lint`  | Run ESLint across the entire repository                    |
+Populate initial data:
+\\\ash
+# Via API endpoint
+curl http://localhost:3000/api/seed
 
-### Package-Specific Scripts
+# Or access in browser
+http://localhost:3000/api/seed
+\\\
 
-Each package has its own scripts. To run package-specific commands:
+## 🚢 Deployment
 
-```pwsh
-# Run a script for a specific package
-npx turbo run <script-name> --filter=<package-name>
+### Railway
 
-# Examples:
-npx turbo run test --filter=api
-npx turbo run build --filter=web
-npx turbo run dev --filter=mobile
-```
+1. Connect GitHub repo
+2. Add PostgreSQL service
+3. Set environment variables
+4. Deploy automatically on push
 
-Refer to individual `package.json` files in `apps/*` and `packages/*` for available scripts.
+### Production Checklist
 
-## Technology Stack
+- ✅ \STAGE=prod\ in environment
+- ✅ \DATABASE_URL\ configured
+- ✅ All API keys set
+- ✅ SSL enabled (automatic with Railway)
+- ✅ \synchronize: false\ (safety in production)
 
-### Backend (API)
+## 🔗 Dependencies
 
-- **NestJS** v10 - Progressive Node.js framework
-- **TypeORM** - Database ORM with PostgreSQL
-- **JWT** - Authentication
-- **Bcrypt** - Password hashing
-- **Luxon** - Date/time handling
+### Core
+- NestJS 10
+- TypeORM 0.3.20
+- PostgreSQL (pg)
 
-### Web Frontend
+### Integrations
+- Google Calendar API
+- Zoom API
+- OpenAI API
+- Mailersend
+- Cloudinary
 
-- **Next.js** 16 with Turbopack
-- **React** 19.1.0
-- **Tailwind CSS** - Utility-first styling
-- **Framer Motion** - Animations
+### Shared Package
+- \@ascencio-tax/shared\ - Types, schemas, utilities (from GitHub)
 
-### Mobile App
+## 📄 License
 
-- **Expo SDK** 54
-- **React Native** 0.81.5
-- **React** 19.1.0
-- **Expo Router** - File-based navigation
-- **TypeScript** - Type safety
-
-### Shared Infrastructure
-
-- **TurboRepo** - Monorepo orchestration
-- **npm workspaces** - Dependency management
-- **TypeScript** - Shared types and utilities
-- **Zod** - Schema validation
-- **PostgreSQL** - Database (Docker)
-
-## Project Roadmap
-
-For detailed information about development phases, priorities, and milestones, see:
-
-📋 **[PROJECT_MASTER_PLAN.md](./PROJECT_MASTER_PLAN.md)**
-
-## Contributing
-
-We welcome contributions to improve this project. To contribute:
-
-1. **Report Issues:** Open an issue for bugs or feature requests with detailed descriptions
-2. **Submit Pull Requests:** Follow the repository's coding standards and include tests where applicable
-3. **Code Review:** All PRs require review before merging
-
-Please ensure your code passes linting and builds successfully before submitting.
-
-## License
-
-This repository contains proprietary code for **Ascencio Tax Inc**.  
-All rights reserved © 2025 Ascencio Tax Inc.
-
----
-
-**Questions or Support?** Contact the development team or open an issue in this repository.
+Proprietary - Ascencio Tax Inc © 2025
