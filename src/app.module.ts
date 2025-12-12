@@ -1,0 +1,83 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { CommonModule } from './common/common.module';
+import { UsersModule } from './users/users.module';
+import { SeedModule } from './seed/seed.module';
+import { FilesModule } from './files/files.module';
+import { StaffMembersModule } from './bookings/staff-members/staff-members.module';
+import { AppointmentsModule } from './bookings/appointments/appointments.module';
+import { ScheduleModule } from './bookings/schedules/schedule.module';
+import { CalendarModule } from './calendar/calendar.module';
+import { ZoomModule } from './zoom/zoom.module';
+import { MailModule } from './mail/mail.module';
+import { PostsModule } from './blog/posts/posts.module';
+import { CategoriesModule } from './accounting/categories/categories.module';
+import { ExpensesModule } from './accounting/expenses/expenses.module';
+import { SubcategoriesModule } from './accounting/subcategories/subcategories.module';
+import { LogsModule } from './logs/logs.module';
+import { ReportsModule } from './accounting/reports/reports.module';
+import { PrinterModule } from './printer/printer.module';
+import { NotificationModule } from './notification/notification.module';
+import { SystemSettingsModule } from './system-settings/system-settings.module';
+import { AvailabilityModule } from './bookings/availability/availability.module';
+import { OpenaiModule } from './openai/openai.module';
+import { OcrModule } from './ocr/ocr.module';
+import { AppVersionsModule } from './app-versions/app-versions.module';
+import { NodeMailerModule } from './node-mailer/node-mailer.module';
+import { DashboardModule } from './accounting/dashboard/dashboard.module';
+import { ServicesModule } from './bookings/services/services.module';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    TypeOrmModule.forRoot({
+      ssl: process.env.STAGE !== 'dev' ? { rejectUnauthorized: false } : false,
+      type: 'postgres',
+      ...(process.env.DATABASE_URL
+        ? { url: process.env.DATABASE_URL }
+        : {
+            host: process.env.DB_HOST,
+            port: +process.env.DB_PORT,
+            username: process.env.DB_USERNAME,
+            password: process.env.DB_PASSWORD,
+            database: process.env.DB_NAME,
+          }),
+      autoLoadEntities: true,
+      synchronize: process.env.STAGE !== 'prod',
+    }),
+    AuthModule,
+    ServicesModule,
+    CommonModule,
+    UsersModule,
+    SeedModule,
+    FilesModule,
+    StaffMembersModule,
+    AppointmentsModule,
+    ScheduleModule,
+    CalendarModule,
+    ZoomModule,
+    MailModule,
+    PostsModule,
+    CategoriesModule,
+    ExpensesModule,
+    SubcategoriesModule,
+    LogsModule,
+    ReportsModule,
+    PrinterModule,
+    NotificationModule,
+    SystemSettingsModule,
+    AvailabilityModule,
+    OpenaiModule,
+    OcrModule,
+    AppVersionsModule,
+    NodeMailerModule,
+    DashboardModule,
+  ],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
