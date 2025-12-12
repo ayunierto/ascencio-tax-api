@@ -12,7 +12,7 @@ Backend API for Ascencio Tax Inc - A comprehensive tax management and appointmen
 
 ### Installation
 
-\\\ash
+```bash
 # Install dependencies
 npm install
 
@@ -22,31 +22,31 @@ cp .env.example .env
 
 # Start development
 npm run dev
-\\\
+```
 
-The API will be available at \http://localhost:3000\
+The API will be available at `http://localhost:3000`
 
 ## 🐳 Docker Deployment
 
 ### Build and Run
 
-\\\ash
+```bash
 # Build image
 docker build -t ascencio-api .
 
 # Run container
 docker run -p 3000:3000 --env-file .env ascencio-api
-\\\
+```
 
 ### Using Docker Compose
 
-\\\ash
+```bash
 docker-compose up -d
-\\\
+```
 
 ## 📦 Project Structure
 
-\\\
+```
 src/
 ├── accounting/       # Expense tracking, reports
 ├── appointments/     # Booking system
@@ -59,13 +59,13 @@ src/
 ├── openai/          # AI-powered features
 ├── seed/            # Database seeding
 └── zoom/            # Video meeting integration
-\\\
+```
 
 ## 🔑 Environment Variables
 
-Create a \.env\ file with these variables:
+Create a `.env` file with these variables:
 
-\\\nv
+```env
 # Server
 PORT=3000
 STAGE=prod
@@ -98,41 +98,41 @@ ZOOM_CLIENT_SECRET=...
 
 # OpenAI
 OPENAI_API_KEY=sk-proj-...
-\\\
+```
 
 ## 📚 API Documentation
 
 Once running, access Swagger documentation at:
-\\\
+```
 http://localhost:3000/api/docs
-\\\
+```
 
 ## 🛠️ Available Scripts
 
-\\\ash
+```bash
 npm run dev          # Start development server
 npm run build        # Build for production
 npm start            # Start production server
 npm run lint         # Run ESLint
 npm run format       # Format code with Prettier
-\\\
+```
 
 ## 🗄️ Database
 
 ### Initialization
 
-The API uses TypeORM with \synchronize: true\ in development mode to automatically create tables.
+The API uses TypeORM with `synchronize: true` in development mode to automatically create tables.
 
 ### Seeding
 
 Populate initial data:
-\\\ash
+```bash
 # Via API endpoint
 curl http://localhost:3000/api/seed
 
 # Or access in browser
 http://localhost:3000/api/seed
-\\\
+```
 
 ## 🚢 Deployment
 
@@ -145,11 +145,11 @@ http://localhost:3000/api/seed
 
 ### Production Checklist
 
-- ✅ \STAGE=prod\ in environment
-- ✅ \DATABASE_URL\ configured
+- ✅ `STAGE=prod` in environment
+- ✅ `DATABASE_URL` configured
 - ✅ All API keys set
 - ✅ SSL enabled (automatic with Railway)
-- ✅ \synchronize: false\ (safety in production)
+- ✅ `synchronize: false` (safety in production)
 
 ## 🔗 Dependencies
 
@@ -166,7 +166,7 @@ http://localhost:3000/api/seed
 - Cloudinary
 
 ### Shared Package
-- \@ascencio-tax/shared\ - Types, schemas, utilities (from GitHub)
+- `@ascencio-tax/shared` - Types, schemas, utilities (from GitHub)
 
 ## 📄 License
 

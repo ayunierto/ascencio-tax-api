@@ -12,7 +12,7 @@ API Backend para Ascencio Tax Inc - Una plataforma integral de gestión fiscal y
 
 ### Instalación
 
-\\\ash
+```bash
 # Instalar dependencias
 npm install
 
@@ -22,31 +22,31 @@ cp .env.example .env
 
 # Iniciar desarrollo
 npm run dev
-\\\
+```
 
-La API estará disponible en \http://localhost:3000\
+La API estará disponible en `http://localhost:3000`
 
 ## 🐳 Despliegue con Docker
 
 ### Construir y Ejecutar
 
-\\\ash
+```bash
 # Construir imagen
 docker build -t ascencio-api .
 
 # Ejecutar contenedor
 docker run -p 3000:3000 --env-file .env ascencio-api
-\\\
+```
 
 ### Usando Docker Compose
 
-\\\ash
+```bash
 docker-compose up -d
-\\\
+```
 
 ## 📦 Estructura del Proyecto
 
-\\\
+```
 src/
 ├── accounting/       # Seguimiento de gastos, reportes
 ├── appointments/     # Sistema de reservas
@@ -59,13 +59,13 @@ src/
 ├── openai/          # Funciones potenciadas por IA
 ├── seed/            # Datos iniciales de BD
 └── zoom/            # Integración de videollamadas
-\\\
+```
 
 ## 🔑 Variables de Entorno
 
-Crea un archivo \.env\ con estas variables:
+Crea un archivo `.env` con estas variables:
 
-\\\nv
+```env
 # Servidor
 PORT=3000
 STAGE=prod
@@ -98,41 +98,41 @@ ZOOM_CLIENT_SECRET=...
 
 # OpenAI
 OPENAI_API_KEY=sk-proj-...
-\\\
+```
 
 ## 📚 Documentación de la API
 
 Una vez en ejecución, accede a la documentación Swagger en:
-\\\
+```
 http://localhost:3000/api/docs
-\\\
+```
 
 ## 🛠️ Scripts Disponibles
 
-\\\ash
+```bash
 npm run dev          # Iniciar servidor de desarrollo
 npm run build        # Construir para producción
 npm start            # Iniciar servidor de producción
 npm run lint         # Ejecutar ESLint
 npm run format       # Formatear código con Prettier
-\\\
+```
 
 ## 🗄️ Base de Datos
 
 ### Inicialización
 
-La API usa TypeORM con \synchronize: true\ en modo desarrollo para crear tablas automáticamente.
+La API usa TypeORM con `synchronize: true` en modo desarrollo para crear tablas automáticamente.
 
 ### Datos Iniciales
 
 Poblar datos iniciales:
-\\\ash
+```bash
 # Vía endpoint de la API
 curl http://localhost:3000/api/seed
 
 # O acceder desde el navegador
 http://localhost:3000/api/seed
-\\\
+```
 
 ## 🚢 Despliegue
 
@@ -145,11 +145,11 @@ http://localhost:3000/api/seed
 
 ### Lista de Verificación para Producción
 
-- ✅ \STAGE=prod\ en entorno
-- ✅ \DATABASE_URL\ configurado
+- ✅ `STAGE=prod` en entorno
+- ✅ `DATABASE_URL` configurado
 - ✅ Todas las API keys configuradas
 - ✅ SSL habilitado (automático con Railway)
-- ✅ \synchronize: false\ (seguridad en producción)
+- ✅ `synchronize: false` (seguridad en producción)
 
 ## 🔗 Dependencias
 
@@ -166,7 +166,7 @@ http://localhost:3000/api/seed
 - Cloudinary
 
 ### Paquete Compartido
-- \@ascencio-tax/shared\ - Tipos, esquemas, utilidades (desde GitHub)
+- `@ascencio-tax/shared` - Tipos, esquemas, utilidades (desde GitHub)
 
 ## 📄 Licencia
 
