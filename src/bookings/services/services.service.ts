@@ -37,6 +37,12 @@ export class ServicesService {
   ): Promise<CreateServiceResponse> {
     const { staffIds, ...serviceData } = createServiceDto;
 
+    if (!staffIds || staffIds.length === 0) {
+      throw new BadRequestException(
+        'Service must be assigned to at least one staff member',
+      );
+    }
+
     try {
       this.logger.log(`Creating service: ${serviceData.name}`);
 
@@ -135,10 +141,19 @@ export class ServicesService {
       this.logger.log(`Updating service with ID: ${id}`);
 
       // Check if service exists first
-      await this.findOne(id);
+      const existing = await this.findOne(id);
 
-      // Validate and get staff members if provided
-      const staff = await this.validateAndGetStaff(staffIds);
+      // Validate and get staff members if provided; if not provided, keep current ones
+      const staff =
+        staffIds === undefined
+          ? existing.staffMembers
+          : await this.validateAndGetStaff(staffIds);
+
+      if (!staff || staff.length === 0) {
+        throw new BadRequestException(
+          'Service must be assigned to at least one staff member',
+        );
+      }
 
       const service = await this.serviceRepository.preload({
         id,
@@ -207,7 +222,9 @@ export class ServicesService {
     staffIds?: string[],
   ): Promise<StaffMember[]> {
     if (!staffIds || staffIds.length === 0) {
-      return [];
+      throw new BadRequestException(
+        'At least one staff member is required for this service',
+      );
     }
 
     this.logger.log(`Validating ${staffIds.length} staff member(s)`);

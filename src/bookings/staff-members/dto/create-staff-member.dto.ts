@@ -20,7 +20,10 @@ export class CreateStaffMemberDto {
   })
   lastName: string;
 
-  @ApiProperty({ description: 'Whether the staff member is active', example: true })
+  @ApiProperty({
+    description: 'Whether the staff member is active',
+    example: true,
+  })
   @IsBoolean()
   isActive: boolean;
 

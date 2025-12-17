@@ -22,7 +22,10 @@ export class CreateUserDto {
   @MinLength(3)
   lastName: string;
 
-  @ApiProperty({ description: 'Email address', example: 'john.doe@example.com' })
+  @ApiProperty({
+    description: 'Email address',
+    example: 'john.doe@example.com',
+  })
   @IsString()
   @IsEmail()
   email: string;
@@ -31,7 +34,11 @@ export class CreateUserDto {
   @IsOptional()
   countryCode?: string;
 
-  @ApiProperty({ description: 'Phone number', example: '1234567890', required: false })
+  @ApiProperty({
+    description: 'Phone number',
+    example: '1234567890',
+    required: false,
+  })
   @IsOptional()
   phoneNumber?: string;
 
@@ -49,12 +56,20 @@ export class CreateUserDto {
   @IsOptional()
   imageUrl?: string;
 
-  @ApiProperty({ description: 'Is email verified?', default: false, required: false })
+  @ApiProperty({
+    description: 'Is email verified?',
+    default: false,
+    required: false,
+  })
   @IsOptional()
   @IsBoolean()
   isEmailVerified?: boolean;
 
-  @ApiProperty({ description: 'Password', example: 'password123', minLength: 6 })
+  @ApiProperty({
+    description: 'Password',
+    example: 'password123',
+    minLength: 6,
+  })
   @IsString()
   @MinLength(6)
   @MaxLength(50)
@@ -68,7 +83,12 @@ export class CreateUserDto {
   @IsBoolean()
   isActive: boolean;
 
-  @ApiProperty({ description: 'User roles', enum: Role, isArray: true, required: false })
+  @ApiProperty({
+    description: 'User roles',
+    enum: Role,
+    isArray: true,
+    required: false,
+  })
   @IsString({ each: true })
   @IsArray()
   @IsOptional()

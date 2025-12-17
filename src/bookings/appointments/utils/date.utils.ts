@@ -65,8 +65,10 @@ export class DateUtils {
       }
 
       const torontoDate = fechaUTC.setZone('America/Toronto'); // Convierte a la zona horaria de Toronto
+      const isoToronto = torontoDate.toISO();
+      if (!isoToronto) return null;
 
-      return new Date(torontoDate.toISO()).toLocaleTimeString('es-ES', {
+      return new Date(isoToronto).toLocaleTimeString('es-ES', {
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
@@ -76,7 +78,7 @@ export class DateUtils {
       console.error('Error when processing the date:', error);
       return null;
     } finally {
-      Settings.defaultZone = undefined; // Restore the default time zone.
+      Settings.defaultZone = 'system'; // Restore the default time zone.
     }
   }
 }

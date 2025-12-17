@@ -33,7 +33,7 @@ export class StaffMembersService {
     } = createStaffDto;
 
     try {
-      const services = [];
+      const services: Service[] = [];
       if (servicesIds && servicesIds.length > 0) {
         services.push(
           ...(await this.serviceRepository.findBy({
@@ -41,7 +41,7 @@ export class StaffMembersService {
           })),
         );
       }
-      const schedules = [];
+      const schedules: Schedule[] = [];
       if (schedulesIds && schedulesIds.length > 0) {
         schedules.push(
           ...(await this.scheduleRepository.findBy({
@@ -110,7 +110,7 @@ export class StaffMembersService {
     } = updateStaffDto;
 
     try {
-      const services = [];
+      const services: Service[] = [];
       if (servicesIds && servicesIds.length > 0) {
         services.push(
           ...(await this.serviceRepository.findBy({
@@ -118,7 +118,7 @@ export class StaffMembersService {
           })),
         );
       }
-      const schedules = [];
+      const schedules: Schedule[] = [];
       if (schedulesIds && schedulesIds.length > 0) {
         schedules.push(
           ...(await this.scheduleRepository.findBy({

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Interval } from 'luxon';
 import { Appointment } from 'src/bookings/appointments/entities/appointment.entity';
@@ -13,6 +13,8 @@ import { Schedule } from '../schedules/entities/schedule.entity';
 
 @Injectable()
 export class AvailabilityService {
+  private readonly logger = new Logger(AvailabilityService.name);
+
   constructor(
     @InjectRepository(Appointment)
     private readonly appointmentsRepository: Repository<Appointment>,
@@ -44,10 +46,29 @@ export class AvailabilityService {
     // 1.1 Comprobar si existe el servicio por el id.
     const service = await this.servicesService.findOne(serviceId);
     const duration = service.durationMinutes;
+    if (!duration || duration <= 0) {
+      throw new BadRequestException(
+        'Service durationMinutes must be configured',
+      );
+    }
 
-    // 1.2 Obtener ajustes del negocio (para zona horaria)
-    const settings = await this.settingsService.findOne('timezone');
-    const businessTimeZone = settings.value;
+    if (!service.staffMembers || service.staffMembers.length === 0) {
+      throw new BadRequestException(
+        'El servicio no tiene staff asignado. Asigne al menos un miembro.',
+      );
+    }
+
+    // 1.2 Obtener ajustes del negocio (para zona horaria) con valor por defecto
+    const defaultBusinessTz =
+      process.env.BUSINESS_TZ ||
+      process.env.BUSINESS_TIMEZONE ||
+      'America/Toronto';
+
+    const businessTimeZone = await this.settingsService.findOneOrDefault(
+      'timezone',
+      defaultBusinessTz,
+    );
+
     const targetDate = DateTime.fromISO(date, {
       zone: userTimeZone,
     });
@@ -63,23 +84,25 @@ export class AvailabilityService {
     });
 
     // Obtener el día de la semana según la zona del negocio. Mapear 7 a 0. Usar 0-6 (0=Dom, 1=Lun...)
-    const dayOfWeek = targetDate.weekday % 7;
+    const dayOfWeek = businessDate.weekday % 7;
 
     // --- 2. OBTENER STAFF(S) VÁLIDOS ---
     // Buscar StaffMember que ofrezca el servicio y, opcionalmente, filtrar por staff específico
     let staff: StaffMember[] = [];
 
-    staff = await this.staffRepository.find({
-      where: {
-        id: staffId ? staffId : undefined,
-        services: { id: serviceId },
-        schedules: { dayOfWeek },
-        isActive: true,
-      },
-      relations: {
-        schedules: true,
-      },
-    });
+    const qb = this.staffRepository
+      .createQueryBuilder('staff')
+      .leftJoinAndSelect('staff.services', 'service')
+      .leftJoinAndSelect('staff.schedules', 'schedule')
+      .where('staff.isActive = :active', { active: true })
+      .andWhere('service.id = :serviceId', { serviceId })
+      .andWhere('schedule.dayOfWeek = :dayOfWeek', { dayOfWeek });
+
+    if (staffId) {
+      qb.andWhere('staff.id = :staffId', { staffId });
+    }
+
+    staff = await qb.getMany();
     if (staff.length === 0) return []; // No hay staff disponible para ese dia.
 
     // Estructura para consolidar slots: Map<startTimeUTC, StaffMember[]>
@@ -106,8 +129,13 @@ export class AvailabilityService {
           },
         });
 
+      const schedules = staffMember.schedules ?? [];
+      if (schedules.length === 0) {
+        continue;
+      }
+
       let availableIntervals: Interval[] = this.calculateBaseIntervals(
-        staffMember.schedules,
+        schedules,
         businessDate,
       );
       availableIntervals = this.subtractAppointments(
@@ -116,35 +144,55 @@ export class AvailabilityService {
         businessTimeZone,
       );
 
-      const calendarEvents = await this.calendarService.checkEventsInRange(
-        dateStart.toISOString(),
-        dateEnd.toISOString(),
-      );
-      availableIntervals = this.subtractCalendarEvents(
-        availableIntervals,
-        calendarEvents,
-      );
+      try {
+        const calendarEvents = await this.calendarService.checkEventsInRange(
+          dateStart.toISOString(),
+          dateEnd.toISOString(),
+          businessTimeZone,
+          staffMember.id,
+        );
+        availableIntervals = this.subtractCalendarEvents(
+          availableIntervals,
+          calendarEvents,
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        this.logger.warn(`Calendar lookup failed: ${message}`);
+      }
 
       // Filtrar intervalos que ya han pasado
-      availableIntervals = availableIntervals.filter(
-        (interval) => interval.end > now,
-      );
+      availableIntervals = availableIntervals.filter((interval) => {
+        const end = interval.end;
+        return end !== null && end > now;
+      });
 
       this.generateAndConsolidateSlots(
         availableIntervals,
         duration,
         staffMember,
         consolidatedSlots,
+        now, // Pasar now para filtrar slots individuales
       );
     }
 
-    return Array.from(consolidatedSlots, ([startTimeUTC, availableStaff]) => ({
-      startTimeUTC,
-      endTimeUTC: DateTime.fromISO(startTimeUTC, { zone: 'utc' })
+    return Array.from(consolidatedSlots, ([startTimeUTC, availableStaff]) => {
+      const slotEnd = DateTime.fromISO(startTimeUTC, { zone: 'utc' })
         .plus({ minutes: duration })
-        .toISO()!,
-      availableStaff,
-    })).sort((a, b) => a.startTimeUTC.localeCompare(b.startTimeUTC));
+        .toUTC()
+        .toISO();
+
+      if (!slotEnd) {
+        throw new BadRequestException(
+          'No fue posible calcular el final del intervalo solicitado.',
+        );
+      }
+
+      return {
+        startTimeUTC,
+        endTimeUTC: slotEnd,
+        availableStaff,
+      };
+    }).sort((a, b) => a.startTimeUTC.localeCompare(b.startTimeUTC));
   }
 
   private async checkForAppointments(
@@ -167,6 +215,7 @@ export class AvailabilityService {
     const events = await this.calendarService.checkEventsInRange(
       startTime.toUTCString(),
       endTime.toUTCString(),
+      'UTC',
     );
 
     return events.length > 0; // True if there's at least one event
@@ -250,45 +299,60 @@ export class AvailabilityService {
     schedules: Schedule[],
     date: DateTime,
   ): Interval[] {
-    return schedules.map(({ startTime, endTime }) => {
-      const [startHour, startMinute] = startTime.split(':').map(Number);
-      const [endHour, endMinute] = endTime.split(':').map(Number);
+    return schedules
+      .map(({ startTime, endTime }) => {
+        const [startHour, startMinute] = startTime.split(':').map(Number);
+        const [endHour, endMinute] = endTime.split(':').map(Number);
 
-      const start = date.set({
-        hour: startHour,
-        minute: startMinute,
-      });
-      const end = date.set({ hour: endHour, minute: endMinute });
+        const start = date.set({
+          hour: startHour,
+          minute: startMinute,
+        });
+        const end = date.set({ hour: endHour, minute: endMinute });
 
-      return Interval.fromDateTimes(start, end);
-    });
+        return start < end ? Interval.fromDateTimes(start, end) : null;
+      })
+      .filter((interval): interval is Interval => interval !== null);
   }
 
   /**
    * Itera sobre los intervalos libres y genera slots del tamaño del servicio, consolidándolos.
    * @param staff El StaffMember que está disponible en este intervalo.
    * @param consolidatedSlots El mapa global de slots disponibles.
+   * @param now La hora actual para filtrar slots que ya pasaron.
    */
   private generateAndConsolidateSlots(
     intervals: Interval[],
     duration: number,
     staff: StaffMember,
     consolidatedSlots: Map<string, StaffMember[]>,
+    now: DateTime,
   ): void {
     intervals.forEach((interval) => {
+      if (!interval.start || !interval.end) return;
+
       let currentStart = interval.start;
 
-      while (
-        currentStart.isValid &&
-        currentStart.plus({ minutes: duration }) <= interval.end
-      ) {
+      while (currentStart.plus({ minutes: duration }) <= interval.end) {
+        // Filtrar slots que ya han pasado (comparar inicio del slot con el momento actual)
+        if (currentStart <= now) {
+          currentStart = currentStart.plus({ minutes: duration });
+          continue;
+        }
+
         // 1. Convertir la hora de inicio (que está en BUSINESS_TIMEZONE) a UTC.
-        const startTimeUTC = currentStart.toUTC().toISO()!;
+        const startTimeUTC = currentStart.toUTC().toISO();
+        if (!startTimeUTC) {
+          this.logger.warn(
+            `No se pudo convertir el slot a ISO (${currentStart.toISO()})`,
+          );
+          break;
+        }
 
         // 2. Usar el ISO string UTC como clave para el mapa.
-        if (consolidatedSlots.has(startTimeUTC)) {
-          // Si el slot ya existe (otro staff disponible), agregar el staff a la lista
-          consolidatedSlots.get(startTimeUTC)!.push(staff);
+        const existingStaff = consolidatedSlots.get(startTimeUTC);
+        if (existingStaff !== undefined) {
+          existingStaff.push(staff);
         } else {
           // Si es un slot nuevo, crear la entrada con el staff inicial
           consolidatedSlots.set(startTimeUTC, [staff]);

@@ -30,7 +30,10 @@ export class Appointment {
   timeZone: string;
 
   @Column({ default: 'confirmed' })
-  @ApiProperty({ description: 'Appointment status', enum: ['pending', 'confirmed', 'cancelled', 'completed'] })
+  @ApiProperty({
+    description: 'Appointment status',
+    enum: ['pending', 'confirmed', 'cancelled', 'completed'],
+  })
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
 
   @Column({ nullable: true })
@@ -51,7 +54,10 @@ export class Appointment {
 
   @Column({ default: 'app' })
   // "enum[app, admin, imported, api]"
-  @ApiProperty({ description: 'Source of the appointment', enum: ['app', 'admin', 'imported', 'api'] })
+  @ApiProperty({
+    description: 'Source of the appointment',
+    enum: ['app', 'admin', 'imported', 'api'],
+  })
   source: 'app' | 'admin' | 'imported' | 'api';
 
   @Column({ type: 'varchar', length: 500, nullable: true })

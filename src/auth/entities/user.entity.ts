@@ -29,11 +29,14 @@ export class User {
   lastName: string;
 
   @Column({ type: 'text', nullable: true })
-  @ApiProperty({ description: 'URL to the user\'s profile image', nullable: true })
+  @ApiProperty({
+    description: "URL to the user's profile image",
+    nullable: true,
+  })
   /**
    * URL to the user's profile image
    */
-  imageUrl: string;
+  imageUrl: string | null;
 
   @Column({ unique: true })
   @ApiProperty({ description: 'Email address of the user', uniqueItems: true })
@@ -54,14 +57,14 @@ export class User {
   /**
    * Country code of the user
    */
-  countryCode: string;
+  countryCode: string | null;
 
   @Column({ type: 'text', nullable: true })
   @ApiProperty({ description: 'Phone number of the user', nullable: true })
   /**
    * Phone number of the user
    */
-  phoneNumber: string;
+  phoneNumber: string | null;
 
   @Column()
   @ApiProperty({ description: 'Time zone of the user' })
@@ -103,33 +106,42 @@ export class User {
   /**
    * Verification code of the user
    */
-  verificationCode: string;
+  verificationCode: string | null;
 
   @Column('timestamp', { nullable: true })
-  @ApiProperty({ description: 'Verification code expiration date of the user', nullable: true })
-  verificationCodeExpiresAt: Date;
+  @ApiProperty({
+    description: 'Verification code expiration date of the user',
+    nullable: true,
+  })
+  verificationCodeExpiresAt: Date | null;
 
   @Column('text', { nullable: true })
-  @ApiProperty({ description: 'Password reset code of the user', nullable: true })
+  @ApiProperty({
+    description: 'Password reset code of the user',
+    nullable: true,
+  })
   /**
    * Password reset code of the user
    */
-  passwordResetCode: string;
+  passwordResetCode: string | null;
 
   @Column('timestamp', { nullable: true })
-  @ApiProperty({ description: 'Password reset code expiration date of the user', nullable: true })
+  @ApiProperty({
+    description: 'Password reset code expiration date of the user',
+    nullable: true,
+  })
   /**
    * Password reset code expiration date of the user
    */
-  passwordResetExpiresAt: Date;
+  passwordResetExpiresAt: Date | null;
 
   @Column('timestamp with time zone', { nullable: true })
   @ApiProperty({ description: 'Last login date of the user', nullable: true })
-      lastLoginAt: Date;
+  lastLoginAt: Date | null;
 
   @Column('timestamp with time zone', { nullable: true })
   @ApiProperty({ description: 'Deleted date of the user', nullable: true })
-  deletedAt: Date;
+  deletedAt: Date | null;
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   @ApiProperty({ description: 'Created date of the user' })

@@ -17,12 +17,21 @@ export class UpdateProfileDto {
   @IsOptional()
   countryCode?: string;
 
-  @ApiProperty({ description: 'Phone number', example: '1234567890', required: false })
+  @ApiProperty({
+    description: 'Phone number',
+    example: '1234567890',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   phoneNumber?: string;
 
-  @ApiProperty({ description: 'Password (optional)', example: 'newpassword123', required: false, minLength: 6 })
+  @ApiProperty({
+    description: 'Password (optional)',
+    example: 'newpassword123',
+    required: false,
+    minLength: 6,
+  })
   @IsString()
   @MinLength(6)
   @MaxLength(50)

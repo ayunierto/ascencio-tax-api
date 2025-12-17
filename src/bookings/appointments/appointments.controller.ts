@@ -19,7 +19,14 @@ import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/auth/entities/user.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 @ApiTags('Bookings - Appointments')
 @Controller('appointments')
@@ -84,7 +91,10 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel an appointment' })
   @ApiParam({ name: 'id', description: 'Appointment ID' })
-  @ApiResponse({ status: 200, description: 'Appointment cancelled successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Appointment cancelled successfully',
+  })
   @ApiResponse({ status: 404, description: 'Appointment not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @HttpCode(HttpStatus.OK)

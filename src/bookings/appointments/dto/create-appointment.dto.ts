@@ -20,12 +20,18 @@ export class CreateAppointmentDto {
   @IsNotEmpty()
   staffId: string;
 
-  @ApiProperty({ description: 'Start date and time', example: '2023-10-27T10:00:00Z' })
+  @ApiProperty({
+    description: 'Start date and time',
+    example: '2023-10-27T10:00:00Z',
+  })
   @IsDateString()
   @IsNotEmpty()
   start: string;
 
-  @ApiProperty({ description: 'End date and time', example: '2023-10-27T11:00:00Z' })
+  @ApiProperty({
+    description: 'End date and time',
+    example: '2023-10-27T11:00:00Z',
+  })
   @IsDateString()
   @IsNotEmpty()
   end: string;
@@ -35,12 +41,21 @@ export class CreateAppointmentDto {
   @IsNotEmpty()
   timeZone: string;
 
-  @ApiProperty({ description: 'Comments', example: 'I need help with my taxes', required: false })
+  @ApiProperty({
+    description: 'Comments',
+    example: 'I need help with my taxes',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   comments?: string;
 
-  @ApiProperty({ description: 'Source of the appointment', example: 'app', enum: ['app', 'admin', 'imported', 'api'], required: false })
+  @ApiProperty({
+    description: 'Source of the appointment',
+    example: 'app',
+    enum: ['app', 'admin', 'imported', 'api'],
+    required: false,
+  })
   @IsString()
   @IsOptional()
   source?: 'app' | 'admin' | 'imported' | 'api';

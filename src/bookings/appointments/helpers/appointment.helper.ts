@@ -40,7 +40,7 @@ export class AppointmentHelper {
     staffId?: string,
     existingService?: Service,
     existingStaff?: StaffMember,
-  ) {
+  ): Promise<{ service: Service; staff: StaffMember }> {
     const service = serviceId
       ? await this.servicesService.findOne(serviceId)
       : existingService;
@@ -48,6 +48,10 @@ export class AppointmentHelper {
     const staff = staffId
       ? await this.staffMembersService.findOne(staffId)
       : existingStaff;
+
+    if (!service || !staff) {
+      throw new BadRequestException('Service and staff are required.');
+    }
 
     return { service, staff };
   }

@@ -474,9 +474,9 @@ export class ReportsService {
               [
                 { text: '*RENTA', bold: true, fillColor: '#ccc' },
                 {
-                  text: expensesData.expensesByCategory['Rent']
+                  text: expensesData.expensesByCategory.Rent
                     ? Number(
-                        expensesData.expensesByCategory['Rent'].total.gross,
+                        expensesData.expensesByCategory.Rent.total.gross,
                       ).toFixed(2)
                     : '0.00',
                   alignment: 'right',

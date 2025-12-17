@@ -16,7 +16,7 @@ import { Appointment } from './entities/appointment.entity';
 import { Schedule } from 'src/bookings/schedules/entities/schedule.entity';
 import { CalendarService } from 'src/calendar/calendar.service';
 import { ZoomService } from 'src/zoom/zoom.service';
-import { DateTime } from 'luxon';
+import { DateTime, Interval } from 'luxon';
 import { NotificationService } from 'src/notification/notification.service';
 import { SystemSettingsService } from 'src/system-settings/system-settings.service';
 import {
@@ -31,7 +31,6 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
 import { ServicesService } from '../services/services.service';
 import { StaffMembersService } from '../staff-members/staff-members.service';
-import { StaffMember } from '../staff-members/entities/staff-member.entity';
 
 @Injectable()
 export class AppointmentsService {
@@ -63,10 +62,13 @@ export class AppointmentsService {
       const { staffId, serviceId, start, end, timeZone, ...rest } =
         createAppointmentDto;
 
-      const settings = await this.settingsService.findOne('timezone');
-      if (!settings) {
-        throw new InternalServerErrorException('Settings not found');
-      }
+      // Obtener timezone de negocio con fallback profesional
+      const defaultBusinessTz =
+        process.env.BUSINESS_TZ || process.env.BUSINESS_TIMEZONE || 'UTC';
+      const businessTimeZone = await this.settingsService.findOneOrDefault(
+        'timezone',
+        defaultBusinessTz,
+      );
 
       // Validar la zona horaria
       const validatedTimeZone = validateTimeZone(timeZone);
@@ -82,6 +84,12 @@ export class AppointmentsService {
       // Validar fechas
       validateDatesForUpdate(startDateAndTime, endDateAndTime, null, null);
 
+      const startIso = startDateAndTime.setZone(validatedTimeZone).toISO();
+      const endIso = endDateAndTime.setZone(validatedTimeZone).toISO();
+      if (!startIso || !endIso) {
+        throw new BadRequestException('Invalid appointment date range');
+      }
+
       // 3. Validar horario y obtener schedule
       const schedule = await this.appointmentHelper.validateAndGetSchedule(
         staffId,
@@ -91,6 +99,13 @@ export class AppointmentsService {
       // 4. Validar horas laborales
       validateWorkingHours(
         schedule,
+        startDateAndTime,
+        endDateAndTime,
+        validatedTimeZone,
+      );
+
+      // 5.1 Validar conflictos con eventos externos de calendario
+      await this.assertNoCalendarConflicts(
         startDateAndTime,
         endDateAndTime,
         validatedTimeZone,
@@ -112,33 +127,31 @@ export class AppointmentsService {
       }
 
       // 6. Crear reunión de Zoom
-      const meeting = await this.zoomService.createZoomMeeting(
-        getZoomMeetingConfig(
-          service.name,
-          startDateAndTime.setZone(validatedTimeZone).toISO(),
-          validatedTimeZone,
+      const meeting = this.normalizeZoomMeeting(
+        await this.zoomService.createZoomMeeting(
+          getZoomMeetingConfig(service.name, startIso, validatedTimeZone),
         ),
       );
 
       // 7. Crear evento en el calendario
-      const eventId = await this.calendarService.createEvent({
+      const calendarEventBody = {
         summary: `Appointment: ${service.name}`,
         location: service.address,
         description: formatAppointmentDescription(
-          meeting.join_url,
+          meeting.joinUrl ?? '',
           staff.firstName,
           staff.lastName,
           user.firstName,
           user.lastName,
           user.email,
-          user.phoneNumber || '',
+          user.phoneNumber ?? '',
         ),
         start: {
-          dateTime: startDateAndTime.setZone(validatedTimeZone).toISO(),
+          dateTime: startIso,
           timeZone: validatedTimeZone,
         },
         end: {
-          dateTime: endDateAndTime.setZone(validatedTimeZone).toISO(),
+          dateTime: endIso,
           timeZone: validatedTimeZone,
         },
         reminders: {
@@ -148,7 +161,16 @@ export class AppointmentsService {
             { method: 'popup', minutes: 10 },
           ],
         },
-      });
+      };
+
+      const eventId = await this.calendarService.createEvent(
+        calendarEventBody,
+        {
+          staffMemberId: staff.id,
+          serviceId: service.id,
+          sourceType: 'appointment',
+        },
+      );
 
       // 8. Guardar la cita
       const newAppointment = this.appointmentsRepository.create({
@@ -159,8 +181,8 @@ export class AppointmentsService {
         end: endDateAndTime,
         timeZone: validatedTimeZone,
         calendarEventId: typeof eventId === 'string' ? eventId : 'N/A',
-        zoomMeetingId: meeting.id || 'N/A',
-        zoomMeetingLink: meeting.join_url || 'N/A',
+        zoomMeetingId: meeting.id ?? 'N/A',
+        zoomMeetingLink: meeting.joinUrl ?? 'N/A',
         ...rest,
       });
       await this.appointmentsRepository.save(newAppointment);
@@ -179,30 +201,40 @@ export class AppointmentsService {
           clientName: `${user.firstName} ${user.lastName}`,
           location: service.address,
           staffName: `${staff.firstName} ${staff.lastName}`,
-          meetingLink: meeting.join_url,
+          meetingLink: meeting.joinUrl ?? '',
           clientEmail: user.email,
-          clientPhoneNumber: user.phoneNumber || '',
+          clientPhoneNumber: user.phoneNumber ?? '',
         },
       );
 
+      const staffNotificationEmail = process.env.ENTERPRISE_EMAIL ?? user.email;
+
       await this.notificationService.sendAppointmentConfirmationEmailToStaff(
-        process.env.ENTERPRISE_EMAIL,
+        staffNotificationEmail,
         {
           serviceName: service.name,
           appointmentDate: startDateAndTime
-            .setZone(settings.value)
+            .setZone(businessTimeZone)
             .toFormat('yyyy-MM-dd'),
           appointmentTime: startDateAndTime
-            .setZone(settings.value)
+            .setZone(businessTimeZone)
             .toFormat('HH:mm a'),
           clientName: `${user.firstName} ${user.lastName}`,
           location: service.address,
           staffName: `${staff.firstName} ${staff.lastName}`,
-          meetingLink: meeting.join_url,
+          meetingLink: meeting.joinUrl ?? '',
           clientEmail: user.email,
-          clientPhoneNumber: user.phoneNumber || '',
+          clientPhoneNumber: user.phoneNumber ?? '',
         },
       );
+
+      if (typeof eventId === 'string' && eventId !== 'N/A') {
+        await this.calendarService.updateEvent(eventId, calendarEventBody, {
+          sourceId: newAppointment.id,
+          staffMemberId: staff.id,
+          serviceId: service.id,
+        });
+      }
 
       return newAppointment;
     } catch (error) {
@@ -253,7 +285,6 @@ export class AppointmentsService {
     user: User,
   ) {
     try {
-
       // 1. Buscar la cita existente
       const appointment = await this.appointmentsRepository.findOne({
         where: { id },
@@ -288,21 +319,21 @@ export class AppointmentsService {
         const startDateAndTime = DateTime.fromISO(start, { zone: 'utc' });
         const endDateAndTime = DateTime.fromISO(end, { zone: 'utc' });
 
-        this.logger.log(
-          `Parsed startDateAndTime (UTC): ${startDateAndTime.toISO()}`,
-        );
-        this.logger.log(
-          `Parsed endDateAndTime (UTC): ${endDateAndTime.toISO()}`,
-        );
+        const startIsoUtc = startDateAndTime.toISO() ?? '';
+        const endIsoUtc = endDateAndTime.toISO() ?? '';
+
+        this.logger.log(`Parsed startDateAndTime (UTC): ${startIsoUtc}`);
+        this.logger.log(`Parsed endDateAndTime (UTC): ${endIsoUtc}`);
         this.logger.log(`appointmentTimeZone: ${appointmentTimeZone}`);
 
         // Log de las fechas en la zona horaria objetivo
-        this.logger.log(
-          `Start in target timezone: ${startDateAndTime.setZone(appointmentTimeZone).toISO()}`,
-        );
-        this.logger.log(
-          `End in target timezone: ${endDateAndTime.setZone(appointmentTimeZone).toISO()}`,
-        );
+        const startIsoTz =
+          startDateAndTime.setZone(appointmentTimeZone).toISO() ?? '';
+        const endIsoTz =
+          endDateAndTime.setZone(appointmentTimeZone).toISO() ?? '';
+
+        this.logger.log(`Start in target timezone: ${startIsoTz}`);
+        this.logger.log(`End in target timezone: ${endIsoTz}`);
 
         // Validar fechas
         validateDatesForUpdate(
@@ -321,6 +352,12 @@ export class AppointmentsService {
         // Validar horas laborales
         validateWorkingHours(
           schedule,
+          startDateAndTime,
+          endDateAndTime,
+          appointmentTimeZone,
+        );
+
+        await this.assertNoCalendarConflicts(
           startDateAndTime,
           endDateAndTime,
           appointmentTimeZone,
@@ -363,7 +400,7 @@ export class AppointmentsService {
               lastName: user.lastName,
             },
             userEmail: user.email,
-            userPhoneNumber: user.phoneNumber,
+            userPhoneNumber: user.phoneNumber ?? '',
           },
         );
 
@@ -372,7 +409,7 @@ export class AppointmentsService {
           !appointment.calendarEventId ||
           appointment.calendarEventId === 'N/A'
         ) {
-          const newEventId = await this.calendarService.createEvent({
+          const fallbackEventBody = {
             summary: `Appointment: ${service.name}`,
             location: service.address,
             description: formatAppointmentDescription(
@@ -385,11 +422,11 @@ export class AppointmentsService {
               user.phoneNumber || '',
             ),
             start: {
-              dateTime: startDateAndTime.setZone(appointmentTimeZone).toISO(),
+              dateTime: startIsoTz,
               timeZone: appointmentTimeZone,
             },
             end: {
-              dateTime: endDateAndTime.setZone(appointmentTimeZone).toISO(),
+              dateTime: endIsoTz,
               timeZone: appointmentTimeZone,
             },
             reminders: {
@@ -399,21 +436,33 @@ export class AppointmentsService {
                 { method: 'popup', minutes: 10 },
               ],
             },
-          });
+          };
+
+          const newEventId = await this.calendarService.createEvent(
+            fallbackEventBody,
+            {
+              staffMemberId: staff.id,
+              serviceId: service.id,
+              sourceType: 'appointment',
+              sourceId: appointment.id,
+            },
+          );
           appointment.calendarEventId =
             typeof newEventId === 'string' ? newEventId : 'N/A';
         }
 
         if (!appointment.zoomMeetingId || appointment.zoomMeetingId === 'N/A') {
-          const meeting = await this.zoomService.createZoomMeeting(
-            getZoomMeetingConfig(
-              service.name,
-              startDateAndTime.setZone(appointmentTimeZone).toISO(),
-              appointmentTimeZone,
+          const meeting = this.normalizeZoomMeeting(
+            await this.zoomService.createZoomMeeting(
+              getZoomMeetingConfig(
+                service.name,
+                startIsoTz,
+                appointmentTimeZone,
+              ),
             ),
           );
-          appointment.zoomMeetingId = meeting.id || 'N/A';
-          appointment.zoomMeetingLink = meeting.join_url || 'N/A';
+          appointment.zoomMeetingId = meeting.id ?? 'N/A';
+          appointment.zoomMeetingLink = meeting.joinUrl ?? 'N/A';
         }
 
         // 5. Actualizar la cita
@@ -440,6 +489,11 @@ export class AppointmentsService {
           zone: 'utc',
         });
 
+        const startIsoTz =
+          startDateAndTime.setZone(appointmentTimeZone).toISO() ?? '';
+        const endIsoTz =
+          endDateAndTime.setZone(appointmentTimeZone).toISO() ?? '';
+
         // Actualizar servicios externos (título, ubicación, descripción) aunque el horario no cambie
         await this.appointmentHelper.updateExternalServices(
           this.zoomService,
@@ -460,7 +514,7 @@ export class AppointmentsService {
               lastName: user.lastName,
             },
             userEmail: user.email,
-            userPhoneNumber: user.phoneNumber,
+            userPhoneNumber: user.phoneNumber ?? '',
           },
         );
 
@@ -469,7 +523,7 @@ export class AppointmentsService {
           !appointment.calendarEventId ||
           appointment.calendarEventId === 'N/A'
         ) {
-          const newEventId = await this.calendarService.createEvent({
+          const fallbackEventBody = {
             summary: `Appointment: ${service.name}`,
             location: service.address,
             description: formatAppointmentDescription(
@@ -482,11 +536,11 @@ export class AppointmentsService {
               user.phoneNumber || '',
             ),
             start: {
-              dateTime: startDateAndTime.setZone(appointmentTimeZone).toISO(),
+              dateTime: startIsoTz,
               timeZone: appointmentTimeZone,
             },
             end: {
-              dateTime: endDateAndTime.setZone(appointmentTimeZone).toISO(),
+              dateTime: endIsoTz,
               timeZone: appointmentTimeZone,
             },
             reminders: {
@@ -496,21 +550,33 @@ export class AppointmentsService {
                 { method: 'popup', minutes: 10 },
               ],
             },
-          });
+          };
+
+          const newEventId = await this.calendarService.createEvent(
+            fallbackEventBody,
+            {
+              staffMemberId: staff.id,
+              serviceId: service.id,
+              sourceType: 'appointment',
+              sourceId: appointment.id,
+            },
+          );
           appointment.calendarEventId =
             typeof newEventId === 'string' ? newEventId : 'N/A';
         }
 
         if (!appointment.zoomMeetingId || appointment.zoomMeetingId === 'N/A') {
-          const meeting = await this.zoomService.createZoomMeeting(
-            getZoomMeetingConfig(
-              service.name,
-              startDateAndTime.setZone(appointmentTimeZone).toISO(),
-              appointmentTimeZone,
+          const meeting = this.normalizeZoomMeeting(
+            await this.zoomService.createZoomMeeting(
+              getZoomMeetingConfig(
+                service.name,
+                startIsoTz,
+                appointmentTimeZone,
+              ),
             ),
           );
-          appointment.zoomMeetingId = meeting.id || 'N/A';
-          appointment.zoomMeetingLink = meeting.join_url || 'N/A';
+          appointment.zoomMeetingId = meeting.id ?? 'N/A';
+          appointment.zoomMeetingLink = meeting.joinUrl ?? 'N/A';
         }
 
         const updatedAppointment = this.appointmentsRepository.merge(
@@ -543,7 +609,6 @@ export class AppointmentsService {
           where: { user: { id: user.id }, start: MoreThan(now) },
           relations: ['staffMember', 'service'],
         });
-        if (!appts) return [];
         return appts;
       }
 
@@ -552,9 +617,10 @@ export class AppointmentsService {
           where: { user: { id: user.id }, start: LessThan(now) },
           relations: ['staffMember', 'service'],
         });
-        if (!appts) return [];
         return appts;
       }
+
+      return [];
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException(
@@ -645,9 +711,9 @@ export class AppointmentsService {
         ' ' +
         appointment.staffMember.lastName,
       serviceName: appointment.service.name,
-      clientPhoneNumber: appointment.user.phoneNumber || '',
-      location: appointment.service.address || '',
-      meetingLink: appointment.zoomMeetingLink || '',
+      clientPhoneNumber: appointment.user.phoneNumber ?? '',
+      location: appointment.service.address ?? '',
+      meetingLink: appointment.zoomMeetingLink ?? '',
     });
 
     // 8. Opcional: Registrar en log/auditoría
@@ -700,5 +766,44 @@ export class AppointmentsService {
       where: { user: { id: userId } },
       order: { start: 'DESC' },
     });
+  }
+
+  private normalizeZoomMeeting(meeting: unknown): {
+    id?: string;
+    joinUrl?: string;
+  } {
+    if (meeting && typeof meeting === 'object') {
+      const data = meeting as Record<string, unknown>;
+      const id = typeof data.id === 'string' ? data.id : undefined;
+      const joinUrl =
+        typeof data.join_url === 'string' ? data.join_url : undefined;
+      return { id, joinUrl };
+    }
+    return {};
+  }
+
+  private async assertNoCalendarConflicts(
+    start: DateTime,
+    end: DateTime,
+    timeZone: string,
+  ): Promise<void> {
+    const startIso = start.setZone(timeZone).toISO();
+    const endIso = end.setZone(timeZone).toISO();
+
+    if (!startIso || !endIso) {
+      throw new BadRequestException('Invalid date range for calendar check');
+    }
+
+    const conflicts: Interval[] = await this.calendarService.checkEventsInRange(
+      startIso,
+      endIso,
+      timeZone,
+    );
+
+    if (conflicts.length > 0) {
+      throw new ConflictException(
+        'The selected time slot has conflicts in the staff calendar.',
+      );
+    }
   }
 }

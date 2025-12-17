@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Appointment } from '../../bookings/appointments/entities/appointment.entity';
 import { StaffMember } from '../../bookings/staff-members/entities/staff-member.entity';
@@ -46,7 +46,7 @@ export class DashboardService {
 
       // Total appointments (excluding deleted)
       this.appointmentRepository.count({
-        where: { deletedAt: null },
+        where: { deletedAt: IsNull() },
       }),
 
       // Upcoming appointments (next 7 days, confirmed or pending)
@@ -75,7 +75,7 @@ export class DashboardService {
       this.serviceRepository.count({
         where: {
           isActive: true,
-          deletedAt: null,
+          deletedAt: IsNull(),
         },
       }),
 
@@ -83,7 +83,7 @@ export class DashboardService {
       this.staffRepository.count({
         where: {
           isActive: true,
-          deletedAt: null,
+          deletedAt: IsNull(),
         },
       }),
 
@@ -91,7 +91,7 @@ export class DashboardService {
       this.appointmentRepository.count({
         where: {
           status: 'completed',
-          deletedAt: null,
+          deletedAt: IsNull(),
         },
       }),
     ]);

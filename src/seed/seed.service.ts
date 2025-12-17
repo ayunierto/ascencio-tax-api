@@ -37,7 +37,7 @@ export class SeedService {
       }
 
       await this.settingsService.create({
-        key: 'timeZone',
+        key: 'timezone',
         value: 'America/Toronto',
         type: 'string',
       });

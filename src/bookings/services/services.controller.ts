@@ -9,7 +9,13 @@ import {
   ParseUUIDPipe,
   Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -20,7 +26,6 @@ import { Role } from 'src/auth/enums/role.enum';
 @ApiTags('Bookings - Services')
 @Controller('services')
 export class ServicesController {
-  // eslint-disable-next-line no-unused-vars
   constructor(private readonly servicesService: ServicesService) {}
 
   @Post()

@@ -1,17 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsISO8601, IsOptional, IsString, IsTimeZone, IsUUID } from 'class-validator';
+import {
+  IsISO8601,
+  IsOptional,
+  IsString,
+  IsTimeZone,
+  IsUUID,
+} from 'class-validator';
 
 export class SearchAvailabilityDto {
   @ApiProperty({ description: 'Service ID', format: 'uuid' })
   @IsUUID()
   serviceId: string;
 
-  @ApiProperty({ description: 'Staff Member ID', format: 'uuid', required: false })
+  @ApiProperty({
+    description: 'Staff Member ID',
+    format: 'uuid',
+    required: false,
+  })
   @IsOptional()
   @IsUUID()
   staffId?: string;
 
-  @ApiProperty({ description: 'Date to check availability', example: '2023-10-27' })
+  @ApiProperty({
+    description: 'Date to check availability',
+    example: '2023-10-27',
+  })
   @IsISO8601()
   date: string;
 

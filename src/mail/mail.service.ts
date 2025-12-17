@@ -20,13 +20,14 @@ export class MailService {
       throw new Error('MAILERSEND_API_KEY is not configured.');
     }
 
-    this.senderEmail = process.env.MAILERSEND_SENDER_EMAIL;
-    if (!this.senderEmail) {
+    const senderEmail = process.env.MAILERSEND_SENDER_EMAIL;
+    if (!senderEmail) {
       this.logger.error(
         'MAILERSEND_SENDER_EMAIL is not configured. Please set it in your environment variables.',
       );
       throw new Error('MAILERSEND_SENDER_EMAIL is not configured.');
     }
+    this.senderEmail = senderEmail;
 
     const senderEmailReplyTo = process.env.MAILERSEND_SENDER_EMAIL_REPLY_TO;
     if (!senderEmailReplyTo) {
