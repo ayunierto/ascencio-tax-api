@@ -43,6 +43,8 @@ import {
 import { NotificationService } from 'src/notification/notification.service';
 import { UserMapper } from './mappers/user.mapper';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { randomUUID } from 'crypto';
+import type { GoogleUserProfile } from './strategies/google.strategy';
 
 @Injectable()
 export class AuthService {
@@ -69,14 +71,14 @@ export class AuthService {
       return this.notification.sendVerificationEmail(
         user.firstName,
         user.email,
-        user.verificationCode,
+        user.verificationCode ?? '',
         this.emailVerificationCodeTTL,
       );
     }
     return this.notification.sendResetPasswordEmail(
       user.firstName,
       user.email,
-      user.passwordResetCode,
+      user.passwordResetCode ?? '',
       this.emailVerificationCodeTTL,
     );
   }
@@ -117,6 +119,61 @@ export class AuthService {
   private async generateJWT(user: User): Promise<string> {
     const payload: JwtPayload = { id: user.id, email: user.email };
     return this.jwtService.signAsync(payload);
+  }
+
+  async signInWithGoogle(profile: unknown): Promise<SignInResponse> {
+    const googleProfile = profile as GoogleUserProfile;
+    const email = googleProfile?.email;
+
+    if (!email) {
+      throw new BadRequestException('Google profile missing email');
+    }
+
+    let user = await this.usersRepository.findOneBy({ email });
+
+    if (!user) {
+      const passwordHash = await this.hashPassword(randomUUID());
+      user = this.usersRepository.create({
+        firstName: googleProfile.firstName ?? 'User',
+        lastName: googleProfile.lastName ?? '',
+        email,
+        password: passwordHash,
+        timeZone: 'UTC',
+        locale: 'en-CA',
+        isActive: true,
+        isEmailVerified: true,
+        imageUrl: googleProfile.pictureUrl ?? null,
+      });
+
+      user = await this.usersRepository.save(user);
+    }
+
+    if (user.deletedAt !== null) {
+      throw new UnauthorizedException('Login failed, invalid credentials');
+    }
+
+    if (!user.isActive) {
+      throw new ForbiddenException('User is inactive, please contact support');
+    }
+
+    if (!user.isEmailVerified) {
+      user.isEmailVerified = true;
+      user.verificationCode = null;
+      user.verificationCodeExpiresAt = null;
+      user = await this.usersRepository.save(user);
+    }
+
+    if (!user.imageUrl && googleProfile.pictureUrl) {
+      user.imageUrl = googleProfile.pictureUrl;
+      user = await this.usersRepository.save(user);
+    }
+
+    await this.updateLastLogin(user.id);
+
+    return {
+      access_token: await this.generateJWT(user),
+      user: UserMapper.toBasicUser(user),
+    };
   }
 
   private async comparePasswords(
@@ -385,16 +442,20 @@ export class AuthService {
     this.logger.log(`Login attempt of: ${email}`);
 
     const user = await this.usersRepository.findOneBy({ email });
+
+    // 1. Check if user exists
     if (!user) {
       this.logger.warn(`Login failed, user not found: ${email}`);
       throw new UnauthorizedException('Login failed, invalid credentials');
     }
 
+    // 2. Check if user is deleted
     if (user.deletedAt !== null) {
       this.logger.warn(`Login failed, user is deleted: ${email}`);
       throw new UnauthorizedException('Login failed, invalid credentials');
     }
 
+    // 3. Check if user is active and email is verified
     if (!user.isActive) {
       this.logger.warn(`Login failed, user is inactive: ${email}`);
       throw new UnauthorizedException(
@@ -406,6 +467,7 @@ export class AuthService {
       this.logger.warn(`Login failed, email not verified: ${email}`);
       throw new UnauthorizedException(
         'Login failed, email not verified. Please verify your email first.',
+        'Email Not Verified',
       );
     }
 
@@ -559,6 +621,13 @@ export class AuthService {
     this.logger.log(`Change password attempt for user: ${user.email}`);
 
     const existingUser = await this.usersRepository.findOneBy({ id: user.id });
+
+    if (!existingUser) {
+      this.logger.warn(
+        `Change password failed - user not found: ${user.email}`,
+      );
+      throw new NotFoundException('User not found');
+    }
 
     const isValidPassword = await this.comparePasswords(
       currentPassword,

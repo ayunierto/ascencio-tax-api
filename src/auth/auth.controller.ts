@@ -6,12 +6,25 @@ import {
   HttpStatus,
   Get,
   Patch,
+  UseGuards,
+  Req,
+  Res,
+  Query,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { Auth } from './decorators/auth.decorator';
 import { GetUser } from './decorators/get-user.decorator';
 import { User } from './entities/user.entity';
+import { UserMapper } from './mappers/user.mapper';
+import { BasicUser } from './interfaces/basic-user.interface';
+import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+import type { Request, Response } from 'express';
 import {
   SignInDto,
   SignUpDto,
@@ -24,24 +37,92 @@ import {
   UpdateProfileDto,
   DeleteAccountDto,
 } from './dto/';
-import { ChangePasswordResponse, CheckStatusResponse, DeleteAccountResponse, ForgotPasswordResponse, ResendEmailVerificationResponse, ResendResetPasswordCodeResponse, ResetPasswordResponse, SignInResponse, SignUpResponse, UpdateProfileResponse, VerifyEmailCodeResponse } from './interfaces/auth-responses.interface';
+import {
+  ChangePasswordResponse,
+  CheckStatusResponse,
+  DeleteAccountResponse,
+  ForgotPasswordResponse,
+  ResendEmailVerificationResponse,
+  ResendResetPasswordCodeResponse,
+  ResetPasswordResponse,
+  SignInResponse,
+  SignUpResponse,
+  UpdateProfileResponse,
+  VerifyEmailCodeResponse,
+} from './interfaces/auth-responses.interface';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Get('me')
+  @Auth()
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({ status: 200, description: 'Current user', type: BasicUser })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @HttpCode(HttpStatus.OK)
+  me(@GetUser() user: User): BasicUser {
+    return UserMapper.toBasicUser(user);
+  }
+
   @Post('signin')
   @ApiOperation({ summary: 'Sign in a user' })
-  @ApiResponse({ status: 201, description: 'User signed in successfully', type: SignInResponse })
+  @ApiResponse({
+    status: 201,
+    description: 'User signed in successfully',
+    type: SignInResponse,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   login(@Body() signInDto: SignInDto): Promise<SignInResponse> {
     return this.authService.signIn(signInDto);
   }
 
+  @Get('google')
+  @ApiOperation({ summary: 'Sign in with Google (redirect)' })
+  @UseGuards(PassportAuthGuard('google'))
+  googleAuth() {
+    return;
+  }
+
+  @Get('google/callback')
+  @ApiOperation({ summary: 'Google OAuth callback' })
+  @UseGuards(PassportAuthGuard('google'))
+  async googleCallback(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Query('mode') mode?: 'json',
+  ) {
+    const result = await this.authService.signInWithGoogle(req.user);
+
+    if (mode === 'json') {
+      return res.status(HttpStatus.OK).json(result);
+    }
+
+    const cookieDomain = process.env.AUTH_COOKIE_DOMAIN;
+    res.cookie('access_token', result.access_token, {
+      httpOnly: true,
+      secure: process.env.STAGE !== 'dev',
+      sameSite: 'lax',
+      ...(cookieDomain ? { domain: cookieDomain } : {}),
+      maxAge: 1000 * 60 * 60 * 24 * 7,
+      path: '/',
+    });
+
+    const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:3000';
+    const successPath = process.env.OAUTH_SUCCESS_REDIRECT ?? '/en/admin';
+    const redirectUrl = new URL(successPath, webAppUrl);
+    return res.redirect(redirectUrl.toString());
+  }
+
   @Post('signup')
   @ApiOperation({ summary: 'Sign up a new user' })
-  @ApiResponse({ status: 201, description: 'User created successfully', type: SignUpResponse })
+  @ApiResponse({
+    status: 201,
+    description: 'User created successfully',
+    type: SignUpResponse,
+  })
   @ApiResponse({ status: 400, description: 'Bad Request' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
   register(@Body() signUpDto: SignUpDto): Promise<SignUpResponse> {
@@ -50,16 +131,26 @@ export class AuthController {
 
   @Post('verify-email-code')
   @ApiOperation({ summary: 'Verify email with code' })
-  @ApiResponse({ status: 201, description: 'Email verified successfully', type: VerifyEmailCodeResponse })
+  @ApiResponse({
+    status: 201,
+    description: 'Email verified successfully',
+    type: VerifyEmailCodeResponse,
+  })
   @ApiResponse({ status: 400, description: 'Invalid or expired code' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  verifyEmail(@Body() verifyCodeDto: VerifyEmailCodeDto): Promise<VerifyEmailCodeResponse> {
+  verifyEmail(
+    @Body() verifyCodeDto: VerifyEmailCodeDto,
+  ): Promise<VerifyEmailCodeResponse> {
     return this.authService.verifyEmailCode(verifyCodeDto);
   }
 
   @Post('resend-email-code')
   @ApiOperation({ summary: 'Resend email verification code' })
-  @ApiResponse({ status: 200, description: 'Verification code sent successfully', type: ResendEmailVerificationResponse })
+  @ApiResponse({
+    status: 200,
+    description: 'Verification code sent successfully',
+    type: ResendEmailVerificationResponse,
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   @HttpCode(HttpStatus.OK)
   resendEmailVerification(
@@ -72,26 +163,42 @@ export class AuthController {
 
   @Post('forgot-password')
   @ApiOperation({ summary: 'Request password reset' })
-  @ApiResponse({ status: 200, description: 'Password reset email sent', type: ForgotPasswordResponse })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset email sent',
+    type: ForgotPasswordResponse,
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   @HttpCode(HttpStatus.OK)
-  forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<ForgotPasswordResponse> {
+  forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ): Promise<ForgotPasswordResponse> {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
 
   @Post('reset-password')
   @ApiOperation({ summary: 'Reset password with code' })
-  @ApiResponse({ status: 200, description: 'Password reset successfully', type: ResetPasswordResponse })
+  @ApiResponse({
+    status: 200,
+    description: 'Password reset successfully',
+    type: ResetPasswordResponse,
+  })
   @ApiResponse({ status: 400, description: 'Invalid or expired code' })
   @ApiResponse({ status: 404, description: 'User not found' })
   @HttpCode(HttpStatus.OK)
-  resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<ResetPasswordResponse> {
+  resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<ResetPasswordResponse> {
     return this.authService.resetPassword(resetPasswordDto);
   }
 
   @Post('resend-reset-password-code')
   @ApiOperation({ summary: 'Resend password reset code' })
-  @ApiResponse({ status: 200, description: 'Reset code sent successfully', type: ResendResetPasswordCodeResponse })
+  @ApiResponse({
+    status: 200,
+    description: 'Reset code sent successfully',
+    type: ResendResetPasswordCodeResponse,
+  })
   @ApiResponse({ status: 404, description: 'User not found' })
   @HttpCode(HttpStatus.OK)
   resendResetPasswordCode(
@@ -104,7 +211,11 @@ export class AuthController {
   @Auth()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Check user authentication status' })
-  @ApiResponse({ status: 200, description: 'User is authenticated', type: CheckStatusResponse })
+  @ApiResponse({
+    status: 200,
+    description: 'User is authenticated',
+    type: CheckStatusResponse,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @HttpCode(HttpStatus.OK)
   checkStatus(@GetUser() user: User): Promise<CheckStatusResponse> {
@@ -115,7 +226,11 @@ export class AuthController {
   @Auth()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Change user password' })
-  @ApiResponse({ status: 201, description: 'Password changed successfully', type: ChangePasswordResponse })
+  @ApiResponse({
+    status: 201,
+    description: 'Password changed successfully',
+    type: ChangePasswordResponse,
+  })
   @ApiResponse({ status: 400, description: 'Invalid current password' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   changePassword(
@@ -129,7 +244,11 @@ export class AuthController {
   @Auth()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update user profile' })
-  @ApiResponse({ status: 200, description: 'Profile updated successfully', type: UpdateProfileResponse })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile updated successfully',
+    type: UpdateProfileResponse,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   updateProfile(
     @Body() updateProfileDto: UpdateProfileDto,
@@ -142,7 +261,11 @@ export class AuthController {
   @Auth()
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Delete user account' })
-  @ApiResponse({ status: 201, description: 'Account deleted successfully', type: DeleteAccountResponse })
+  @ApiResponse({
+    status: 201,
+    description: 'Account deleted successfully',
+    type: DeleteAccountResponse,
+  })
   @ApiResponse({ status: 400, description: 'Invalid password' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   deleteAccount(
