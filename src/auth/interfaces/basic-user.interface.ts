@@ -10,6 +10,9 @@ export class BasicUser {
   @ApiProperty({ description: 'Last name' })
   lastName: string;
 
+  @ApiProperty({ description: 'Profile image URL', required: false })
+  imageUrl?: string | null;
+
   @ApiProperty({ description: 'Email address' })
   email: string;
 

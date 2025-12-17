@@ -7,6 +7,7 @@ export class UserMapper {
       id: user.id,
       firstName: user.firstName,
       lastName: user.lastName,
+      imageUrl: user.imageUrl ?? undefined,
       email: user.email,
       countryCode: user.countryCode ?? undefined,
       phoneNumber: user.phoneNumber ?? undefined,
