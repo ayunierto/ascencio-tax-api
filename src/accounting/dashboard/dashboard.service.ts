@@ -4,8 +4,8 @@ import { IsNull, Repository } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Appointment } from '../../bookings/appointments/entities/appointment.entity';
 import { StaffMember } from '../../bookings/staff-members/entities/staff-member.entity';
-import { DashboardMetricsDto } from './dto/dashboard-metrics.dto';
 import { Service } from 'src/bookings/services/entities';
+import { DashboardMetrics } from '@ascencio/shared/interfaces';
 
 @Injectable()
 export class DashboardService {
@@ -20,7 +20,7 @@ export class DashboardService {
     private readonly staffRepository: Repository<StaffMember>,
   ) {}
 
-  async getMetrics(): Promise<DashboardMetricsDto> {
+  async getMetrics(): Promise<DashboardMetrics> {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const tomorrow = new Date(today);
@@ -96,14 +96,15 @@ export class DashboardService {
       }),
     ]);
 
-    const metrics = new DashboardMetricsDto();
-    metrics.totalUsers = totalUsers;
-    metrics.totalAppointments = totalAppointments;
-    metrics.upcomingAppointments = upcomingAppointments;
-    metrics.todayAppointments = todayAppointments;
-    metrics.totalServices = totalServices;
-    metrics.activeStaff = activeStaff;
-    metrics.completedAppointments = completedAppointments;
+    const metrics: DashboardMetrics = {
+      totalUsers,
+      totalAppointments,
+      upcomingAppointments,
+      todayAppointments,
+      totalServices,
+      activeStaff,
+      completedAppointments,
+    };
 
     // Monthly revenue calculation (optional - remove if no payment system)
     // You can implement this when you have a payments/invoices table

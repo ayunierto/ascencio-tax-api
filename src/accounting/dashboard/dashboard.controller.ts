@@ -1,13 +1,13 @@
 import { Controller, Get } from '@nestjs/common';
 import { DashboardService } from './dashboard.service';
-import { DashboardMetricsDto } from './dto/dashboard-metrics.dto';
+import { DashboardMetrics } from '@ascencio/shared/interfaces';
 
 @Controller('dashboard')
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('metrics')
-  async getMetrics(): Promise<DashboardMetricsDto> {
+  async getMetrics(): Promise<DashboardMetrics> {
     return this.dashboardService.getMetrics();
   }
 

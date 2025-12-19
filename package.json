@@ -11,6 +11,7 @@
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
+    "sync:shared": "powershell -NoProfile -Command \"Push-Location ..\\ascencio-tax-shared; npm run build; $pkg=(npm pack).Trim(); Pop-Location; npm remove @ascencio/shared; npm i ..\\ascencio-tax-shared\\$pkg\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "node dist/main",
     "start:dev": "nest start --watch",

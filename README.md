@@ -103,6 +103,7 @@ OPENAI_API_KEY=sk-proj-...
 ## 📚 API Documentation
 
 Once running, access Swagger documentation at:
+
 ```
 http://localhost:3000/api/docs
 ```
@@ -126,6 +127,7 @@ The API uses TypeORM with `synchronize: true` in development mode to automatical
 ### Seeding
 
 Populate initial data:
+
 ```bash
 # Via API endpoint
 curl http://localhost:3000/api/seed
@@ -154,11 +156,13 @@ http://localhost:3000/api/seed
 ## 🔗 Dependencies
 
 ### Core
+
 - NestJS 10
 - TypeORM 0.3.20
 - PostgreSQL (pg)
 
 ### Integrations
+
 - Google Calendar API
 - Zoom API
 - OpenAI API
@@ -166,7 +170,8 @@ http://localhost:3000/api/seed
 - Cloudinary
 
 ### Shared Package
-- `@ascencio-tax/shared` - Types, schemas, utilities (from GitHub)
+
+- `@ascencio/shared` - Types, schemas, utilities (from GitHub)
 
 ## 📄 License
 

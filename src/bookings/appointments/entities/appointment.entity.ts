@@ -84,13 +84,13 @@ export class Appointment {
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   @ApiProperty({ description: 'Creation date' })
-  createdAt: Date;
+  createdAt: string;
 
   @UpdateDateColumn({ type: 'timestamp with time zone' })
   @ApiProperty({ description: 'Last update date' })
-  updatedAt: Date;
+  updatedAt: string;
 
   @Column('timestamp with time zone', { nullable: true })
   @ApiProperty({ description: 'Deletion date', nullable: true })
-  deletedAt: Date;
+  deletedAt: string;
 }

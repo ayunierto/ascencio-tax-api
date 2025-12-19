@@ -40,11 +40,11 @@ export class StaffMember {
   schedules: Schedule[];
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
-  createdAt: Date;
+  createdAt: string;
 
   @UpdateDateColumn({ type: 'timestamp with time zone' })
-  updatedAt: Date;
+  updatedAt: string;
 
   @Column('timestamp with time zone', { nullable: true })
-  deletedAt: Date;
+  deletedAt: string;
 }

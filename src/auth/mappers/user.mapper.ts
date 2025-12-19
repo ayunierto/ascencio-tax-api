@@ -1,8 +1,8 @@
+import { SimpleUser } from '@ascencio/shared/interfaces';
 import { User } from '../entities/user.entity';
-import { BasicUser } from '../interfaces/basic-user.interface';
 
 export class UserMapper {
-  static toBasicUser(user: User): BasicUser {
+  static toBasicUser(user: User): SimpleUser {
     return {
       id: user.id,
       firstName: user.firstName,
@@ -16,6 +16,10 @@ export class UserMapper {
       lastLoginAt: user.lastLoginAt ?? undefined,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      isActive: user.isActive,
+      isEmailVerified: user.isEmailVerified,
+      timeZone: user.timeZone,
+      deletedAt: user.deletedAt ?? undefined,
     };
   }
 }
