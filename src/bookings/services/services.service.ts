@@ -13,12 +13,10 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Service } from './entities';
 import { StaffMember } from 'src/bookings/staff-members/entities/staff-member.entity';
 import {
-  CreateServiceResponse,
-  DeleteServiceResponse,
-  GetServiceResponse,
-  GetServicesResponse,
-  UpdateServiceResponse,
-} from './interfaces';
+  PaginatedResponse,
+  ServicesResponse,
+} from '@ascencio/shared/interfaces';
+import { DateTime } from 'luxon';
 
 @Injectable()
 export class ServicesService {
@@ -32,10 +30,14 @@ export class ServicesService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(
-    createServiceDto: CreateServiceDto,
-  ): Promise<CreateServiceResponse> {
+  async create(createServiceDto: CreateServiceDto): Promise<Service> {
     const { staffIds, ...serviceData } = createServiceDto;
+
+    if (!staffIds || staffIds.length === 0) {
+      throw new BadRequestException(
+        'Service must be assigned to at least one staff member',
+      );
+    }
 
     try {
       this.logger.log(`Creating service: ${serviceData.name}`);
@@ -70,7 +72,9 @@ export class ServicesService {
     }
   }
 
-  async findAll(paginationDto: PaginationDto): Promise<GetServicesResponse> {
+  async findAll(
+    paginationDto: PaginationDto,
+  ): Promise<PaginatedResponse<Service>> {
     const { limit = 10, offset = 0 } = paginationDto;
 
     try {
@@ -88,14 +92,11 @@ export class ServicesService {
         order: { createdAt: 'DESC' },
       });
 
-      const result = {
-        count: total,
+      return {
+        items: services,
+        total,
         pages: Math.ceil(total / limit),
-        services,
       };
-
-      this.logger.log(`Found ${total} services`);
-      return result;
     } catch (error) {
       this.logger.error(
         `Error fetching services: ${error.message}`,
@@ -107,7 +108,7 @@ export class ServicesService {
     }
   }
 
-  async findOne(id: string): Promise<GetServiceResponse> {
+  async findOne(id: string): Promise<Service> {
     this.logger.log(`Fetching service with ID: ${id}`);
 
     const service = await this.serviceRepository.findOne({
@@ -128,17 +129,26 @@ export class ServicesService {
   async update(
     id: string,
     updateServiceDto: UpdateServiceDto,
-  ): Promise<UpdateServiceResponse> {
+  ): Promise<Service> {
     const { staffIds, ...serviceData } = updateServiceDto;
 
     try {
       this.logger.log(`Updating service with ID: ${id}`);
 
       // Check if service exists first
-      await this.findOne(id);
+      const existing = await this.findOne(id);
 
-      // Validate and get staff members if provided
-      const staff = await this.validateAndGetStaff(staffIds);
+      // Validate and get staff members if provided; if not provided, keep current ones
+      const staff =
+        staffIds === undefined
+          ? existing.staffMembers
+          : await this.validateAndGetStaff(staffIds);
+
+      if (!staff || staff.length === 0) {
+        throw new BadRequestException(
+          'Service must be assigned to at least one staff member',
+        );
+      }
 
       const service = await this.serviceRepository.preload({
         id,
@@ -173,12 +183,12 @@ export class ServicesService {
     }
   }
 
-  async remove(id: string): Promise<DeleteServiceResponse> {
+  async remove(id: string): Promise<Service> {
     try {
       this.logger.log(`Soft deleting service with ID: ${id}`);
 
       const service = await this.findOne(id);
-      service.deletedAt = new Date();
+      service.deletedAt = DateTime.now().toISO();
 
       const deletedService = await this.serviceRepository.save(service);
       this.logger.log(`Service soft deleted successfully with ID: ${id}`);
@@ -207,7 +217,9 @@ export class ServicesService {
     staffIds?: string[],
   ): Promise<StaffMember[]> {
     if (!staffIds || staffIds.length === 0) {
-      return [];
+      throw new BadRequestException(
+        'At least one staff member is required for this service',
+      );
     }
 
     this.logger.log(`Validating ${staffIds.length} staff member(s)`);

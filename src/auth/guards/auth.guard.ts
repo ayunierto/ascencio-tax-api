@@ -24,7 +24,9 @@ export class AuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
-      throw new UnauthorizedException('You need to be logged in to access this resource. Please login and try again.');
+      throw new UnauthorizedException(
+        'You need to be logged in to access this resource. Please login and try again.',
+      );
     }
 
     try {
@@ -36,11 +38,15 @@ export class AuthGuard implements CanActivate {
       if (!user) throw new UnauthorizedException('Token not valid');
 
       if (!user.isActive)
-        throw new ForbiddenException('User is inactive, please contact an admin');
+        throw new ForbiddenException(
+          'User is inactive, please contact an admin',
+        );
 
-      request['user'] = user;
+      request.user = user;
     } catch {
-      throw new UnauthorizedException('You are not authorized to access this resource. Please login and try again.');
+      throw new UnauthorizedException(
+        'You are not authorized to access this resource. Please login and try again.',
+      );
     }
 
     return true;

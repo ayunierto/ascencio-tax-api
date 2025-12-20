@@ -21,7 +21,7 @@ export class FilesService {
 
   async upload(
     file: Express.Multer.File,
-    folder: string = 'temp_files',
+    folder = 'temp_files',
   ): Promise<UploadApiResponse | UploadStream> {
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
@@ -34,7 +34,14 @@ export class FilesService {
           // ],
         },
         (error, result) => {
-          if (error) return reject(error);
+          if (error) {
+            reject(error);
+            return;
+          }
+          if (!result) {
+            reject(new Error('Upload failed'));
+            return;
+          }
           resolve(result);
         },
       );

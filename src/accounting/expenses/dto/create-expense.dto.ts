@@ -13,7 +13,7 @@ export class CreateExpenseDto {
   @IsISO8601()
   date: string;
 
-  @ApiProperty({ description: 'Total amount', example: 150.50 })
+  @ApiProperty({ description: 'Total amount', example: 150.5 })
   @IsNumber({ maxDecimalPlaces: 2 })
   total: number;
 
@@ -21,12 +21,20 @@ export class CreateExpenseDto {
   @IsNumber({ maxDecimalPlaces: 2 })
   tax: number;
 
-  @ApiProperty({ description: 'Receipt image URL', example: 'https://example.com/receipt.jpg', required: false })
+  @ApiProperty({
+    description: 'Receipt image URL',
+    example: 'https://example.com/receipt.jpg',
+    required: false,
+  })
   @IsUrl()
   @IsOptional()
   imageUrl?: string;
 
-  @ApiProperty({ description: 'Notes', example: 'Pens, paper, and ink', required: false })
+  @ApiProperty({
+    description: 'Notes',
+    example: 'Pens, paper, and ink',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   notes?: string;
@@ -35,7 +43,11 @@ export class CreateExpenseDto {
   @IsString()
   categoryId: string;
 
-  @ApiProperty({ description: 'Subcategory ID', format: 'uuid', required: false })
+  @ApiProperty({
+    description: 'Subcategory ID',
+    format: 'uuid',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   subcategoryId?: string;

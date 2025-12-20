@@ -1,283 +1,270 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
-  OnModuleInit,
-  BadRequestException,
   NotFoundException,
-  InternalServerErrorException,
 } from '@nestjs/common';
-import { Auth, calendar_v3, google } from 'googleapis';
-
+import { InjectRepository } from '@nestjs/typeorm';
+import { calendar_v3 } from 'googleapis';
 import { DateTime, Interval } from 'luxon';
+import { Repository, LessThan, MoreThan } from 'typeorm';
+import { GoogleCalendarIntegrationService } from 'src/integrations/google-calendar/google-calendar.service';
+import {
+  CalendarEvent,
+  CalendarSourceType,
+  CalendarStatus,
+} from './entities/calendar.entity';
+
+type CreateEventOptions = {
+  staffMemberId?: string;
+  serviceId?: string;
+  sourceType?: CalendarSourceType;
+  sourceId?: string;
+  externalCalendarId?: string;
+  isBusy?: boolean;
+  sync?: boolean;
+};
+
+type UpdateEventOptions = CreateEventOptions & { status?: CalendarStatus };
 
 @Injectable()
-export class CalendarService implements OnModuleInit {
+export class CalendarService {
   private readonly logger = new Logger(CalendarService.name);
-  private calendar: calendar_v3.Calendar;
-  private calendarId: string;
-  private auth: Auth.GoogleAuth | Auth.OAuth2Client;
 
-  constructor() {
-    this.calendarId = process.env.GOOGLE_CALENDAR_ID;
-    if (!this.calendarId) {
-      this.logger.error(
-        'GOOGLE_CALENDAR_ID no está configurado en las variables de entorno.',
-      );
-      throw new BadRequestException('GOOGLE_CALENDAR_ID must be configured.');
-    }
-    // La inicialización real se hace en onModuleInit
-  }
+  constructor(
+    @InjectRepository(CalendarEvent)
+    private readonly eventsRepository: Repository<CalendarEvent>,
+    private readonly googleCalendar: GoogleCalendarIntegrationService,
+  ) {}
 
-  // Method to create an event on Google Calendar
-  /**
-   * Crea un evento en Google Calendar.
-   * @param body Detalles del evento.
-   * @returns El ID del evento creado.
-   */
-  async createEvent(body: calendar_v3.Schema$Event): Promise<string> {
-    this.ensureInitialized();
-    if (!body || !body.start || !body.end) {
-      throw new BadRequestException('Event body, start and end are required');
-    }
-    try {
-      const response = await this.calendar.events.insert({
-        calendarId: this.calendarId,
-        requestBody: body,
-      });
-      this.logger.log(`Event created: ${response.data.htmlLink}`, {
-        eventId: response.data.id,
-      });
-      return response.data.id;
-    } catch (error) {
-      this.handleGoogleApiError(error, 'Error creating event');
-    }
-  }
+  async createEvent(
+    body: calendar_v3.Schema$Event,
+    options?: CreateEventOptions,
+  ): Promise<string> {
+    this.ensureBody(body);
 
-  async onModuleInit() {
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const privateKey = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-    if (!clientEmail || !privateKey) {
-      this.logger.error(
-        'GOOGLE_SERVICE_ACCOUNT_EMAIL o GOOGLE_PRIVATE_KEY no están configurados en las variables de entorno.',
-      );
-      throw new BadRequestException(
-        'Service account email and private key must be configured.',
-      );
-    }
-    try {
-      this.auth = new google.auth.JWT({
-        email: clientEmail,
-        key: privateKey,
-        scopes: ['https://www.googleapis.com/auth/calendar'],
-      });
-      await (this.auth as Auth.JWT).authorize();
-      this.calendar = google.calendar({ version: 'v3', auth: this.auth });
-      this.logger.log('Google Calendar Service Initialized Successfully.');
-    } catch (error) {
-      this.logger.error(
-        'Error initializing Google Calendar client:',
-        error.stack || error.message,
-      );
-      throw new InternalServerErrorException(
-        `Failed to initialize Google Calendar client: ${error.message}`,
-      );
-    }
-  }
+    const { startDate, endDate, timeZone } = this.resolveDates(body);
 
-  /**
-   * Lists upcoming events from the configured calendar.
-   * @param maxResults Maximum number of events to return.
-   * @returns A list of events.
-   */
-  /**
-   * Lista los próximos eventos del calendario.
-   * @param maxResults Máximo de eventos a retornar.
-   */
-  async listUpcomingEvents(
-    maxResults: number = 10,
-  ): Promise<calendar_v3.Schema$Event[]> {
-    this.ensureInitialized();
-    try {
-      const now = new Date().toISOString();
-      const response = await this.calendar.events.list({
-        calendarId: this.calendarId,
-        timeMin: now,
-        maxResults,
-        singleEvents: true,
-        orderBy: 'startTime',
-      });
-      return response.data.items || [];
-    } catch (error) {
-      this.handleGoogleApiError(error, 'Failed to list upcoming events');
-    }
-  }
+    const event = this.eventsRepository.create({
+      summary: body.summary ?? 'Event',
+      description: body.description ?? undefined,
+      location: body.location ?? undefined,
+      start: startDate.toUTC().toJSDate(),
+      end: endDate.toUTC().toJSDate(),
+      timeZone,
+      staffMemberId: options?.staffMemberId,
+      serviceId: options?.serviceId,
+      sourceType: options?.sourceType ?? 'appointment',
+      sourceId: options?.sourceId,
+      externalCalendarId: options?.externalCalendarId,
+      isBusy: options?.isBusy ?? true,
+      status: 'confirmed',
+    });
 
-  /**
-   * Gets details for a specific event.
-   * @param eventId The ID of the event to retrieve.
-   * @returns The event details.
-   */
-  /**
-   * Obtiene los detalles de un evento específico.
-   * @param eventId ID del evento.
-   */
-  async getEvent(eventId: string): Promise<calendar_v3.Schema$Event> {
-    this.ensureInitialized();
-    if (!eventId) throw new BadRequestException('eventId is required');
-    try {
-      const response = await this.calendar.events.get({
-        calendarId: this.calendarId,
-        eventId,
-      });
-      return response.data;
-    } catch (error) {
-      const googleApiError = error.response?.data?.error;
-      if (googleApiError && googleApiError.code === 404) {
-        throw new NotFoundException(`Event with ID ${eventId} not found.`);
+    const saved = await this.eventsRepository.save(event);
+
+    let externalEventId: string | undefined;
+    if (options?.sync !== false) {
+      externalEventId = await this.googleCalendar.createEvent(
+        this.mapToGoogleEvent(body, timeZone, startDate, endDate),
+        options?.externalCalendarId,
+      );
+
+      if (externalEventId) {
+        await this.eventsRepository.update(saved.id, {
+          externalEventId,
+          externalCalendarId:
+            options?.externalCalendarId ?? this.googleCalendar.getCalendarId(),
+        });
       }
-      this.handleGoogleApiError(error, `Failed to get event ${eventId}`);
     }
+
+    return externalEventId ?? saved.id;
   }
 
-  /**
-   * Updates an existing event.
-   * @param eventId The ID of the event to update.
-   * @param eventDetails The new details for the event.
-   * @returns The updated event.
-   */
-  /**
-   * Actualiza un evento existente.
-   * @param eventId ID del evento.
-   * @param eventDetails Nuevos detalles.
-   */
   async updateEvent(
     eventId: string,
     eventDetails: calendar_v3.Schema$Event,
-  ): Promise<calendar_v3.Schema$Event> {
-    this.ensureInitialized();
-    if (!eventId || !eventDetails)
-      throw new BadRequestException('eventId and eventDetails are required');
-    try {
-      this.logger.log(`Updating Calendar event ${eventId}`, {
-        summary: eventDetails.summary,
-        start: eventDetails.start,
-        end: eventDetails.end,
-        location: eventDetails.location,
-      });
-      const response = await this.calendar.events.update({
-        calendarId: this.calendarId,
-        eventId,
-        requestBody: eventDetails,
-      });
-      this.logger.log(`Event updated successfully: ${response.data.htmlLink}`);
-      return response.data;
-    } catch (error) {
-      this.handleGoogleApiError(error, `Failed to update event ${eventId}`);
+    options?: UpdateEventOptions,
+  ): Promise<void> {
+    const existing = await this.findEvent(eventId);
+    if (!existing) {
+      throw new NotFoundException(`Event ${eventId} not found`);
+    }
+
+    this.ensureBody(eventDetails);
+    const { startDate, endDate, timeZone } = this.resolveDates(eventDetails);
+
+    const merged: CalendarEvent = {
+      ...existing,
+      summary: eventDetails.summary ?? existing.summary,
+      description: eventDetails.description ?? existing.description,
+      location: eventDetails.location ?? existing.location,
+      start: startDate.toUTC().toJSDate(),
+      end: endDate.toUTC().toJSDate(),
+      timeZone,
+      staffMemberId: options?.staffMemberId ?? existing.staffMemberId,
+      serviceId: options?.serviceId ?? existing.serviceId,
+      sourceType: options?.sourceType ?? existing.sourceType,
+      sourceId: options?.sourceId ?? existing.sourceId,
+      isBusy: options?.isBusy ?? existing.isBusy,
+      status: options?.status ?? existing.status,
+    };
+
+    await this.eventsRepository.save(merged);
+
+    if (options?.sync !== false && merged.externalEventId) {
+      await this.googleCalendar.updateEvent(
+        merged.externalEventId,
+        this.mapToGoogleEvent(eventDetails, timeZone, startDate, endDate),
+        merged.externalCalendarId ?? options?.externalCalendarId,
+      );
     }
   }
 
-  /**
-   * Deletes an event.
-   * @param eventId The ID of the event to delete.
-   */
-  /**
-   * Elimina un evento por ID.
-   * @param eventId ID del evento.
-   */
-  async deleteEvent(eventId: string): Promise<void> {
-    this.ensureInitialized();
-    if (!eventId) throw new BadRequestException('eventId is required');
-    try {
-      await this.calendar.events.delete({
-        calendarId: this.calendarId,
-        eventId,
-      });
-      this.logger.log(`Event ${eventId} deleted successfully.`);
-    } catch (error) {
-      this.handleGoogleApiError(error, `Failed to delete event ${eventId}`);
+  async deleteEvent(
+    eventId: string,
+    opts?: { removeExternal?: boolean },
+  ): Promise<void> {
+    const existing = await this.findEvent(eventId);
+
+    if (existing) {
+      existing.status = 'cancelled';
+      await this.eventsRepository.save(existing);
+
+      if (opts?.removeExternal !== false && existing.externalEventId) {
+        await this.googleCalendar.deleteEvent(
+          existing.externalEventId,
+          existing.externalCalendarId,
+        );
+      }
+      return;
+    }
+
+    // Compatibilidad: si no existe interno, intentar borrar el ID externo directo.
+    if (opts?.removeExternal !== false) {
+      await this.googleCalendar.deleteEvent(eventId);
     }
   }
 
-  /**
-   * Verifica si hay eventos en un rango de fechas dado.
-   *
-   * @param startDateTime 2025-01-06T00:00:00.000Z
-   * @param endDateTime 2025-01-06T14:00:00.000Z
-   * @param targetTimeZone Zona horaria para convertir los tiempos (por defecto 'America/Toronto')
-   * @returns Una lista de intervalos ocupados en la zona horaria objetivo.
-   */
-  /**
-   * Verifica si hay eventos en un rango de fechas dado.
-   * @param startDateTime Fecha/hora inicio (ISO).
-   * @param endDateTime Fecha/hora fin (ISO).
-   * @param targetTimeZone Zona horaria objetivo.
-   */
+  async listUpcomingEvents(maxResults = 10): Promise<CalendarEvent[]> {
+    const now = DateTime.utc().toJSDate();
+    return this.eventsRepository.find({
+      where: { start: MoreThan(now), status: 'confirmed' },
+      take: maxResults,
+      order: { start: 'ASC' },
+    });
+  }
+
   async checkEventsInRange(
     startDateTime: string,
     endDateTime: string,
-    targetTimeZone: string = 'America/Toronto',
+    targetTimeZone = 'UTC',
+    staffMemberId?: string,
   ): Promise<Interval[]> {
-    this.ensureInitialized();
-    if (!startDateTime || !endDateTime)
+    if (!startDateTime || !endDateTime) {
       throw new BadRequestException(
         'startDateTime and endDateTime are required',
       );
-    try {
-      const timeMin = new Date(startDateTime).toISOString();
-      const timeMax = new Date(endDateTime).toISOString();
-      const response = await this.calendar.events.list({
-        calendarId: this.calendarId,
-        timeMin,
-        timeMax,
-        singleEvents: true,
-        orderBy: 'startTime',
+    }
+
+    const start = DateTime.fromISO(startDateTime, { zone: 'utc' });
+    const end = DateTime.fromISO(endDateTime, { zone: 'utc' });
+
+    if (!start.isValid || !end.isValid) {
+      throw new BadRequestException('Invalid date range');
+    }
+
+    const events = await this.eventsRepository.find({
+      where: {
+        status: 'confirmed',
+        isBusy: true,
+        ...(staffMemberId ? { staffMemberId } : {}),
+        start: LessThan(end.toJSDate()),
+        end: MoreThan(start.toJSDate()),
+      },
+    });
+
+    return events.map((event) =>
+      Interval.fromDateTimes(
+        DateTime.fromJSDate(event.start, { zone: 'utc' }).setZone(
+          targetTimeZone,
+        ),
+        DateTime.fromJSDate(event.end, { zone: 'utc' }).setZone(targetTimeZone),
+      ),
+    );
+  }
+
+  private ensureBody(body: calendar_v3.Schema$Event): void {
+    if (!body?.start?.dateTime || !body?.end?.dateTime) {
+      throw new BadRequestException('Event body, start and end are required');
+    }
+  }
+
+  private resolveDates(body: calendar_v3.Schema$Event): {
+    startDate: DateTime;
+    endDate: DateTime;
+    timeZone: string;
+  } {
+    const timeZone = body.start?.timeZone || body.end?.timeZone || 'UTC';
+
+    const startDate = DateTime.fromISO(body.start?.dateTime ?? '', {
+      zone: timeZone,
+    });
+    const endDate = DateTime.fromISO(body.end?.dateTime ?? '', {
+      zone: timeZone,
+    });
+
+    if (!startDate.isValid || !endDate.isValid || endDate <= startDate) {
+      throw new BadRequestException('Invalid start/end date range');
+    }
+
+    return { startDate, endDate, timeZone };
+  }
+
+  private mapToGoogleEvent(
+    body: calendar_v3.Schema$Event,
+    timeZone: string,
+    startDate: DateTime,
+    endDate: DateTime,
+  ): calendar_v3.Schema$Event {
+    return {
+      ...body,
+      start: {
+        dateTime: startDate.setZone(timeZone).toISO(),
+        timeZone,
+      },
+      end: {
+        dateTime: endDate.setZone(timeZone).toISO(),
+        timeZone,
+      },
+      reminders: body.reminders ?? {
+        useDefault: false,
+        overrides: [
+          { method: 'email', minutes: 24 * 60 },
+          { method: 'popup', minutes: 10 },
+        ],
+      },
+    };
+  }
+
+  private async findEvent(eventId: string): Promise<CalendarEvent | null> {
+    // Validar si es un UUID antes de buscar por id
+    const isUuid =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        eventId,
+      );
+
+    if (isUuid) {
+      const byId = await this.eventsRepository.findOne({
+        where: { id: eventId },
       });
-      const eventIntervals = (response.data.items || [])
-        .filter((event) => event.start?.dateTime && event.end?.dateTime)
-        .map((event) =>
-          Interval.fromDateTimes(
-            DateTime.fromISO(event.start.dateTime, {
-              zone: event.start.timeZone || targetTimeZone,
-            }).setZone(targetTimeZone),
-            DateTime.fromISO(event.end.dateTime, {
-              zone: event.end.timeZone || targetTimeZone,
-            }).setZone(targetTimeZone),
-          ),
-        );
-      return eventIntervals;
-    } catch (error) {
-      this.logger.error('Error in checkEventsInRange:', error.message);
-      return [];
+      if (byId) return byId;
     }
-  }
 
-  /**
-   * Helper privado para asegurar inicialización.
-   */
-  private ensureInitialized() {
-    if (!this.calendar) {
-      this.logger.error('Calendar client not initialized.');
-      throw new InternalServerErrorException(
-        'Calendar client not initialized. Check initialization logs.',
-      );
-    }
-  }
-
-  /**
-   * Helper privado para manejo DRY de errores de Google API.
-   */
-  private handleGoogleApiError(error: any, contextMsg: string): never {
-    this.logger.error(`${contextMsg}: ${error.message}`, error.stack);
-    const googleApiError = error.response?.data?.error;
-    if (googleApiError) {
-      this.logger.error(
-        `Google API Error: ${googleApiError.message} (Code: ${googleApiError.code})`,
-      );
-      if (googleApiError.code === 404) {
-        throw new NotFoundException(`${contextMsg}: Not found.`);
-      }
-      throw new BadRequestException(`${contextMsg}: ${googleApiError.message}`);
-    }
-    throw new InternalServerErrorException(`${contextMsg}: ${error.message}`);
+    const byExternal = await this.eventsRepository.findOne({
+      where: { externalEventId: eventId },
+    });
+    return byExternal ?? null;
   }
 }

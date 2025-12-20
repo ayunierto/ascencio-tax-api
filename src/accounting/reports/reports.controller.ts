@@ -1,5 +1,11 @@
 import { Controller, Get, Header, Query, Res } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiProduces } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiProduces,
+} from '@nestjs/swagger';
 import { ReportsService } from './reports.service';
 import { Response } from 'express';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -18,7 +24,10 @@ export class ReportsController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Generate PDF report' })
   @ApiProduces('application/pdf')
-  @ApiResponse({ status: 200, description: 'PDF report generated successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'PDF report generated successfully',
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @Header('Content-Type', 'application/pdf')
   async generatePdf(

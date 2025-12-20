@@ -32,6 +32,10 @@ export class UsersService {
         description: `The email ${userData.email} is already registered.`,
       });
 
+    if (!userData.password) {
+      throw new ConflictException('Password is required.');
+    }
+
     const hashedPassword = await this.hashPassword(userData.password);
 
     const newUser = this.usersRepository.create({
@@ -70,7 +74,7 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     const user = await this.usersRepository.findOneBy({ email });
     if (!user) {
-      throw new NotFoundException(`User not found.`);
+      return null;
     }
     return user;
   }
@@ -90,7 +94,7 @@ export class UsersService {
       // Or using findOneBy:
       // const user = await this.usersRepository.findOneBy({ passwordResetToken: token });
 
-      return user;
+      return user ?? undefined;
     } catch (error) {
       if (error instanceof HttpException) throw error;
       throw new InternalServerErrorException(

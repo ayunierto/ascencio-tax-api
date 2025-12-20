@@ -1,5 +1,19 @@
-import { Controller, Get, Body, Patch, Param, Post, NotFoundException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Body,
+  Patch,
+  Param,
+  Post,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { SystemSettingsService } from './system-settings.service';
 import { UpdateSystemSettingDto } from './dto/update-system-setting.dto';
 import { CreateSystemSettingDto } from './dto/create-system-setting.dto';
@@ -26,9 +40,7 @@ export class SystemSettingsController {
   @ApiParam({ name: 'key', description: 'Setting key' })
   @ApiResponse({ status: 200, description: 'Return the setting' })
   @ApiResponse({ status: 404, description: 'Setting not found' })
-  async findOne(
-    @Param('key') key: string,
-  ) {
+  async findOne(@Param('key') key: string) {
     const setting = await this.settingsService.findOne(key);
     if (!setting) throw new NotFoundException('Setting not found');
     return setting;
@@ -51,10 +63,7 @@ export class SystemSettingsController {
   @ApiParam({ name: 'key', description: 'Setting key' })
   @ApiResponse({ status: 200, description: 'Setting updated successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async update(
-    @Param('key') key: string,
-    @Body() dto: UpdateSystemSettingDto,
-  ) {
+  async update(@Param('key') key: string, @Body() dto: UpdateSystemSettingDto) {
     return this.settingsService.update(key, dto);
   }
 

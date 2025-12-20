@@ -328,13 +328,15 @@ export const dd: TDocumentDefinitions = {
           return i === 0 || i === node.table.body.length ? 2 : 1;
         },
         vLineWidth: function (i, node) {
-          return i === 0 || i === node.table.widths.length ? 2 : 1;
+          const widthsLength = node.table?.widths?.length ?? 0;
+          return i === 0 || i === widthsLength ? 2 : 1;
         },
         hLineColor: function (i, node) {
           return i === 0 || i === node.table.body.length ? 'black' : 'gray';
         },
         vLineColor: function (i, node) {
-          return i === 0 || i === node.table.widths.length ? 'black' : 'gray';
+          const widthsLength = node.table?.widths?.length ?? 0;
+          return i === 0 || i === widthsLength ? 'black' : 'gray';
         },
         // hLineStyle: function (i, node) { return {dash: { length: 10, space: 4 }}; },
         // vLineStyle: function (i, node) { return {dash: { length: 10, space: 4 }}; },
@@ -386,7 +388,8 @@ export const dd: TDocumentDefinitions = {
           return i === 0 || i === node.table.body.length ? 2 : 1;
         },
         vLineWidth: function (i, node) {
-          return i === 0 || i === node.table.widths.length ? 2 : 1;
+          const widthsLength = node.table?.widths?.length ?? 0;
+          return i === 0 || i === widthsLength ? 2 : 1;
         },
         hLineColor: function (i, node) {
           return 'black';
@@ -401,7 +404,8 @@ export const dd: TDocumentDefinitions = {
           return { dash: { length: 10, space: 4 } };
         },
         vLineStyle: function (i, node) {
-          if (i === 0 || i === node.table.widths.length) {
+          const widthsLength = node.table?.widths?.length ?? 0;
+          if (i === 0 || i === widthsLength) {
             return null;
           }
           return { dash: { length: 4 } };

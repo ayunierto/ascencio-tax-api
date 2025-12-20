@@ -7,7 +7,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-
 @Entity('system_settings')
 export class SystemSetting {
   @PrimaryGeneratedColumn('uuid')
@@ -18,9 +17,9 @@ export class SystemSetting {
   @ApiProperty({ description: 'Setting key' })
   key: string;
 
-  @Column('text')
-  @ApiProperty({ description: 'Setting value' })
-  value: string;
+  @Column('text', { nullable: true })
+  @ApiProperty({ description: 'Setting value', nullable: true })
+  value: string | null;
 
   @Column('text')
   @ApiProperty({ description: 'Setting type' })

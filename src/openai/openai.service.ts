@@ -56,7 +56,11 @@ Receipt text:
         { role: 'user', content: prompt },
       ],
     });
+    const content = res.choices[0].message.content;
+    if (!content) {
+      throw new Error('OpenAI response content is empty');
+    }
 
-    return JSON.parse(res.choices[0].message.content);
+    return JSON.parse(content);
   }
 }

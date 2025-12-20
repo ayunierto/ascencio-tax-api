@@ -1,11 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
+  ArrayNotEmpty,
   IsArray,
   IsBoolean,
   IsInt,
   IsOptional,
   IsString,
   IsUrl,
+  IsUUID,
   MinLength,
 } from 'class-validator';
 
@@ -15,17 +17,29 @@ export class CreateServiceDto {
   @MinLength(3)
   name: string;
 
-  @ApiProperty({ description: 'Service description', example: 'One-hour consultation for tax planning', required: false })
+  @ApiProperty({
+    description: 'Service description',
+    example: 'One-hour consultation for tax planning',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   description: string;
 
-  @ApiProperty({ description: 'Service address', example: '123 Main St', required: false })
+  @ApiProperty({
+    description: 'Service address',
+    example: '123 Main St',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   address?: string;
 
-  @ApiProperty({ description: 'Duration in minutes', example: 60, required: false })
+  @ApiProperty({
+    description: 'Duration in minutes',
+    example: 60,
+    required: false,
+  })
   @IsInt()
   @IsOptional()
   durationMinutes?: number;
@@ -34,7 +48,11 @@ export class CreateServiceDto {
   @IsBoolean()
   isAvailableOnline: boolean;
 
-  @ApiProperty({ description: 'Image URL', example: 'https://example.com/image.jpg', required: false })
+  @ApiProperty({
+    description: 'Image URL',
+    example: 'https://example.com/image.jpg',
+    required: false,
+  })
   @IsString()
   @IsUrl()
   @IsOptional()
@@ -44,9 +62,12 @@ export class CreateServiceDto {
   @IsBoolean()
   isActive: boolean;
 
-  @ApiProperty({ description: 'List of Staff IDs', example: ['uuid1', 'uuid2'], required: false })
+  @ApiProperty({
+    description: 'List of Staff IDs (at least one)',
+    example: ['uuid1', 'uuid2'],
+  })
   @IsArray()
-  @IsOptional()
-  @IsString({ each: true })
+  @ArrayNotEmpty()
+  @IsUUID('all', { each: true })
   staffIds: string[];
 }

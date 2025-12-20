@@ -47,15 +47,15 @@ export class Service {
 
   @CreateDateColumn()
   @ApiProperty({ description: 'Creation date' })
-  createdAt: Date;
+  createdAt: string;
 
   @UpdateDateColumn()
   @ApiProperty({ description: 'Last update date' })
-  updatedAt: Date;
+  updatedAt: string;
 
   @Column('timestamp with time zone', { nullable: true })
   @ApiProperty({ description: 'Deletion date', nullable: true })
-  deletedAt: Date;
+  deletedAt: string;
 
   // Relationships
   @ManyToMany(() => StaffMember, (staffMember) => staffMember.services)

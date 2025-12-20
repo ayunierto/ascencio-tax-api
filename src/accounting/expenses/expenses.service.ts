@@ -17,6 +17,8 @@ import { ExpensesByCategory } from './interfaces/expenses-by-category.interface'
 import { CategoriesService } from '../categories/categories.service';
 import { SubcategoriesService } from '../subcategories/subcategories.service';
 import { FilesService } from 'src/files/files.service';
+import { Category } from '../categories/entities/category.entity';
+import { Subcategory } from '../subcategories/entities/subcategory.entity';
 
 @Injectable()
 export class ExpensesService {
@@ -84,7 +86,7 @@ export class ExpensesService {
         createExpenseDto;
 
       // Validar imageUrl nulo
-      let updatedImageUrl = null;
+      let updatedImageUrl: string | null = null;
       if (imageUrl) {
         const oldPath = this.extractPublicId(imageUrl);
         if (oldPath) {
@@ -97,7 +99,7 @@ export class ExpensesService {
       }
 
       // Validar si la categoría existe (puede ser nula)
-      let category = null;
+      let category: Category | null = null;
       if (categoryId) {
         category = await this.categoriesService.findOne(categoryId);
         if (!category) {
@@ -106,7 +108,7 @@ export class ExpensesService {
       }
 
       // Validar si la subcategoría existe (puede ser nula)
-      let subcategory = null;
+      let subcategory: Subcategory | null = null;
       if (subcategoryId) {
         subcategory = await this.subcategoriesService.findOne(subcategoryId);
         if (!subcategory) {
@@ -115,7 +117,7 @@ export class ExpensesService {
       }
 
       // Validar fecha nula
-      let expenseDate = null;
+      let expenseDate: Date | undefined;
       if (date) {
         expenseDate = new Date(date);
         if (isNaN(expenseDate.getTime())) {
@@ -124,9 +126,9 @@ export class ExpensesService {
       }
 
       const newExpense = this.expenseRepository.create({
-        category: category,
+        category: category ?? undefined,
         date: expenseDate,
-        subcategory: subcategory,
+        subcategory: subcategory ?? undefined,
         user: user,
         imageUrl: updatedImageUrl,
         ...rest,
@@ -174,6 +176,9 @@ export class ExpensesService {
         where: { id: id, user: { id: user.id } },
         relations: { category: true, subcategory: true },
       });
+      if (!expense) {
+        throw new BadRequestException('Expense not found');
+      }
       return expense;
     } catch (error) {
       throw new BadRequestException(
@@ -197,14 +202,14 @@ export class ExpensesService {
         throw new BadRequestException('Expense not found');
       }
 
-      let category = null;
+      let category: Category | null = null;
       if (categoryId) {
         category = await this.categoriesService.findOne(categoryId);
       } else {
         category = expense.category;
       }
 
-      let subcategory = null;
+      let subcategory: Subcategory | null = null;
       if (subcategoryId) {
         subcategory = await this.subcategoriesService.findOne(subcategoryId);
         if (!subcategory) {
@@ -214,14 +219,23 @@ export class ExpensesService {
         subcategory = expense.subcategory;
       }
 
+      const parsedDate = date ? new Date(date) : expense.date;
+      if (date && isNaN(parsedDate.getTime())) {
+        throw new BadRequestException('Invalid date');
+      }
+
       const updatedExpense = await this.expenseRepository.preload({
         id,
         ...rest,
-        date: new Date(date),
-        category: category,
-        subcategory: subcategory,
+        date: parsedDate,
+        category: category ?? undefined,
+        subcategory: subcategory ?? undefined,
         user: user,
       });
+
+      if (!updatedExpense) {
+        throw new BadRequestException('Expense not found');
+      }
 
       await this.expenseRepository.save(updatedExpense);
 

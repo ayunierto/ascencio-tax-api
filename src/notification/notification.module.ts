@@ -7,4 +7,4 @@ import { MailModule } from 'src/mail/mail.module';
   exports: [NotificationService],
   imports: [MailModule],
 })
-export class NotificationModule { }
+export class NotificationModule {}

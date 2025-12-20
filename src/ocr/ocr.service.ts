@@ -3,10 +3,7 @@ import Tesseract from 'tesseract.js';
 
 @Injectable()
 export class OcrService {
-  async extractTextFromImage(
-    url: string,
-    language: string = 'eng',
-  ): Promise<string> {
+  async extractTextFromImage(url: string, language = 'eng'): Promise<string> {
     const {
       data: { text },
     } = await Tesseract.recognize(url, language);

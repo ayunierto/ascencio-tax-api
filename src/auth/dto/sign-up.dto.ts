@@ -21,12 +21,19 @@ export class SignUpDto {
   })
   lastName: string;
 
-  @ApiProperty({ description: 'Email address of the user', example: 'john.doe@example.com' })
+  @ApiProperty({
+    description: 'Email address of the user',
+    example: 'john.doe@example.com',
+  })
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
-  @ApiProperty({ description: 'Password of the user', example: 'password123', minLength: 6 })
+  @ApiProperty({
+    description: 'Password of the user',
+    example: 'password123',
+    minLength: 6,
+  })
   @IsString()
   @MinLength(6)
   password: string;
@@ -36,16 +43,27 @@ export class SignUpDto {
   @IsOptional()
   countryCode?: string;
 
-  @ApiProperty({ description: 'Phone number', example: '1234567890', required: false })
+  @ApiProperty({
+    description: 'Phone number',
+    example: '1234567890',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   phoneNumber?: string;
 
-  @ApiProperty({ description: 'Time zone of the user', example: 'America/New_York' })
+  @ApiProperty({
+    description: 'Time zone of the user',
+    example: 'America/New_York',
+  })
   @IsTimeZone()
   timeZone: string;
 
-  @ApiProperty({ description: 'Locale preference', example: 'en-US', required: false })
+  @ApiProperty({
+    description: 'Locale preference',
+    example: 'en-US',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   locale?: string;

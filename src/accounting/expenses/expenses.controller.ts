@@ -11,7 +11,15 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiConsumes, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
@@ -158,7 +166,11 @@ export class ExpensesController {
   @ApiResponse({ status: 201, description: 'Image deleted successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteReceipt(@Body() { imageUrl }: RemoveReceiptImageDto) {
-    return await this.filesService.delete(this.extractPublicId(imageUrl));
+    const publicId = this.extractPublicId(imageUrl);
+    if (!publicId) {
+      throw new BadRequestException('Invalid image URL');
+    }
+    return await this.filesService.delete(publicId);
   }
 
   extractPublicId(url: string): string | null {

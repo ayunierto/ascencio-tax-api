@@ -37,13 +37,13 @@ export class Expense {
     nullable: true,
   })
   @ApiProperty({ description: 'Receipt image URL', nullable: true })
-  imageUrl: string;
+  imageUrl: string | null;
 
   @Column('text', {
     nullable: true,
   })
   @ApiProperty({ description: 'Notes', nullable: true })
-  notes: string;
+  notes: string | null;
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   @ApiProperty({ description: 'Creation date' })

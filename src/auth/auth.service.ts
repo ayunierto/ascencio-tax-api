@@ -4,7 +4,6 @@ import {
   ForbiddenException,
   Injectable,
   InternalServerErrorException,
-  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -13,40 +12,42 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { DateTime } from 'luxon';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
+import type { GoogleUserProfile } from './strategies/google.strategy';
 
-import { User } from './entities/user.entity';
 import {
   ChangePasswordDto,
   DeleteAccountDto,
   ForgotPasswordDto,
-  ResendEmailVerificationCodeDto,
+  ResendEmailCodeDto,
   ResendResetPasswordCodeDto,
   ResetPasswordDto,
-  SignInDto,
   SignUpDto,
   UpdateProfileDto,
   VerifyEmailCodeDto,
-} from './dto';
+} from '@ascencio/shared/schemas';
+import { AuthMessages, CommonMessages } from '@ascencio/shared/i18n';
+import { User } from './entities/user.entity';
+import { NotificationService } from 'src/notification/notification.service';
+import { UserMapper } from './mappers/user.mapper';
+import { JwtPayload } from './interfaces/jwt-payload.interface';
 import {
   ChangePasswordResponse,
   CheckStatusResponse,
   DeleteAccountResponse,
   ForgotPasswordResponse,
-  ResendEmailVerificationResponse,
+  ResendEmailCodeResponse,
   ResendResetPasswordCodeResponse,
   ResetPasswordResponse,
   SignInResponse,
   SignUpResponse,
   UpdateProfileResponse,
-  VerifyEmailCodeResponse,
-} from './interfaces/auth-responses.interface';
-import { NotificationService } from 'src/notification/notification.service';
-import { UserMapper } from './mappers/user.mapper';
-import { JwtPayload } from './interfaces/jwt-payload.interface';
+  VerifyEmailResponse,
+} from '@ascencio/shared/interfaces';
+import { SignInDto } from './dto/sign-in.dto';
 
 @Injectable()
 export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
   private readonly emailVerificationCodeTTL: number;
 
   constructor(
@@ -69,14 +70,14 @@ export class AuthService {
       return this.notification.sendVerificationEmail(
         user.firstName,
         user.email,
-        user.verificationCode,
+        user.verificationCode ?? '',
         this.emailVerificationCodeTTL,
       );
     }
     return this.notification.sendResetPasswordEmail(
       user.firstName,
       user.email,
-      user.passwordResetCode,
+      user.passwordResetCode ?? '',
       this.emailVerificationCodeTTL,
     );
   }
@@ -85,6 +86,13 @@ export class AuthService {
     return expiresAt < DateTime.utc().toJSDate();
   }
 
+  /**
+   * Sets a verification code and its expiration on the user entity.
+   *
+   * @param user The user entity to set the verification code for.
+   * @param type The type of verification code to set ('email' or 'reset').
+   * @returns The updated user entity with the new verification code and expiration.
+   */
   private async setVerificationCode(
     user: User,
     type: 'email' | 'reset',
@@ -105,6 +113,13 @@ export class AuthService {
     return this.usersRepository.save(user);
   }
 
+  /**
+   * Generates a numeric code of specified length.
+   * @param length  Length of the numeric code to generate.
+   * @returns  Generated numeric code as a string.
+   *
+   * Example: generateNumericCode(6) => "493027"
+   */
   private generateNumericCode(length: number): string {
     let code = '';
     const characters = '0123456789';
@@ -119,6 +134,58 @@ export class AuthService {
     return this.jwtService.signAsync(payload);
   }
 
+  async signInWithGoogle(profile: unknown): Promise<SignInResponse> {
+    const googleProfile = profile as GoogleUserProfile;
+    const email = googleProfile?.email;
+
+    if (!email) {
+      throw new BadRequestException(AuthMessages.GOOGLE_PROFILE_MISSING_EMAIL);
+    }
+
+    let user = await this.usersRepository.findOneBy({ email });
+
+    if (user && !user.isActive)
+      throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
+
+    if (!user || user.deletedAt !== null) {
+      const passwordHash = await this.hashPassword(randomUUID());
+      user = this.usersRepository.create({
+        firstName: googleProfile.firstName ?? 'User',
+        lastName: googleProfile.lastName ?? '',
+        email,
+        password: passwordHash,
+        timeZone: 'UTC',
+        locale: 'en-CA',
+        isActive: true,
+        isEmailVerified: true,
+        lastLoginAt: DateTime.utc().toJSDate(),
+        imageUrl: googleProfile.pictureUrl ?? null,
+        deletedAt: null,
+      });
+
+      user = await this.usersRepository.save(user);
+    }
+
+    if (!user.isEmailVerified) {
+      user.isEmailVerified = true;
+      user.verificationCode = null;
+      user.verificationCodeExpiresAt = null;
+      user = await this.usersRepository.save(user);
+    }
+
+    if (!user.imageUrl && googleProfile.pictureUrl) {
+      user.imageUrl = googleProfile.pictureUrl;
+      user = await this.usersRepository.save(user);
+    }
+
+    await this.updateLastLogin(user.id);
+
+    return {
+      access_token: await this.generateJWT(user),
+      user: UserMapper.toBasicUser(user),
+    };
+  }
+
   private async comparePasswords(
     plainPassword: string,
     hashedPassword: string,
@@ -131,6 +198,14 @@ export class AuthService {
     return bcrypt.hash(password, salt);
   }
 
+  /**
+   *  Updates the last login timestamp for the user.
+   *
+   * @param id The ID of the user to update.
+   * @returns  A promise that resolves to true if the update was successful, false otherwise.
+   *
+   * Example: updateLastLogin('user-id-123') => true
+   */
   private async updateLastLogin(id: string): Promise<boolean> {
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) return false;
@@ -139,10 +214,7 @@ export class AuthService {
     return true;
   }
 
-  // Public API
   async signUp(signUpDto: SignUpDto): Promise<SignUpResponse> {
-    this.logger.log(`Sign up attempt of: ${signUpDto.email}`);
-
     const existingUser = await this.usersRepository.findOneBy({
       email: signUpDto.email,
     });
@@ -150,184 +222,123 @@ export class AuthService {
     // If deletedAt is not null, allow to create account again
     if (existingUser && existingUser.deletedAt) {
       existingUser.deletedAt = null;
+      existingUser.isActive = true;
+      existingUser.isEmailVerified = false;
       existingUser.password = await this.hashPassword(signUpDto.password);
       const updatedUser = await this.setVerificationCode(existingUser, 'email');
+
       if (!updatedUser) {
-        this.logger.error('Failed to update deleted user in the database');
         throw new InternalServerErrorException(
-          'Failed to update user. Please try again later.',
+          CommonMessages.INTERNAL_SERVER_ERROR,
         );
       }
-      this.logger.log(
-        `Deleted user reactivated successfully: ${updatedUser.email}. Verification code: ${updatedUser.verificationCode}`,
-      );
+
       const emailSent = await this.sendEmail('verification', updatedUser);
-      if (!emailSent) {
-        this.logger.error(
-          `Failed to send verification email to: ${updatedUser.email}. Please check your configuration.`,
-        );
+
+      if (!emailSent)
         throw new InternalServerErrorException(
-          'Failed to send verification email. Please contact support.',
+          CommonMessages.INTERNAL_SERVER_ERROR,
         );
-      }
-      this.logger.log(
-        `Verification email sent successfully to: ${updatedUser.email}`,
-      );
+
       return {
-        message:
-          'User reactivated successfully. Please check your email for verification.',
+        message: AuthMessages.SIGN_UP_SUCCESS,
         user: UserMapper.toBasicUser(updatedUser),
       };
     }
 
-    if (existingUser) {
-      this.logger.warn(`Sign up failed - email already exists`);
-      throw new ConflictException(
-        'Email already exists, please login instead or contact support if you need help.',
-      );
-    }
+    if (existingUser)
+      throw new ConflictException(AuthMessages.EMAIL_ALREADY_EXISTS);
 
     const passwordHash = await this.hashPassword(signUpDto.password);
     const newUser = this.usersRepository.create({
       ...signUpDto,
       password: passwordHash,
     });
+
     const savedUser = await this.setVerificationCode(newUser, 'email');
-    if (!savedUser) {
-      this.logger.error('Failed to create user in the database');
+    if (!savedUser)
       throw new InternalServerErrorException(
-        'Failed to create user. Please try again later.',
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
-    }
-    this.logger.log(
-      `User created successfully: ${savedUser.email}. Verification code: ${savedUser.verificationCode}`,
-    );
+
     const emailSent = await this.sendEmail('verification', savedUser);
+
     if (!emailSent) {
-      this.logger.error(
-        `Failed to send verification email to: ${savedUser.email}. Please check your configuration.`,
-      );
       await this.usersRepository.remove(savedUser);
-      this.logger.warn(
-        `User ${savedUser.email} removed due to email send failure.`,
-      );
+
       throw new InternalServerErrorException(
-        'Failed to send verification email. Please contact support.',
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
     }
-    this.logger.log(
-      `Verification email sent successfully to: ${savedUser.email}`,
-    );
+
     return {
-      message:
-        'User created successfully. Please check your email for verification.',
+      message: AuthMessages.SIGN_UP_SUCCESS,
       user: UserMapper.toBasicUser(savedUser),
     };
   }
 
   async verifyEmailCode(
     verifyEmailCodeDto: VerifyEmailCodeDto,
-  ): Promise<VerifyEmailCodeResponse> {
-    this.logger.log(
-      `Verification code attempt for: ${verifyEmailCodeDto.email}`,
-    );
-
+  ): Promise<VerifyEmailResponse> {
     const user = await this.usersRepository.findOneBy({
       email: verifyEmailCodeDto.email,
     });
-    if (!user) {
-      this.logger.warn(
-        `Verification failed - user not found: ${verifyEmailCodeDto.email}`,
-      );
-      throw new NotFoundException('Verification failed - user not found');
-    }
+
+    if (!user) throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
 
     if (user.isEmailVerified) {
       user.verificationCode = null;
       user.verificationCodeExpiresAt = null;
       await this.usersRepository.save(user);
-      this.logger.warn(`Email is already verified: ${user.email}`);
-      throw new BadRequestException('Email is already verified. Please login.');
+      throw new BadRequestException(AuthMessages.EMAIL_ALREADY_VERIFIED);
     }
 
-    if (!user.verificationCode || !user.verificationCodeExpiresAt) {
-      this.logger.warn(
-        `Verification code or expiration not found: ${user.email}`,
-      );
+    if (!user.verificationCode || !user.verificationCodeExpiresAt)
       throw new BadRequestException('Verification code not found or expired.');
-    }
 
     if (this.isCodeExpired(user.verificationCodeExpiresAt)) {
-      this.logger.warn(`Verification code expired: ${user.email}`);
       await this.setVerificationCode(user, 'email');
       await this.sendEmail('verification', user);
-      throw new BadRequestException(
-        'Verification code expired. A new code has been sent to your email.',
-      );
+      throw new BadRequestException(AuthMessages.CODE_EXPIRED);
     }
 
     if (user.verificationCode !== verifyEmailCodeDto.code) {
       await this.setVerificationCode(user, 'email');
       await this.sendEmail('verification', user);
-      this.logger.warn(
-        `Verification failed - invalid code: ${verifyEmailCodeDto.code} for user: ${user.email}. New code sent: ${user.verificationCode}`,
-      );
-      throw new BadRequestException(
-        'Invalid verification code. Please try again. A new code has been sent to your email.',
-      );
+      throw new BadRequestException(AuthMessages.INVALID_CODE);
     }
-
-    this.logger.log(
-      `Verification code matched for user: ${user.email}. Proceeding to verify email.`,
-    );
 
     user.isEmailVerified = true;
     user.verificationCode = null;
     user.verificationCodeExpiresAt = null;
     const updatedUser = await this.usersRepository.save(user);
-    if (!updatedUser) {
-      this.logger.error(
-        `Failed to update user verification status: ${user.email}`,
-      );
+    if (!updatedUser)
       throw new InternalServerErrorException(
-        'Failed to verify email. Please try again later.',
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
-    }
-    this.logger.log(`Email verified successfully for user: ${user.email}.`);
 
     return {
-      message: 'Email verified successfully. You can now log in.',
       user: UserMapper.toBasicUser(updatedUser),
+      access_token: await this.generateJWT(updatedUser),
     };
   }
 
-  async resendEmailVerification(
-    resendEmailVerificationCodeDto: ResendEmailVerificationCodeDto,
-  ): Promise<ResendEmailVerificationResponse> {
-    const { email } = resendEmailVerificationCodeDto;
-    this.logger.log(`Resend email verification code attempt for: ${email}`);
+  async resendEmailCode(
+    resendEmailCodeDto: ResendEmailCodeDto,
+  ): Promise<ResendEmailCodeResponse> {
+    const { email } = resendEmailCodeDto;
     const user = await this.usersRepository.findOneBy({ email });
-    if (!user) {
-      this.logger.warn(
-        `Resend email verification failed - user not found: ${email}`,
-      );
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+
     await this.setVerificationCode(user, 'email');
     const emailSent = await this.sendEmail('verification', user);
-    if (!emailSent) {
-      this.logger.error(
-        `Failed to send verification email to: ${user.email}. Please check your configuration.`,
-      );
+    if (!emailSent)
       throw new InternalServerErrorException(
-        'Failed to send verification email',
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
-    }
-    this.logger.log(
-      `Resent verification email successfully to: ${user.email}. New code: ${user.verificationCode}`,
-    );
+
     return {
-      message: 'If this email is registered, a new code has been sent.',
+      message: AuthMessages.VERIFICATION_EMAIL_RESENT,
     };
   }
 
@@ -335,89 +346,60 @@ export class AuthService {
     forgotPasswordDto: ForgotPasswordDto,
   ): Promise<ForgotPasswordResponse> {
     const { email } = forgotPasswordDto;
-    this.logger.log(`Forgot password attempt for: ${email}`);
+
     try {
       const user = await this.usersRepository.findOneBy({ email });
 
-      if (!user) {
-        this.logger.warn(`Forgot password failed - user not found: ${email}`);
+      if (!user)
         return {
-          message: 'If this email is registered, a reset code has been sent.',
+          message: AuthMessages.RESET_CODE_SENT,
         };
-      }
 
-      if (!user.isActive) {
-        this.logger.warn(`Forgot password failed - user is inactive: ${email}`);
-        throw new ForbiddenException(
-          'Your account is inactive. Please contact support.',
-        );
-      }
+      if (!user.isActive)
+        throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
 
       await this.setVerificationCode(user, 'reset');
-      const emailSent = await this.sendEmail('reset', user);
-      if (!emailSent) {
-        this.logger.error(
-          `Failed to send reset password email to: ${user.email}. Please check your configuration.`,
-        );
-        throw new InternalServerErrorException(
-          'Failed to send reset password email',
-        );
-      }
 
-      this.logger.log(
-        `Reset password email sent successfully to: ${user.email}. Reset code: ${user.passwordResetCode}`,
-      );
+      const emailSent = await this.sendEmail('reset', user);
+      if (!emailSent)
+        throw new InternalServerErrorException(
+          CommonMessages.INTERNAL_SERVER_ERROR,
+        );
 
       return {
-        message:
-          'Reset password email sent successfully. Please check your inbox.',
+        message: AuthMessages.RESET_PASSWORD_EMAIL_SENT,
       };
     } catch (error) {
-      this.logger.error(`Forgot password failed for: ${email}`, error);
       throw new InternalServerErrorException(
-        'Failed to process forgot password request. Please try again later.',
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
     }
   }
 
   async signIn(signInDto: SignInDto): Promise<SignInResponse> {
     const { email, password } = signInDto;
-    this.logger.log(`Login attempt of: ${email}`);
 
     const user = await this.usersRepository.findOneBy({ email });
-    if (!user) {
-      this.logger.warn(`Login failed, user not found: ${email}`);
-      throw new UnauthorizedException('Login failed, invalid credentials');
-    }
 
-    if (user.deletedAt !== null) {
-      this.logger.warn(`Login failed, user is deleted: ${email}`);
-      throw new UnauthorizedException('Login failed, invalid credentials');
-    }
+    if (!user)
+      throw new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS);
 
-    if (!user.isActive) {
-      this.logger.warn(`Login failed, user is inactive: ${email}`);
-      throw new UnauthorizedException(
-        'Login failed, user is inactive. Please contact support.',
-      );
-    }
+    if (user.deletedAt !== null)
+      throw new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS);
 
-    if (!user.isEmailVerified) {
-      this.logger.warn(`Login failed, email not verified: ${email}`);
-      throw new UnauthorizedException(
-        'Login failed, email not verified. Please verify your email first.',
-      );
-    }
+    if (!user.isEmailVerified)
+      throw new UnauthorizedException(AuthMessages.EMAIL_NOT_VERIFIED);
+
+    if (!user.isActive)
+      throw new UnauthorizedException(AuthMessages.ACCOUNT_LOCKED);
 
     const isValidCredentials = await this.comparePasswords(
       password,
       user.password,
     );
-    if (!isValidCredentials) {
-      this.logger.warn(`Login failed - invalid credentials: ${email}`);
-      throw new UnauthorizedException('Login failed, invalid credentials');
-    }
-    this.logger.log(`Login successful for user: ${email}`);
+
+    if (!isValidCredentials)
+      throw new UnauthorizedException(AuthMessages.INVALID_CREDENTIALS);
 
     await this.updateLastLogin(user.id);
 
@@ -431,50 +413,26 @@ export class AuthService {
     resetPasswordDto: ResetPasswordDto,
   ): Promise<ResetPasswordResponse> {
     const { email, code, newPassword } = resetPasswordDto;
-    this.logger.log(
-      `Reset password attempt for: ${email}. At ${DateTime.utc().toISO()}`,
-    );
 
     const user = await this.usersRepository.findOneBy({ email });
-    if (!user) {
-      this.logger.warn(`Reset password failed - user not found: ${email}`);
-      throw new NotFoundException('User not found');
-    }
+    if (!user) throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
 
-    if (!user.isActive) {
-      this.logger.warn(`Reset password failed - user is inactive: ${email}`);
-      throw new ForbiddenException(
-        'Your account is inactive. Please contact support.',
-      );
-    }
+    if (!user.isActive)
+      throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
 
-    if (!user.passwordResetCode || !user.passwordResetExpiresAt) {
-      this.logger.warn(
-        `Reset password code or expiration not found for user: ${user.email}`,
-      );
-      throw new BadRequestException('Reset code not found.');
-    }
+    if (!user.passwordResetCode || !user.passwordResetExpiresAt)
+      throw new BadRequestException(AuthMessages.CODE_NOT_FOUND);
 
     if (this.isCodeExpired(user.passwordResetExpiresAt)) {
       await this.setVerificationCode(user, 'reset');
       await this.sendEmail('reset', user);
-      this.logger.warn(
-        `Reset password failed - code expired for user: ${user.email}`,
-      );
-      throw new BadRequestException(
-        'Reset code expired. A new code has been sent to your email.',
-      );
+      throw new BadRequestException(AuthMessages.CODE_EXPIRED);
     }
 
     if (user.passwordResetCode !== code) {
       await this.setVerificationCode(user, 'reset');
       await this.sendEmail('reset', user);
-      this.logger.warn(
-        `Reset password failed - invalid code: ${code} for user: ${user.email}. New code sent: ${user.passwordResetCode}`,
-      );
-      throw new BadRequestException(
-        'Invalid reset code. A new code has been sent to your email. Please try again.',
-      );
+      throw new BadRequestException(AuthMessages.INVALID_CODE);
     }
 
     const hashedPassword = await this.hashPassword(newPassword);
@@ -485,69 +443,44 @@ export class AuthService {
     user.isEmailVerified = true;
     user.verificationCode = null;
     user.verificationCodeExpiresAt = null;
-    this.logger.log(
-      `Email verified for user: ${user.email} during password reset.`,
-    );
 
     const updatedUser = await this.usersRepository.save(user);
-    if (!updatedUser) {
-      this.logger.error(`Failed to update password for user: ${user.email}`);
+    if (!updatedUser)
       throw new InternalServerErrorException(
-        'Failed to reset password. Please try again later.',
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
-    }
 
-    this.logger.log(`Password reset successfully for user: ${user.email}`);
-
-    return { message: 'Password reset successfully. You can now log in.' };
+    return {
+      access_token: await this.generateJWT(updatedUser),
+      user: UserMapper.toBasicUser(updatedUser),
+    };
   }
 
   async resendResetPasswordCode(
     resendResetPasswordCodeDto: ResendResetPasswordCodeDto,
   ): Promise<ResendResetPasswordCodeResponse> {
     const { email } = resendResetPasswordCodeDto;
-    this.logger.log(`Resend reset password code attempt for: ${email}`);
     const user = await this.usersRepository.findOneBy({ email });
     if (!user) {
-      this.logger.warn(
-        `Resend reset password code failed - user not found: ${email}`,
-      );
       return {
-        message: 'If this email is registered, a reset code has been sent.',
+        message: AuthMessages.RESET_CODE_SENT,
       };
     }
     if (!user.isActive) {
-      this.logger.warn(
-        `Resend reset password code failed - user is inactive: ${email}`,
-      );
-      throw new ForbiddenException(
-        'Your account is inactive. Please contact support.',
-      );
+      throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
     }
-    if (!user.passwordResetCode || !user.passwordResetExpiresAt) {
-      this.logger.warn(
-        `Reset password code or expiration not found for user: ${user.email}`,
-      );
-      throw new BadRequestException(
-        'Reset code not found or expired. Please try again.',
-      );
-    }
+    if (!user.passwordResetCode || !user.passwordResetExpiresAt)
+      throw new BadRequestException(AuthMessages.CODE_EXPIRED);
+
     await this.setVerificationCode(user, 'reset');
     const emailSent = await this.sendEmail('reset', user);
-    if (!emailSent) {
-      this.logger.error(
-        `Failed to send reset password email to: ${user.email}. Please check your configuration.`,
-      );
+    if (!emailSent)
       throw new InternalServerErrorException(
-        'Failed to send reset password email',
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
-    }
-    this.logger.log(
-      `Resent reset password email successfully to: ${user.email}. New code: ${user.passwordResetCode}`,
-    );
+
     return {
-      message:
-        'Reset password email resent successfully. Please check your inbox.',
+      message: AuthMessages.RESET_CODE_SENT,
     };
   }
 
@@ -556,34 +489,29 @@ export class AuthService {
     user: User,
   ): Promise<ChangePasswordResponse> {
     const { currentPassword, newPassword } = changePasswordDto;
-    this.logger.log(`Change password attempt for user: ${user.email}`);
 
     const existingUser = await this.usersRepository.findOneBy({ id: user.id });
+
+    if (!existingUser)
+      throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
 
     const isValidPassword = await this.comparePasswords(
       currentPassword,
       existingUser.password,
     );
-    if (!isValidPassword) {
-      this.logger.warn(
-        `Change password failed - invalid current password for user: ${user.email}`,
-      );
-      throw new BadRequestException('Invalid current password');
-    }
+    if (!isValidPassword)
+      throw new BadRequestException(AuthMessages.INVALID_CURRENT_PASSWORD);
 
     existingUser.password = await this.hashPassword(newPassword);
     const updatedUser = await this.usersRepository.save(existingUser);
-    if (!updatedUser) {
-      this.logger.error(`Failed to update password for user: ${user.email}`);
+    if (!updatedUser)
       throw new InternalServerErrorException(
-        'Failed to change password. Please try again later.',
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
-    }
 
-    this.logger.log(`Password changed successfully for user: ${user.email}`);
     return {
-      message: 'Password changed successfully',
       user: UserMapper.toBasicUser(updatedUser),
+      access_token: await this.generateJWT(updatedUser),
     };
   }
 
@@ -591,72 +519,40 @@ export class AuthService {
     deleteAccountDto: DeleteAccountDto,
     user: User,
   ): Promise<DeleteAccountResponse> {
-    this.logger.log(`Delete account attempt for user: ${user.email}`);
-
     const existingUser = await this.usersRepository.findOneBy({ id: user.id });
-    if (!existingUser) {
-      this.logger.warn(`Delete account failed - user not found: ${user.email}`);
-      throw new NotFoundException('User not found');
-    }
+    if (!existingUser)
+      throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
 
-    if (!existingUser.isActive) {
-      this.logger.warn(
-        `Delete account failed - user is inactive: ${user.email}`,
-      );
-      throw new ForbiddenException(
-        'Your account is inactive. Please contact support.',
-      );
-    }
+    if (!existingUser.isActive)
+      throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
 
     const isValidPassword = await this.comparePasswords(
       deleteAccountDto.password,
       existingUser.password,
     );
-    if (!isValidPassword) {
-      this.logger.warn(
-        `Delete account failed - invalid password for user: ${user.email}`,
-      );
-      throw new BadRequestException('Invalid password');
-    }
+    if (!isValidPassword)
+      throw new BadRequestException(AuthMessages.INVALID_PASSWORD);
 
     existingUser.isActive = false;
     existingUser.deletedAt = DateTime.utc().toJSDate();
     await this.usersRepository.save(existingUser);
-    this.logger.log(
-      `Account inactivated (soft deleted) for user: ${user.email}`,
-    );
 
     return {
-      message:
-        'Account deleted successfully. We are sorry to see you go. But we hope to see you again in the future.',
-      user: UserMapper.toBasicUser(existingUser),
+      message: AuthMessages.ACCOUNT_DELETED,
     };
   }
 
   async checkStatus(user: User): Promise<CheckStatusResponse> {
-    this.logger.log(`Checking status for user: ${user.email}`);
-
     const existingUser = await this.usersRepository.findOneBy({ id: user.id });
-    if (!existingUser) {
-      this.logger.warn(`User not found: ${user.email}`);
-      throw new NotFoundException('User not found');
-    }
+    if (!existingUser)
+      throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
 
-    if (!existingUser.isActive) {
-      this.logger.warn(`User is inactive: ${user.email}`);
-      throw new UnauthorizedException(
-        'Your account is inactive. Please contact support.',
-      );
-    }
+    if (!existingUser.isActive)
+      throw new UnauthorizedException(AuthMessages.ACCOUNT_LOCKED);
 
-    if (!existingUser.isEmailVerified) {
-      this.logger.warn(`Email not verified for user: ${user.email}`);
-      throw new UnauthorizedException(
-        'Email not verified. Please verify your email first.',
-      );
-    }
+    if (!existingUser.isEmailVerified)
+      throw new UnauthorizedException(AuthMessages.EMAIL_NOT_VERIFIED);
 
-    this.logger.log(`User status check successful for: ${user.email}`);
     return {
       access_token: await this.generateJWT(existingUser),
       user: UserMapper.toBasicUser(existingUser),
@@ -669,13 +565,8 @@ export class AuthService {
   ): Promise<UpdateProfileResponse> {
     const { password, ...userData } = updateProfileDto;
 
-    this.logger.log(`Update profile attempt for user: ${user.email}`);
-
     try {
       if (password && password.trim().length > 0) {
-        this.logger.log(
-          `Updating profile with password for user: ${user.email}`,
-        );
         const newPassword = await this.hashPassword(password);
 
         const updatedUser = await this.usersRepository.preload({
@@ -684,49 +575,29 @@ export class AuthService {
           ...userData,
         });
 
-        if (!updatedUser) {
-          this.logger.error(`User not found: ${user.id}`);
-          throw new NotFoundException('User not found');
-        }
+        if (!updatedUser)
+          throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
 
         await this.usersRepository.save(updatedUser);
-        this.logger.log(
-          `Profile updated successfully with password for user: ${user.email}`,
-        );
 
-        return {
-          message: 'Profile updated successfully',
-          user: UserMapper.toBasicUser(updatedUser),
-        };
+        return UserMapper.toBasicUser(updatedUser);
       }
 
-      this.logger.log(
-        `Updating profile without password for user: ${user.email}`,
-      );
       const updatedUser = await this.usersRepository.preload({
         id: user.id,
         ...userData,
       });
 
-      if (!updatedUser) {
-        this.logger.error(`User not found: ${user.id}`);
-        throw new NotFoundException('User not found');
-      }
+      if (!updatedUser)
+        throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
 
       await this.usersRepository.save(updatedUser);
-      this.logger.log(`Profile updated successfully for user: ${user.email}`);
 
-      return {
-        message: 'Profile updated successfully',
-        user: UserMapper.toBasicUser(updatedUser),
-      };
+      return UserMapper.toBasicUser(updatedUser);
     } catch (error) {
-      this.logger.error(
-        `Failed to update profile for user: ${user.email}`,
-        error,
-      );
+      console.error('Error updating profile:', error);
       throw new InternalServerErrorException(
-        `Failed to update profile for user ${user.id}.`,
+        CommonMessages.INTERNAL_SERVER_ERROR,
       );
     }
   }
