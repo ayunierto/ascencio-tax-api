@@ -1,8 +1,8 @@
 import { SimpleUser } from '@ascencio/shared/interfaces';
 import { User } from '../entities/user.entity';
 
-export class UserMapper {
-  static toBasicUser(user: User): SimpleUser {
+export const UserMapper = {
+  toBasicUser(user: User): SimpleUser {
     return {
       id: user.id,
       firstName: user.firstName,
@@ -21,5 +21,5 @@ export class UserMapper {
       timeZone: user.timeZone,
       deletedAt: user.deletedAt ?? undefined,
     };
-  }
-}
+  },
+};

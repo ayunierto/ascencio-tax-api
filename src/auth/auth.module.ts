@@ -21,7 +21,6 @@ const GoogleStrategyProvider = {
     if (!clientID || !clientSecret || !callbackURL) {
       return null;
     }
-    // Instanciar para que Nest registre la estrategia en Passport
     return new GoogleStrategy(configService);
   },
 };
@@ -48,4 +47,5 @@ const GoogleStrategyProvider = {
   providers: [AuthService, GoogleStrategyProvider],
   exports: [AuthService, JwtModule, TypeOrmModule],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AuthModule {}

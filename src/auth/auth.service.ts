@@ -15,17 +15,6 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import type { GoogleUserProfile } from './strategies/google.strategy';
 
-import {
-  ChangePasswordDto,
-  DeleteAccountDto,
-  ForgotPasswordDto,
-  ResendEmailCodeDto,
-  ResendResetPasswordCodeDto,
-  ResetPasswordDto,
-  SignUpDto,
-  UpdateProfileDto,
-  VerifyEmailCodeDto,
-} from '@ascencio/shared/schemas';
 import { AuthMessages, CommonMessages } from '@ascencio/shared/i18n';
 import { User } from './entities/user.entity';
 import { NotificationService } from 'src/notification/notification.service';
@@ -45,6 +34,17 @@ import {
   VerifyEmailResponse,
 } from '@ascencio/shared/interfaces';
 import { SignInDto } from './dto/sign-in.dto';
+import {
+  ChangePasswordRequest,
+  DeleteAccountRequest,
+  ForgotPasswordRequest,
+  ResendEmailCodeRequest,
+  ResendResetPasswordCodeRequest,
+  ResetPasswordRequest,
+  SignUpRequest,
+  UpdateProfileRequest,
+  VerifyEmailCodeRequest,
+} from '@ascencio/shared/schemas';
 
 @Injectable()
 export class AuthService {
@@ -136,7 +136,7 @@ export class AuthService {
 
   async signInWithGoogle(profile: unknown): Promise<SignInResponse> {
     const googleProfile = profile as GoogleUserProfile;
-    const email = googleProfile?.email;
+    const email = googleProfile.email;
 
     if (!email) {
       throw new BadRequestException(AuthMessages.GOOGLE_PROFILE_MISSING_EMAIL);
@@ -147,7 +147,7 @@ export class AuthService {
     if (user && !user.isActive)
       throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
 
-    if (!user || user.deletedAt !== null) {
+    if (user?.deletedAt !== null) {
       const passwordHash = await this.hashPassword(randomUUID());
       user = this.usersRepository.create({
         firstName: googleProfile.firstName ?? 'User',
@@ -198,14 +198,6 @@ export class AuthService {
     return bcrypt.hash(password, salt);
   }
 
-  /**
-   *  Updates the last login timestamp for the user.
-   *
-   * @param id The ID of the user to update.
-   * @returns  A promise that resolves to true if the update was successful, false otherwise.
-   *
-   * Example: updateLastLogin('user-id-123') => true
-   */
   private async updateLastLogin(id: string): Promise<boolean> {
     const user = await this.usersRepository.findOneBy({ id });
     if (!user) return false;
@@ -214,24 +206,18 @@ export class AuthService {
     return true;
   }
 
-  async signUp(signUpDto: SignUpDto): Promise<SignUpResponse> {
+  async signUp(signUpDto: SignUpRequest): Promise<SignUpResponse> {
     const existingUser = await this.usersRepository.findOneBy({
       email: signUpDto.email,
     });
 
     // If deletedAt is not null, allow to create account again
-    if (existingUser && existingUser.deletedAt) {
+    if (existingUser?.deletedAt) {
       existingUser.deletedAt = null;
       existingUser.isActive = true;
       existingUser.isEmailVerified = false;
       existingUser.password = await this.hashPassword(signUpDto.password);
       const updatedUser = await this.setVerificationCode(existingUser, 'email');
-
-      if (!updatedUser) {
-        throw new InternalServerErrorException(
-          CommonMessages.INTERNAL_SERVER_ERROR,
-        );
-      }
 
       const emailSent = await this.sendEmail('verification', updatedUser);
 
@@ -256,10 +242,6 @@ export class AuthService {
     });
 
     const savedUser = await this.setVerificationCode(newUser, 'email');
-    if (!savedUser)
-      throw new InternalServerErrorException(
-        CommonMessages.INTERNAL_SERVER_ERROR,
-      );
 
     const emailSent = await this.sendEmail('verification', savedUser);
 
@@ -278,7 +260,7 @@ export class AuthService {
   }
 
   async verifyEmailCode(
-    verifyEmailCodeDto: VerifyEmailCodeDto,
+    verifyEmailCodeDto: VerifyEmailCodeRequest,
   ): Promise<VerifyEmailResponse> {
     const user = await this.usersRepository.findOneBy({
       email: verifyEmailCodeDto.email,
@@ -305,17 +287,13 @@ export class AuthService {
     if (user.verificationCode !== verifyEmailCodeDto.code) {
       await this.setVerificationCode(user, 'email');
       await this.sendEmail('verification', user);
-      throw new BadRequestException(AuthMessages.INVALID_CODE);
+      throw new BadRequestException(CommonMessages.INVALID_CODE);
     }
 
     user.isEmailVerified = true;
     user.verificationCode = null;
     user.verificationCodeExpiresAt = null;
     const updatedUser = await this.usersRepository.save(user);
-    if (!updatedUser)
-      throw new InternalServerErrorException(
-        CommonMessages.INTERNAL_SERVER_ERROR,
-      );
 
     return {
       user: UserMapper.toBasicUser(updatedUser),
@@ -324,7 +302,7 @@ export class AuthService {
   }
 
   async resendEmailCode(
-    resendEmailCodeDto: ResendEmailCodeDto,
+    resendEmailCodeDto: ResendEmailCodeRequest,
   ): Promise<ResendEmailCodeResponse> {
     const { email } = resendEmailCodeDto;
     const user = await this.usersRepository.findOneBy({ email });
@@ -343,37 +321,31 @@ export class AuthService {
   }
 
   async forgotPassword(
-    forgotPasswordDto: ForgotPasswordDto,
+    forgotPasswordDto: ForgotPasswordRequest,
   ): Promise<ForgotPasswordResponse> {
     const { email } = forgotPasswordDto;
 
-    try {
-      const user = await this.usersRepository.findOneBy({ email });
+    const user = await this.usersRepository.findOneBy({ email });
 
-      if (!user)
-        return {
-          message: AuthMessages.RESET_CODE_SENT,
-        };
-
-      if (!user.isActive)
-        throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
-
-      await this.setVerificationCode(user, 'reset');
-
-      const emailSent = await this.sendEmail('reset', user);
-      if (!emailSent)
-        throw new InternalServerErrorException(
-          CommonMessages.INTERNAL_SERVER_ERROR,
-        );
-
+    if (!user)
       return {
-        message: AuthMessages.RESET_PASSWORD_EMAIL_SENT,
+        message: AuthMessages.RESET_CODE_SENT,
       };
-    } catch (error) {
+
+    if (!user.isActive)
+      throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
+
+    await this.setVerificationCode(user, 'reset');
+
+    const emailSent = await this.sendEmail('reset', user);
+    if (!emailSent)
       throw new InternalServerErrorException(
         CommonMessages.INTERNAL_SERVER_ERROR,
       );
-    }
+
+    return {
+      message: AuthMessages.RESET_PASSWORD_EMAIL_SENT,
+    };
   }
 
   async signIn(signInDto: SignInDto): Promise<SignInResponse> {
@@ -410,7 +382,7 @@ export class AuthService {
   }
 
   async resetPassword(
-    resetPasswordDto: ResetPasswordDto,
+    resetPasswordDto: ResetPasswordRequest,
   ): Promise<ResetPasswordResponse> {
     const { email, code, newPassword } = resetPasswordDto;
 
@@ -432,7 +404,7 @@ export class AuthService {
     if (user.passwordResetCode !== code) {
       await this.setVerificationCode(user, 'reset');
       await this.sendEmail('reset', user);
-      throw new BadRequestException(AuthMessages.INVALID_CODE);
+      throw new BadRequestException(CommonMessages.INVALID_CODE);
     }
 
     const hashedPassword = await this.hashPassword(newPassword);
@@ -445,10 +417,6 @@ export class AuthService {
     user.verificationCodeExpiresAt = null;
 
     const updatedUser = await this.usersRepository.save(user);
-    if (!updatedUser)
-      throw new InternalServerErrorException(
-        CommonMessages.INTERNAL_SERVER_ERROR,
-      );
 
     return {
       access_token: await this.generateJWT(updatedUser),
@@ -457,7 +425,7 @@ export class AuthService {
   }
 
   async resendResetPasswordCode(
-    resendResetPasswordCodeDto: ResendResetPasswordCodeDto,
+    resendResetPasswordCodeDto: ResendResetPasswordCodeRequest,
   ): Promise<ResendResetPasswordCodeResponse> {
     const { email } = resendResetPasswordCodeDto;
     const user = await this.usersRepository.findOneBy({ email });
@@ -485,7 +453,7 @@ export class AuthService {
   }
 
   async changePassword(
-    changePasswordDto: ChangePasswordDto,
+    changePasswordDto: ChangePasswordRequest,
     user: User,
   ): Promise<ChangePasswordResponse> {
     const { currentPassword, newPassword } = changePasswordDto;
@@ -504,10 +472,6 @@ export class AuthService {
 
     existingUser.password = await this.hashPassword(newPassword);
     const updatedUser = await this.usersRepository.save(existingUser);
-    if (!updatedUser)
-      throw new InternalServerErrorException(
-        CommonMessages.INTERNAL_SERVER_ERROR,
-      );
 
     return {
       user: UserMapper.toBasicUser(updatedUser),
@@ -516,7 +480,7 @@ export class AuthService {
   }
 
   async deleteAccount(
-    deleteAccountDto: DeleteAccountDto,
+    deleteAccountDto: DeleteAccountRequest,
     user: User,
   ): Promise<DeleteAccountResponse> {
     const existingUser = await this.usersRepository.findOneBy({ id: user.id });
@@ -531,7 +495,7 @@ export class AuthService {
       existingUser.password,
     );
     if (!isValidPassword)
-      throw new BadRequestException(AuthMessages.INVALID_PASSWORD);
+      throw new BadRequestException(AuthMessages.INVALID_CREDENTIALS);
 
     existingUser.isActive = false;
     existingUser.deletedAt = DateTime.utc().toJSDate();
@@ -560,31 +524,17 @@ export class AuthService {
   }
 
   async updateProfile(
-    updateProfileDto: UpdateProfileDto,
+    updateProfileDto: UpdateProfileRequest,
     user: User,
   ): Promise<UpdateProfileResponse> {
     const { password, ...userData } = updateProfileDto;
 
-    try {
-      if (password && password.trim().length > 0) {
-        const newPassword = await this.hashPassword(password);
-
-        const updatedUser = await this.usersRepository.preload({
-          id: user.id,
-          password: newPassword,
-          ...userData,
-        });
-
-        if (!updatedUser)
-          throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
-
-        await this.usersRepository.save(updatedUser);
-
-        return UserMapper.toBasicUser(updatedUser);
-      }
+    if (password && password.trim().length > 0) {
+      const newPassword = await this.hashPassword(password);
 
       const updatedUser = await this.usersRepository.preload({
         id: user.id,
+        password: newPassword,
         ...userData,
       });
 
@@ -594,11 +544,18 @@ export class AuthService {
       await this.usersRepository.save(updatedUser);
 
       return UserMapper.toBasicUser(updatedUser);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      throw new InternalServerErrorException(
-        CommonMessages.INTERNAL_SERVER_ERROR,
-      );
     }
+
+    const updatedUser = await this.usersRepository.preload({
+      id: user.id,
+      ...userData,
+    });
+
+    if (!updatedUser)
+      throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+
+    await this.usersRepository.save(updatedUser);
+
+    return UserMapper.toBasicUser(updatedUser);
   }
 }

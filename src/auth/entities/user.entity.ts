@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToMany,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -13,6 +14,7 @@ import { Appointment } from 'src/bookings/appointments/entities/appointment.enti
 import { Expense } from 'src/accounting/expenses/entities/expense.entity';
 import { Report } from 'src/accounting/reports/entities/report.entity';
 import { ApiProperty } from '@nestjs/swagger';
+import { Company } from 'src/accounting/companies/entities/company.entity';
 
 @Entity('users')
 export class User {
@@ -165,4 +167,7 @@ export class User {
 
   @OneToMany(() => Report, (report) => report.user)
   reports: Report[];
+
+  @ManyToMany(() => Company, (company) => company.users)
+  companies: Company[];
 }

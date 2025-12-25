@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Body,
-  HttpCode,
   HttpStatus,
   Get,
   Patch,
@@ -21,28 +20,6 @@ import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
 import {
-  signinSchema,
-  signUpSchema,
-  verifyEmailCodeSchema,
-  resendEmailVerificationCodeSchema,
-  resendResetPasswordCodeSchema,
-  changePasswordSchema,
-  forgotPasswordSchema,
-  resetPasswordSchema,
-  updateProfileSchema,
-  deleteAccountSchema,
-  type SigninDto,
-  type SignUpDto,
-  type VerifyEmailCodeDto,
-  type ResendEmailCodeDto,
-  type ResendResetPasswordCodeDto,
-  type ChangePasswordDto,
-  type ForgotPasswordDto,
-  type ResetPasswordDto,
-  type UpdateProfileDto,
-  type DeleteAccountDto,
-} from '@ascencio/shared/schemas';
-import {
   ChangePasswordResponse,
   CheckStatusResponse,
   DeleteAccountResponse,
@@ -56,6 +33,28 @@ import {
   UpdateProfileResponse,
   VerifyEmailResponse,
 } from '@ascencio/shared/interfaces';
+import {
+  ChangePasswordRequest,
+  changePasswordSchema,
+  DeleteAccountRequest,
+  deleteAccountSchema,
+  ForgotPasswordRequest,
+  forgotPasswordSchema,
+  ResendEmailCodeRequest,
+  resendEmailCodeSchema,
+  ResendResetPasswordCodeRequest,
+  resendResetPasswordCodeSchema,
+  ResetPasswordRequest,
+  resetPasswordSchema,
+  SignInRequest,
+  signInSchema,
+  SignUpRequest,
+  signUpSchema,
+  UpdateProfileRequest,
+  updateProfileSchema,
+  VerifyEmailCodeRequest,
+  verifyEmailCodeSchema,
+} from '@ascencio/shared/schemas';
 
 @Controller('auth')
 export class AuthController {
@@ -68,29 +67,29 @@ export class AuthController {
   }
 
   @Post('signin')
-  @UsePipes(new ZodValidationPipe(signinSchema))
-  login(@Body() signInDto: SigninDto): Promise<SignInResponse> {
+  @UsePipes(new ZodValidationPipe(signInSchema))
+  login(@Body() signInDto: SignInRequest): Promise<SignInResponse> {
     return this.authService.signIn(signInDto);
   }
 
   @Post('signup')
   @UsePipes(new ZodValidationPipe(signUpSchema))
-  register(@Body() signUpDto: SignUpDto): Promise<SignUpResponse> {
+  register(@Body() signUpDto: SignUpRequest): Promise<SignUpResponse> {
     return this.authService.signUp(signUpDto);
   }
 
   @Post('verify-email-code')
   @UsePipes(new ZodValidationPipe(verifyEmailCodeSchema))
   verifyEmail(
-    @Body() verifyCodeDto: VerifyEmailCodeDto,
+    @Body() verifyCodeDto: VerifyEmailCodeRequest,
   ): Promise<VerifyEmailResponse> {
     return this.authService.verifyEmailCode(verifyCodeDto);
   }
 
   @Post('resend-email-code')
-  @UsePipes(new ZodValidationPipe(resendEmailVerificationCodeSchema))
+  @UsePipes(new ZodValidationPipe(resendEmailCodeSchema))
   resendEmailVerification(
-    @Body() resendEmailCodeDto: ResendEmailCodeDto,
+    @Body() resendEmailCodeDto: ResendEmailCodeRequest,
   ): Promise<ResendEmailCodeResponse> {
     return this.authService.resendEmailCode(resendEmailCodeDto);
   }
@@ -98,7 +97,7 @@ export class AuthController {
   @Post('forgot-password')
   @UsePipes(new ZodValidationPipe(forgotPasswordSchema))
   forgotPassword(
-    @Body() forgotPasswordDto: ForgotPasswordDto,
+    @Body() forgotPasswordDto: ForgotPasswordRequest,
   ): Promise<ForgotPasswordResponse> {
     return this.authService.forgotPassword(forgotPasswordDto);
   }
@@ -106,7 +105,7 @@ export class AuthController {
   @Post('reset-password')
   @UsePipes(new ZodValidationPipe(resetPasswordSchema))
   resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto,
+    @Body() resetPasswordDto: ResetPasswordRequest,
   ): Promise<ResetPasswordResponse> {
     return this.authService.resetPassword(resetPasswordDto);
   }
@@ -114,7 +113,7 @@ export class AuthController {
   @Post('resend-reset-password-code')
   @UsePipes(new ZodValidationPipe(resendResetPasswordCodeSchema))
   resendResetPasswordCode(
-    @Body() resendResetPasswordCodeDto: ResendResetPasswordCodeDto,
+    @Body() resendResetPasswordCodeDto: ResendResetPasswordCodeRequest,
   ): Promise<ResendResetPasswordCodeResponse> {
     return this.authService.resendResetPasswordCode(resendResetPasswordCodeDto);
   }
@@ -129,7 +128,7 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(changePasswordSchema))
   @Auth()
   changePassword(
-    @Body() changePasswordDto: ChangePasswordDto,
+    @Body() changePasswordDto: ChangePasswordRequest,
     @GetUser() user: User,
   ): Promise<ChangePasswordResponse> {
     return this.authService.changePassword(changePasswordDto, user);
@@ -139,7 +138,7 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(updateProfileSchema))
   @Auth()
   updateProfile(
-    @Body() updateProfileDto: UpdateProfileDto,
+    @Body() updateProfileDto: UpdateProfileRequest,
     @GetUser() user: User,
   ): Promise<UpdateProfileResponse> {
     return this.authService.updateProfile(updateProfileDto, user);
@@ -149,7 +148,7 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(deleteAccountSchema))
   @Auth()
   deleteAccount(
-    @Body() deleteAccountDto: DeleteAccountDto,
+    @Body() deleteAccountDto: DeleteAccountRequest,
     @GetUser() user: User,
   ): Promise<DeleteAccountResponse> {
     return this.authService.deleteAccount(deleteAccountDto, user);
@@ -176,7 +175,7 @@ export class AuthController {
     }
 
     const cookieDomain = process.env.AUTH_COOKIE_DOMAIN;
-    res.cookie('access_token', result.access_token, {
+    res.cookie('access_to ken', result.access_token, {
       httpOnly: true,
       secure: process.env.STAGE !== 'dev',
       sameSite: 'lax',
@@ -188,6 +187,10 @@ export class AuthController {
     const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:3000';
     const successPath = process.env.OAUTH_SUCCESS_REDIRECT ?? '/en/admin';
     const redirectUrl = new URL(successPath, webAppUrl);
-    return res.redirect(redirectUrl.toString());
+
+    // Remove comment to enable redirect after OAuth if needed
+    // return res.redirect(redirectUrl.toString());
+
+    res.redirect(redirectUrl.toString());
   }
 }

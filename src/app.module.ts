@@ -28,6 +28,7 @@ import { AppVersionsModule } from './app-versions/app-versions.module';
 import { NodeMailerModule } from './node-mailer/node-mailer.module';
 import { DashboardModule } from './accounting/dashboard/dashboard.module';
 import { ServicesModule } from './bookings/services/services.module';
+import { CompaniesModule } from './accounting/companies/companies.module';
 
 @Module({
   imports: [
@@ -77,6 +78,7 @@ import { ServicesModule } from './bookings/services/services.module';
     AppVersionsModule,
     NodeMailerModule,
     DashboardModule,
+    CompaniesModule,
   ],
   controllers: [],
   providers: [],
