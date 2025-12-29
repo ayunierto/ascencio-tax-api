@@ -4,28 +4,38 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { ZodSchema, ZodError } from 'zod';
+import { parseZodIssueMessage } from '@ascencio/shared';
+
+export interface ValidationError {
+  field?: string;
+  messageKey: string;
+  params?: Record<string, string | number>;
+}
 
 export class ZodValidationPipe implements PipeTransform {
   constructor(private schema: ZodSchema) {}
 
   transform(value: unknown, metadata: ArgumentMetadata) {
     try {
-      const parsedValue = this.schema.parse(value);
-      return parsedValue;
+      return this.schema.parse(value);
     } catch (error) {
-      if (error instanceof ZodError) {
-        const details = error.issues.map((issue) => ({
-          path: issue.path.join('.') || '(root)',
-          message: issue.message,
-          code: issue.code,
-        }));
-        throw new BadRequestException({
-          message: 'Validation failed',
-          errors: details,
-        });
+      if (!(error instanceof ZodError)) {
+        throw new BadRequestException(error);
       }
 
-      throw new BadRequestException('Validation failed');
+      const errors: ValidationError[] = error.issues.map((issue) => {
+        const parsed = parseZodIssueMessage(issue.message);
+
+        return {
+          field: issue.path.join('.') || undefined,
+          messageKey: parsed.messageKey,
+          params: parsed.params,
+        };
+      });
+
+      throw new BadRequestException({
+        errors,
+      });
     }
   }
 }

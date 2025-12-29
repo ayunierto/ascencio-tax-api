@@ -9,6 +9,7 @@ import { IsNull, Repository } from 'typeorm';
 import { Company } from './entities/company.entity';
 import { PaginatedResponse } from '@ascencio/shared/interfaces';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class CompaniesService {
@@ -18,8 +19,8 @@ export class CompaniesService {
   ) {}
 
   // TODO: Add user relation properly when multi-user support is added
-  create(userId: string, input: CreateCompanyRequest): Promise<Company> {
-    const company = this.companyRepo.create({ ...input });
+  create(user: User, input: CreateCompanyRequest): Promise<Company> {
+    const company = this.companyRepo.create({ ...input, users: [user] });
     return this.companyRepo.save(company);
   }
 

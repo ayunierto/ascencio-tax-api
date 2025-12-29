@@ -207,17 +207,17 @@ export class AuthService {
   }
 
   async signUp(signUpDto: SignUpRequest): Promise<SignUpResponse> {
-    const existingUser = await this.usersRepository.findOneBy({
+    const user = await this.usersRepository.findOneBy({
       email: signUpDto.email,
     });
 
     // If deletedAt is not null, allow to create account again
-    if (existingUser?.deletedAt) {
-      existingUser.deletedAt = null;
-      existingUser.isActive = true;
-      existingUser.isEmailVerified = false;
-      existingUser.password = await this.hashPassword(signUpDto.password);
-      const updatedUser = await this.setVerificationCode(existingUser, 'email');
+    if (user?.deletedAt) {
+      user.deletedAt = null;
+      user.isActive = true;
+      user.isEmailVerified = false;
+      user.password = await this.hashPassword(signUpDto.password);
+      const updatedUser = await this.setVerificationCode(user, 'email');
 
       const emailSent = await this.sendEmail('verification', updatedUser);
 
@@ -232,8 +232,7 @@ export class AuthService {
       };
     }
 
-    if (existingUser)
-      throw new ConflictException(AuthMessages.EMAIL_ALREADY_EXISTS);
+    if (user) throw new ConflictException(AuthMessages.EMAIL_ALREADY_EXISTS);
 
     const passwordHash = await this.hashPassword(signUpDto.password);
     const newUser = this.usersRepository.create({

@@ -30,13 +30,13 @@ export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
   @Post()
-  @Auth(Role.Admin, Role.Staff, Role.User)
+  @Auth()
   @UsePipes(new ZodValidationPipe(createCompanySchema))
   create(
     @Body() createCompany: CreateCompanyRequest,
     @GetUser() user: User,
   ): Promise<Company> {
-    return this.companiesService.create(user.id, createCompany);
+    return this.companiesService.create(user, createCompany);
   }
 
   @Get()
