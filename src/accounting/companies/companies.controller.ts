@@ -7,7 +7,6 @@ import {
   Patch,
   Post,
   Query,
-  UsePipes,
 } from '@nestjs/common';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
@@ -17,7 +16,7 @@ import {
   UpdateCompanyRequest,
   createCompanySchema,
   updateCompanySchema,
-} from '@ascencio/shared/schemas';
+} from '@ascencio/shared';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { CompaniesService } from './companies.service';
 import { User } from 'src/auth/entities/user.entity';
@@ -31,12 +30,12 @@ export class CompaniesController {
 
   @Post()
   @Auth()
-  @UsePipes(new ZodValidationPipe(createCompanySchema))
   create(
-    @Body() createCompany: CreateCompanyRequest,
+    @Body(new ZodValidationPipe(createCompanySchema))
+    company: CreateCompanyRequest,
     @GetUser() user: User,
-  ): Promise<Company> {
-    return this.companiesService.create(user, createCompany);
+  ) {
+    return this.companiesService.create(user, company);
   }
 
   @Get()
@@ -56,17 +55,17 @@ export class CompaniesController {
 
   @Patch(':id')
   @Auth(Role.Admin, Role.Staff, Role.User)
-  @UsePipes(new ZodValidationPipe(updateCompanySchema))
   update(
     @Param('id') id: string,
-    @Body() body: UpdateCompanyRequest,
+    @Body(new ZodValidationPipe(updateCompanySchema))
+    body: UpdateCompanyRequest,
     @GetUser() user: User,
   ): Promise<Company> {
     return this.companiesService.update(user.id, id, body);
   }
 
   @Delete(':id')
-  @Auth(Role.Admin, Role.Staff)
+  @Auth()
   remove(@Param('id') id: string, @GetUser() user: User): Promise<Company> {
     return this.companiesService.remove(user.id, id);
   }

@@ -31,7 +31,7 @@ import {
   SignUpResponse,
   SimpleUser,
   UpdateProfileResponse,
-  VerifyEmailResponse,
+  VerifyEmailCodeResponse,
 } from '@ascencio/shared/interfaces';
 import {
   ChangePasswordRequest,
@@ -54,7 +54,7 @@ import {
   updateProfileSchema,
   VerifyEmailCodeRequest,
   verifyEmailCodeSchema,
-} from '@ascencio/shared/schemas';
+} from '@ascencio/shared';
 
 @Controller('auth')
 export class AuthController {
@@ -82,7 +82,7 @@ export class AuthController {
   @UsePipes(new ZodValidationPipe(verifyEmailCodeSchema))
   verifyEmail(
     @Body() verifyCodeDto: VerifyEmailCodeRequest,
-  ): Promise<VerifyEmailResponse> {
+  ): Promise<VerifyEmailCodeResponse> {
     return this.authService.verifyEmailCode(verifyCodeDto);
   }
 

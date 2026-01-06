@@ -46,11 +46,11 @@ export class Company {
   @Column()
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   payrollAccountNumber: string;
 
-  @Column()
-  logoUrl: string;
+  @Column({ nullable: true })
+  logoUrl?: string;
 
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: string;

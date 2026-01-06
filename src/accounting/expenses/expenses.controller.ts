@@ -11,15 +11,7 @@ import {
   UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-  ApiConsumes,
-  ApiBody,
-} from '@nestjs/swagger';
+
 import { ExpensesService } from './expenses.service';
 import { CreateExpenseDto } from './dto/create-expense.dto';
 import { UpdateExpenseDto } from './dto/update-expense.dto';
@@ -34,7 +26,6 @@ import { RemoveReceiptImageDto } from './dto/remove-receipt-image.dto';
 import { OcrService } from 'src/ocr/ocr.service';
 import { OpenaiService } from 'src/openai/openai.service';
 
-@ApiTags('Accounting - Expenses')
 @Controller('expenses')
 export class ExpensesController {
   constructor(
@@ -46,45 +37,24 @@ export class ExpensesController {
 
   @Post()
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new expense' })
-  @ApiResponse({ status: 201, description: 'Expense created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(@Body() createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
     return this.expensesService.create(createExpenseDto, user);
   }
 
   @Get()
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get all expenses' })
-  @ApiResponse({ status: 200, description: 'Return all expenses' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   findAll(@Query() paginationDto: PaginationDto, @GetUser() user: User) {
     return this.expensesService.findAll(paginationDto, user);
   }
 
   @Get(':id')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get an expense by ID' })
-  @ApiParam({ name: 'id', description: 'Expense ID' })
-  @ApiResponse({ status: 200, description: 'Return the expense' })
-  @ApiResponse({ status: 404, description: 'Expense not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   findOne(@Param('id') id: string, @GetUser() user: User) {
     return this.expensesService.findOne(id, user);
   }
 
   @Patch(':id')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update an expense' })
-  @ApiParam({ name: 'id', description: 'Expense ID' })
-  @ApiResponse({ status: 200, description: 'Expense updated successfully' })
-  @ApiResponse({ status: 404, description: 'Expense not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   update(
     @Param('id') id: string,
     @Body() updateExpenseDto: UpdateExpenseDto,
@@ -95,35 +65,12 @@ export class ExpensesController {
 
   @Delete(':id')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete an expense' })
-  @ApiParam({ name: 'id', description: 'Expense ID' })
-  @ApiResponse({ status: 200, description: 'Expense deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Expense not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   remove(@Param('id') id: string, @GetUser() user: User) {
     return this.expensesService.remove(id, user);
   }
 
   @Post('upload-receipt-image')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Upload receipt image' })
-  @ApiConsumes('multipart/form-data')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UseInterceptors(FileInterceptor('file'))
   async uploadReceipt(
     @UploadedFile() file: Express.Multer.File,
@@ -149,10 +96,6 @@ export class ExpensesController {
 
   @Post('analyze-image-url')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Analyze receipt image URL' })
-  @ApiResponse({ status: 201, description: 'Receipt analyzed successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async analyzeExpenseUrl(@Body() { imageUrl }: AnalyzeExpenseDto) {
     const text = await this.ocrService.extractTextFromImage(imageUrl);
     const data = await this.openaiService.analyzeReceiptText(text);
@@ -161,10 +104,6 @@ export class ExpensesController {
 
   @Post('delete-receipt-image')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete receipt image' })
-  @ApiResponse({ status: 201, description: 'Image deleted successfully' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async deleteReceipt(@Body() { imageUrl }: RemoveReceiptImageDto) {
     const publicId = this.extractPublicId(imageUrl);
     if (!publicId) {

@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Delete,
   Param,
@@ -23,8 +24,11 @@ export class FilesController {
       // }
     ),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
-    return this.filesService.upload(file);
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Body('folder') folder?: string,
+  ) {
+    return this.filesService.upload(file, folder);
   }
 
   @Delete(':publicId')

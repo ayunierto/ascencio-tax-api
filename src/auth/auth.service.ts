@@ -31,7 +31,7 @@ import {
   SignInResponse,
   SignUpResponse,
   UpdateProfileResponse,
-  VerifyEmailResponse,
+  VerifyEmailCodeResponse,
 } from '@ascencio/shared/interfaces';
 import { SignInDto } from './dto/sign-in.dto';
 import {
@@ -260,7 +260,7 @@ export class AuthService {
 
   async verifyEmailCode(
     verifyEmailCodeDto: VerifyEmailCodeRequest,
-  ): Promise<VerifyEmailResponse> {
+  ): Promise<VerifyEmailCodeResponse> {
     const user = await this.usersRepository.findOneBy({
       email: verifyEmailCodeDto.email,
     });
