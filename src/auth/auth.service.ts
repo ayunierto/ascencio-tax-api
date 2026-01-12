@@ -265,7 +265,7 @@ export class AuthService {
       email: verifyEmailCodeDto.email,
     });
 
-    if (!user) throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+    if (!user) throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
 
     if (user.isEmailVerified) {
       user.verificationCode = null;
@@ -305,7 +305,7 @@ export class AuthService {
   ): Promise<ResendEmailCodeResponse> {
     const { email } = resendEmailCodeDto;
     const user = await this.usersRepository.findOneBy({ email });
-    if (!user) throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+    if (!user) throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
 
     await this.setVerificationCode(user, 'email');
     const emailSent = await this.sendEmail('verification', user);
@@ -386,7 +386,7 @@ export class AuthService {
     const { email, code, newPassword } = resetPasswordDto;
 
     const user = await this.usersRepository.findOneBy({ email });
-    if (!user) throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+    if (!user) throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
 
     if (!user.isActive)
       throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
@@ -460,7 +460,7 @@ export class AuthService {
     const existingUser = await this.usersRepository.findOneBy({ id: user.id });
 
     if (!existingUser)
-      throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+      throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
 
     const isValidPassword = await this.comparePasswords(
       currentPassword,
@@ -484,7 +484,7 @@ export class AuthService {
   ): Promise<DeleteAccountResponse> {
     const existingUser = await this.usersRepository.findOneBy({ id: user.id });
     if (!existingUser)
-      throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+      throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
 
     if (!existingUser.isActive)
       throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
@@ -508,7 +508,7 @@ export class AuthService {
   async checkStatus(user: User): Promise<CheckStatusResponse> {
     const existingUser = await this.usersRepository.findOneBy({ id: user.id });
     if (!existingUser)
-      throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+      throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
 
     if (!existingUser.isActive)
       throw new UnauthorizedException(AuthMessages.ACCOUNT_LOCKED);
@@ -538,7 +538,7 @@ export class AuthService {
       });
 
       if (!updatedUser)
-        throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+        throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
 
       await this.usersRepository.save(updatedUser);
 
@@ -551,7 +551,7 @@ export class AuthService {
     });
 
     if (!updatedUser)
-      throw new NotFoundException(CommonMessages.USER_NOT_FOUND);
+      throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
 
     await this.usersRepository.save(updatedUser);
 

@@ -29,6 +29,8 @@ import { NodeMailerModule } from './node-mailer/node-mailer.module';
 import { DashboardModule } from './accounting/dashboard/dashboard.module';
 import { ServicesModule } from './bookings/services/services.module';
 import { CompaniesModule } from './accounting/companies/companies.module';
+import { EmployeesModule } from './accounting/employees/employees.module';
+import { InvoicesModule } from './accounting/invoices/invoices.module';
 
 @Module({
   imports: [
@@ -79,6 +81,8 @@ import { CompaniesModule } from './accounting/companies/companies.module';
     NodeMailerModule,
     DashboardModule,
     CompaniesModule,
+    EmployeesModule,
+    InvoicesModule,
   ],
   controllers: [],
   providers: [],

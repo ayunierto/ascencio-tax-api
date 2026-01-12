@@ -34,7 +34,7 @@ export class CompaniesController {
     @Body(new ZodValidationPipe(createCompanySchema))
     company: CreateCompanyRequest,
     @GetUser() user: User,
-  ) {
+  ): Promise<Company> {
     return this.companiesService.create(user, company);
   }
 

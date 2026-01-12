@@ -49,6 +49,25 @@ export class Company {
   @Column({ nullable: true })
   payrollAccountNumber: string;
 
+  /**
+   * The temporary media token (publicId) sent from the client.
+   * Used during create/update to promote images from temp_files.
+   * Not persisted after processing.
+   */
+  @Column({ nullable: true })
+  mediaToken?: string;
+
+  /**
+   * The permanent Cloudinary public_id of the company logo.
+   * Used for cleanup when replacing or deleting the logo.
+   */
+  @Column({ nullable: true })
+  logoPublicId?: string;
+
+  /**
+   * The full secure URL of the company logo.
+   * Stored for quick access without needing to construct the URL.
+   */
   @Column({ nullable: true })
   logoUrl?: string;
 
