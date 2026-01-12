@@ -40,7 +40,16 @@ export class CompaniesService {
       users: [user],
     });
 
-    return this.companyRepo.save(company);
+    // Si falla el save, hacer rollback de la imagen promovida
+    try {
+      return await this.companyRepo.save(company);
+    } catch (error) {
+      // Rollback: eliminar la imagen que fue promovida
+      if (logoPublicId) {
+        this.filesService.scheduleDelete(logoPublicId);
+      }
+      throw error;
+    }
   }
 
   async findAll(
@@ -80,20 +89,24 @@ export class CompaniesService {
     const company = await this.findOne(userId, id);
     const { mediaToken, ...updateData } = input;
 
+    let newImagePublicId: string | undefined;
+
     // Handle image update
     if (mediaToken !== undefined) {
       // Case 1: New temp image provided - promote it
       if (mediaToken && mediaToken.startsWith('temp_files/')) {
-        // Schedule deletion of old image (fire and forget)
-        if (company.logoPublicId) {
-          this.filesService.scheduleDelete(company.logoPublicId);
-        }
-
-        // Promote new image from temp to permanent
+        // Promover nueva imagen primero
         const result = await this.filesService.promoteImage(
           mediaToken,
           'companies',
         );
+        newImagePublicId = result.publicId;
+
+        // Programar eliminación de imagen anterior (fire and forget)
+        if (company.logoPublicId) {
+          this.filesService.scheduleDelete(company.logoPublicId);
+        }
+
         company.logoPublicId = result.publicId;
         company.logoUrl = result.secureUrl;
       }
@@ -111,11 +124,30 @@ export class CompaniesService {
     }
 
     Object.assign(company, updateData);
-    return this.companyRepo.save(company);
+
+    // Si falla el save, hacer rollback de la imagen promovida
+    try {
+      return await this.companyRepo.save(company);
+    } catch (error) {
+      // Rollback: eliminar la nueva imagen que fue promovida
+      if (newImagePublicId) {
+        this.filesService.scheduleDelete(newImagePublicId);
+      }
+      throw error;
+    }
   }
 
+  // ========================
+  // ELIMINAR (Soft Delete)
+  // ========================
   async remove(userId: string, id: string): Promise<Company> {
     const company = await this.findOne(userId, id);
+
+    // Eliminar la imagen asociada para evitar imágenes huérfanas
+    if (company.logoPublicId) {
+      this.filesService.scheduleDelete(company.logoPublicId);
+    }
+
     await this.companyRepo.softRemove(company);
     return company;
   }

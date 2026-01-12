@@ -31,6 +31,7 @@ import { ServicesModule } from './bookings/services/services.module';
 import { CompaniesModule } from './accounting/companies/companies.module';
 import { EmployeesModule } from './accounting/employees/employees.module';
 import { InvoicesModule } from './accounting/invoices/invoices.module';
+import { ClientsModule } from './accounting/clients/clients.module';
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { InvoicesModule } from './accounting/invoices/invoices.module';
     NodeMailerModule,
     DashboardModule,
     CompaniesModule,
+    ClientsModule,
     EmployeesModule,
     InvoicesModule,
   ],

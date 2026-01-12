@@ -161,16 +161,65 @@ export class FilesService {
   }
 
   /**
-   * Schedule deletion of an old image (fire and forget).
+   * Cantidad máxima de reintentos para eliminación de imágenes
+   */
+  private readonly MAX_DELETE_RETRIES = 3;
+
+  /**
+   * Delay base entre reintentos (en ms) - se multiplica por el número de intento
+   */
+  private readonly RETRY_DELAY_MS = 1000;
+
+  /**
+   * Schedule deletion of an old image with retry logic.
    * Used when replacing an existing image with a new one.
+   * No bloquea la operación principal pero reintenta en caso de fallo.
    *
    * @param publicId - The public_id to delete
    */
   scheduleDelete(publicId: string): void {
-    // Fire and forget - don't await, don't block the main operation
-    this.delete(publicId).catch((error) => {
-      console.error(`Failed to delete old image ${publicId}:`, error);
+    // Fire and forget - no bloquea la operación principal
+    this.deleteWithRetry(publicId, 1).catch((error) => {
+      // Log final después de agotar todos los reintentos
+      console.error(
+        `[FilesService] FAILED to delete image after ${this.MAX_DELETE_RETRIES} attempts: ${publicId}`,
+        error,
+      );
+      // TODO: Considerar agregar a una cola de limpieza o notificar a admins
     });
+  }
+
+  /**
+   * Elimina una imagen con lógica de reintentos exponenciales.
+   *
+   * @param publicId - El public_id de la imagen a eliminar
+   * @param attempt - Número de intento actual
+   */
+  private async deleteWithRetry(
+    publicId: string,
+    attempt: number,
+  ): Promise<void> {
+    try {
+      await this.delete(publicId);
+      console.log(`[FilesService] Successfully deleted image: ${publicId}`);
+    } catch (error) {
+      if (attempt < this.MAX_DELETE_RETRIES) {
+        const delay = this.RETRY_DELAY_MS * attempt;
+        console.warn(
+          `[FilesService] Delete attempt ${attempt} failed for ${publicId}, retrying in ${delay}ms...`,
+        );
+        await this.sleep(delay);
+        return this.deleteWithRetry(publicId, attempt + 1);
+      }
+      throw error; // Propagar error después de agotar reintentos
+    }
+  }
+
+  /**
+   * Helper para esperar un tiempo determinado
+   */
+  private sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   async delete(publicId: string) {

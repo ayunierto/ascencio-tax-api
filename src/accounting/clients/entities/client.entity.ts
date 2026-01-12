@@ -10,23 +10,23 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity({ name: 'companies' })
-export class Company {
+@Entity({ name: 'clients' })
+export class Client {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToMany(() => User, (user) => user.companies)
+  @ManyToMany(() => User, (user) => user.clients)
   @JoinTable()
   users: User[];
 
   @Column()
-  name: string;
+  fullName: string;
 
   @Column()
-  legalName: string;
+  email: string;
 
   @Column()
-  businessNumber: string;
+  phone: string;
 
   @Column()
   address: string;
@@ -41,28 +41,20 @@ export class Company {
   postalCode: string;
 
   @Column()
-  phone: string;
+  country: string;
 
-  @Column()
-  email: string;
+  // === Campos para individuos ===
+  @Column({ nullable: true })
+  dateOfBirth?: string;
 
   @Column({ nullable: true })
-  payrollAccountNumber: string;
+  sin?: string;
 
-  /**
-   * The permanent Cloudinary public_id of the company logo.
-   * Used for cleanup when replacing or deleting the logo.
-   */
+  // === Campos para empresas ===
   @Column({ nullable: true })
-  logoPublicId?: string;
+  businessNumber?: string;
 
-  /**
-   * The full secure URL of the company logo.
-   * Stored for quick access without needing to construct the URL.
-   */
-  @Column({ nullable: true })
-  logoUrl?: string;
-
+  // === Timestamps ===
   @CreateDateColumn({ type: 'timestamp with time zone' })
   createdAt: string;
 

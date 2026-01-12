@@ -15,6 +15,7 @@ import { Appointment } from 'src/bookings/appointments/entities/appointment.enti
 import { Expense } from 'src/accounting/expenses/entities/expense.entity';
 import { Report } from 'src/accounting/reports/entities/report.entity';
 import { Company } from 'src/accounting/companies/entities/company.entity';
+import { Client } from 'src/accounting/clients/entities/client.entity';
 
 @Entity('users')
 export class User {
@@ -102,4 +103,7 @@ export class User {
 
   @ManyToMany(() => Company, (company) => company.users)
   companies: Company[];
+
+  @ManyToMany(() => Client, (client) => client.users)
+  clients: Client[];
 }

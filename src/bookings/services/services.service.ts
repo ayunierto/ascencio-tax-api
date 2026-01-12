@@ -12,7 +12,7 @@ import { Service } from './entities';
 import { StaffMember } from 'src/bookings/staff-members/entities/staff-member.entity';
 import { PaginatedResponse } from '@ascencio/shared/interfaces';
 import { DateTime } from 'luxon';
-import { CommonMessages } from '@ascencio/shared/i18n';
+import { CommonMessages, ValidationMessages } from '@ascencio/shared/i18n';
 
 @Injectable()
 export class ServicesService {
@@ -27,7 +27,7 @@ export class ServicesService {
     const { staffIds, ...serviceData } = createServiceDto;
 
     if (staffIds.length === 0)
-      throw new BadRequestException(CommonMessages.VALIDATION_REQUIRED);
+      throw new BadRequestException(ValidationMessages.REQUIRED);
 
     // Validate and get staff members if provided
     const staff = await this.validateAndGetStaff(staffIds);
@@ -94,7 +94,7 @@ export class ServicesService {
         : await this.validateAndGetStaff(staffIds);
 
     if (staff.length === 0) {
-      throw new BadRequestException(CommonMessages.VALIDATION_REQUIRED);
+      throw new BadRequestException(ValidationMessages.REQUIRED);
     }
 
     const service = await this.serviceRepository.preload({
@@ -128,7 +128,7 @@ export class ServicesService {
     staffIds?: string[],
   ): Promise<StaffMember[]> {
     if (!staffIds || staffIds.length === 0) {
-      throw new BadRequestException(CommonMessages.VALIDATION_REQUIRED);
+      throw new BadRequestException(ValidationMessages.REQUIRED);
     }
 
     const staff = await this.staffRepository.findBy({
@@ -142,7 +142,7 @@ export class ServicesService {
     );
 
     if (missingStaffIds.length > 0) {
-      throw new BadRequestException(CommonMessages.VALIDATION_UUID);
+      throw new BadRequestException(ValidationMessages.UUID);
     }
 
     return staff;
