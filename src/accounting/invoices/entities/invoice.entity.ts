@@ -57,6 +57,18 @@ export class Invoice {
   @Column({ name: 'bill_to_address', nullable: true, type: 'text' })
   billToAddress?: string;
 
+  @Column({ name: 'bill_to_city', nullable: true })
+  billToCity?: string;
+
+  @Column({ name: 'bill_to_province', nullable: true })
+  billToProvince?: string;
+
+  @Column({ name: 'bill_to_postal_code', nullable: true })
+  billToPostalCode?: string;
+
+  @Column({ name: 'bill_to_country', nullable: true })
+  billToCountry?: string;
+
   /** Invoice details */
   @Column({ name: 'invoice_number', unique: true })
   invoiceNumber: string;
