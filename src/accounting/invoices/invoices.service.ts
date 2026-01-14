@@ -27,11 +27,51 @@ export class InvoicesService {
     private readonly lineItemRepo: Repository<InvoiceLineItem>,
     @InjectRepository(Company)
     private readonly companyRepo: Repository<Company>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly printerService: PrinterService,
     private readonly filesService: FilesService,
     @Inject(forwardRef(() => AccountsReceivableService))
     private readonly arService: AccountsReceivableService,
   ) {}
+
+  /**
+   * Get or create a "Sole Proprietor" company for a user
+   * This is used when the user doesn't have any company registered
+   */
+  private async getOrCreateSoleProprietorCompany(userId: string): Promise<Company> {
+    // Check if user has any company
+    const existingCompany = await this.companyRepo.findOne({
+      where: { users: { id: userId } },
+      relations: ['users'],
+    });
+
+    if (existingCompany) {
+      return existingCompany;
+    }
+
+    // Get user data to populate the company
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Create "Sole Proprietor" company with user's data and associate user
+    const soleProprietorCompany = this.companyRepo.create({
+      name: 'Sole Proprietor',
+      legalName: `${user.firstName} ${user.lastName}`,
+      businessNumber: '', // User to fill later
+      email: user.email,
+      phone: user.phoneNumber || '',
+      address: '', // User to fill later
+      city: '',
+      province: '',
+      postalCode: '',
+      users: [user], // Associate user directly during creation
+    });
+
+    return (await this.companyRepo.save(soleProprietorCompany)) as Company;
+  }
 
   /**
    * Validate that a user belongs to a company (multi-tenant security)
@@ -115,17 +155,19 @@ export class InvoicesService {
   async create(userId: string, input: CreateInvoiceRequest): Promise<Invoice> {
     const { lineItems: lineItemsInput, fromCompanyId, ...invoiceData } = input;
 
-    // Validate fromCompanyId is provided (required for multi-tenant)
-    if (!fromCompanyId) {
-      throw new BadRequestException('Company ID is required');
+    // If no company provided, get or create "Sole Proprietor"
+    let finalCompanyId = fromCompanyId;
+    if (!finalCompanyId) {
+      const company = await this.getOrCreateSoleProprietorCompany(userId);
+      finalCompanyId = company.id;
+    } else {
+      // Validate user has access to this company
+      await this.validateUserCompanyAccess(userId, finalCompanyId);
     }
-
-    // Validate user has access to this company
-    await this.validateUserCompanyAccess(userId, fromCompanyId);
 
     // Generate invoice number
     const { invoiceNumber, invoiceYear } =
-      await this.generateInvoiceNumber(userId, fromCompanyId);
+      await this.generateInvoiceNumber(userId, finalCompanyId);
 
     // Calculate totals
     const totals = this.calculateTotals(lineItemsInput, input.taxRate ?? 13);
@@ -133,7 +175,7 @@ export class InvoicesService {
     // Create invoice in draft state
     const invoice = this.invoiceRepo.create({
       ...invoiceData,
-      fromCompanyId,
+      fromCompanyId: finalCompanyId,
       userId,
       invoiceNumber,
       invoiceYear,

@@ -28,7 +28,7 @@ export class Invoice {
   @Column({ name: 'user_id' })
   userId: string;
 
-  /** Company issuing the invoice (From) - REQUIRED FOR MULTI-TENANT */
+  /** Company issuing the invoice (auto-created as "Sole Proprietor" if user has no company) */
   @ManyToOne(() => Company, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'from_company_id' })
   fromCompany: Company;
@@ -43,6 +43,19 @@ export class Invoice {
 
   @Column({ name: 'bill_to_client_id', nullable: true })
   billToClientId?: string;
+
+  /** Bill To fields (inline) - used when billToClientId is null */
+  @Column({ name: 'bill_to_name', nullable: true })
+  billToName?: string;
+
+  @Column({ name: 'bill_to_email', nullable: true })
+  billToEmail?: string;
+
+  @Column({ name: 'bill_to_phone', nullable: true })
+  billToPhone?: string;
+
+  @Column({ name: 'bill_to_address', nullable: true, type: 'text' })
+  billToAddress?: string;
 
   /** Invoice details */
   @Column({ name: 'invoice_number', unique: true })
