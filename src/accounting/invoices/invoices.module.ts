@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { InvoicesService } from './invoices.service';
 import { InvoicesController } from './invoices.controller';
@@ -8,6 +8,7 @@ import { Company } from '../companies/entities/company.entity';
 import { AuthModule } from '../../auth/auth.module';
 import { PrinterModule } from '../../printer/printer.module';
 import { FilesModule } from '../../files/files.module';
+import { AccountsReceivableModule } from '../accounts-receivable/accounts-receivable.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { FilesModule } from '../../files/files.module';
     AuthModule,
     PrinterModule,
     FilesModule,
+    forwardRef(() => AccountsReceivableModule),
   ],
   controllers: [InvoicesController],
   providers: [InvoicesService],

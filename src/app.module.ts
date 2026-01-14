@@ -32,6 +32,8 @@ import { CompaniesModule } from './accounting/companies/companies.module';
 import { EmployeesModule } from './accounting/employees/employees.module';
 import { InvoicesModule } from './accounting/invoices/invoices.module';
 import { ClientsModule } from './accounting/clients/clients.module';
+import { AccountsReceivableModule } from './accounting/accounts-receivable/accounts-receivable.module';
+import { PaymentsModule } from './accounting/payments/payments.module';
 
 @Module({
   imports: [
@@ -85,6 +87,8 @@ import { ClientsModule } from './accounting/clients/clients.module';
     ClientsModule,
     EmployeesModule,
     InvoicesModule,
+    AccountsReceivableModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],

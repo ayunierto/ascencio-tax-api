@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonMessages } from '@ascencio/shared/i18n';
 import { IsNull, Repository } from 'typeorm';
@@ -16,6 +16,7 @@ import { FilesService } from '../../files/files.service';
 import { TDocumentDefinitions, Content, TableCell } from 'pdfmake/interfaces';
 import { Company } from '../companies/entities/company.entity';
 import { User } from 'src/auth/entities/user.entity';
+import { AccountsReceivableService } from '../accounts-receivable/accounts-receivable.service';
 
 @Injectable()
 export class InvoicesService {
@@ -28,6 +29,8 @@ export class InvoicesService {
     private readonly companyRepo: Repository<Company>,
     private readonly printerService: PrinterService,
     private readonly filesService: FilesService,
+    @Inject(forwardRef(() => AccountsReceivableService))
+    private readonly arService: AccountsReceivableService,
   ) {}
 
   /**
@@ -279,6 +282,13 @@ export class InvoicesService {
       );
     }
 
+    // Validate invoice has a client
+    if (!invoice.billToClientId) {
+      throw new BadRequestException(
+        'Cannot issue invoice without a client.'
+      );
+    }
+
     // Set issued status and timestamp
     invoice.status = 'issued';
     invoice.issuedAt = new Date().toISOString();
@@ -288,7 +298,12 @@ export class InvoicesService {
       invoice.issueDate = input.issueDate;
     }
 
-    return this.invoiceRepo.save(invoice);
+    const savedInvoice = await this.invoiceRepo.save(invoice);
+
+    // Create Account Receivable automatically
+    await this.arService.createFromInvoice(savedInvoice, userId);
+
+    return savedInvoice;
   }
 
   async remove(userId: string, id: string): Promise<Invoice> {
