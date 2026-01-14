@@ -14,7 +14,7 @@ import {
 } from 'typeorm';
 import { InvoiceLineItem } from './invoice-line-item.entity';
 
-export type InvoiceStatus = 'pending' | 'paid' | 'overdue' | 'canceled';
+export type InvoiceStatus = 'draft' | 'issued' | 'partial' | 'paid' | 'overdue' | 'canceled' | 'void';
 
 @Entity({ name: 'invoices' })
 export class Invoice {
@@ -28,13 +28,13 @@ export class Invoice {
   @Column({ name: 'user_id' })
   userId: string;
 
-  /** Company issuing the invoice (From) */
-  @ManyToOne(() => Company, { onDelete: 'SET NULL', nullable: true })
+  /** Company issuing the invoice (From) - REQUIRED FOR MULTI-TENANT */
+  @ManyToOne(() => Company, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'from_company_id' })
-  fromCompany?: Company;
+  fromCompany: Company;
 
-  @Column({ name: 'from_company_id', nullable: true })
-  fromCompanyId?: string;
+  @Column({ name: 'from_company_id' })
+  fromCompanyId: string;
 
   /** Client receiving the invoice (Bill To) */
   @ManyToOne(() => Client, { onDelete: 'SET NULL', nullable: true })
@@ -56,6 +56,10 @@ export class Invoice {
 
   @Column({ name: 'due_date', type: 'date' })
   dueDate: string;
+
+  /** When the invoice was issued (becomes immutable) */
+  @Column({ name: 'issued_at', type: 'timestamp with time zone', nullable: true })
+  issuedAt?: string;
 
   /** Line items */
   @OneToMany(() => InvoiceLineItem, (item) => item.invoice, {
@@ -107,7 +111,7 @@ export class Invoice {
   })
   balanceDue: number;
 
-  @Column({ default: 'pending' })
+  @Column({ default: 'draft' })
   status: InvoiceStatus;
 
   @Column({ name: 'paid_date', type: 'date', nullable: true })

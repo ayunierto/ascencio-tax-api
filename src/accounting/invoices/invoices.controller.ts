@@ -20,6 +20,8 @@ import {
   updateInvoiceSchema,
   CreateInvoicePaymentRequest,
   createInvoicePaymentSchema,
+  IssueInvoiceRequest,
+  issueInvoiceSchema,
 } from '@ascencio/shared';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 import { InvoicesService } from './invoices.service';
@@ -47,9 +49,10 @@ export class InvoicesController {
   findAll(
     @Query() paginationDto: PaginationDto,
     @Query('status') status: string,
+    @Query('companyId') companyId: string,
     @GetUser() user: User,
   ): Promise<PaginatedResponse<Invoice>> {
-    return this.invoicesService.findAll(paginationDto, user.id, status);
+    return this.invoicesService.findAll(paginationDto, user.id, companyId, status);
   }
 
   @Get(':id')
@@ -95,6 +98,17 @@ export class InvoicesController {
       body.amount,
       body.paidAt,
     );
+  }
+
+  @Post(':id/issue')
+  @Auth()
+  issueInvoice(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(issueInvoiceSchema))
+    body: IssueInvoiceRequest,
+    @GetUser() user: User,
+  ): Promise<Invoice> {
+    return this.invoicesService.issueInvoice(user.id, id, body);
   }
 
   @Get(':id/pdf')

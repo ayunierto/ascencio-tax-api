@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonMessages } from '@ascencio/shared/i18n';
 import { IsNull, Repository } from 'typeorm';
@@ -9,10 +9,13 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import {
   CreateInvoiceRequest,
   UpdateInvoiceRequest,
+  IssueInvoiceRequest,
 } from '@ascencio/shared/schemas';
 import { PrinterService } from '../../printer/printer.service';
 import { FilesService } from '../../files/files.service';
 import { TDocumentDefinitions, Content, TableCell } from 'pdfmake/interfaces';
+import { Company } from '../companies/entities/company.entity';
+import { User } from 'src/auth/entities/user.entity';
 
 @Injectable()
 export class InvoicesService {
@@ -21,23 +24,47 @@ export class InvoicesService {
     private readonly invoiceRepo: Repository<Invoice>,
     @InjectRepository(InvoiceLineItem)
     private readonly lineItemRepo: Repository<InvoiceLineItem>,
+    @InjectRepository(Company)
+    private readonly companyRepo: Repository<Company>,
     private readonly printerService: PrinterService,
     private readonly filesService: FilesService,
   ) {}
 
   /**
-   * Generate next invoice number for the user
+   * Validate that a user belongs to a company (multi-tenant security)
+   */
+  private async validateUserCompanyAccess(
+    userId: string, 
+    companyId: string
+  ): Promise<Company> {
+    const company = await this.companyRepo.findOne({
+      where: { id: companyId, users: { id: userId } },
+      relations: ['users'],
+    });
+
+    if (!company) {
+      throw new ForbiddenException('User does not have access to this company');
+    }
+
+    return company;
+  }
+
+  /**
+   * Generate next invoice number for the user within a company
    * Format: INV-YYYY-XXXX (e.g., INV-2026-0001)
    */
-  private async generateInvoiceNumber(userId: string): Promise<{
+  private async generateInvoiceNumber(
+    userId: string, 
+    companyId: string
+  ): Promise<{
     invoiceNumber: string;
     invoiceYear: number;
   }> {
     const currentYear = new Date().getFullYear();
 
-    // Get the last invoice for this user in the current year
+    // Get the last invoice for this user+company in the current year
     const lastInvoice = await this.invoiceRepo.findOne({
-      where: { userId, invoiceYear: currentYear },
+      where: { userId, fromCompanyId: companyId, invoiceYear: currentYear },
       order: { invoiceNumber: 'DESC' },
     });
 
@@ -83,23 +110,32 @@ export class InvoicesService {
   }
 
   async create(userId: string, input: CreateInvoiceRequest): Promise<Invoice> {
-    const { lineItems: lineItemsInput, ...invoiceData } = input;
+    const { lineItems: lineItemsInput, fromCompanyId, ...invoiceData } = input;
+
+    // Validate fromCompanyId is provided (required for multi-tenant)
+    if (!fromCompanyId) {
+      throw new BadRequestException('Company ID is required');
+    }
+
+    // Validate user has access to this company
+    await this.validateUserCompanyAccess(userId, fromCompanyId);
 
     // Generate invoice number
     const { invoiceNumber, invoiceYear } =
-      await this.generateInvoiceNumber(userId);
+      await this.generateInvoiceNumber(userId, fromCompanyId);
 
     // Calculate totals
     const totals = this.calculateTotals(lineItemsInput, input.taxRate ?? 13);
 
-    // Create invoice
+    // Create invoice in draft state
     const invoice = this.invoiceRepo.create({
       ...invoiceData,
+      fromCompanyId,
       userId,
       invoiceNumber,
       invoiceYear,
       ...totals,
-      status: input.status ?? 'pending',
+      status: 'draft', // Always start as draft
     });
 
     // Save invoice first to get the ID
@@ -123,11 +159,20 @@ export class InvoicesService {
   async findAll(
     paginationDto: PaginationDto,
     userId: string,
+    companyId?: string,
     status?: string,
   ): Promise<PaginatedResponse<Invoice>> {
     const { limit = 10, offset = 0 } = paginationDto;
 
     const where: any = { userId, deletedAt: IsNull() };
+    
+    // Multi-tenant filtering
+    if (companyId) {
+      // Validate user has access to this company
+      await this.validateUserCompanyAccess(userId, companyId);
+      where.fromCompanyId = companyId;
+    }
+    
     if (status && status !== 'all') {
       where.status = status;
     }
@@ -157,6 +202,9 @@ export class InvoicesService {
       throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
     }
 
+    // Validate user has access to the company (multi-tenant security)
+    await this.validateUserCompanyAccess(userId, invoice.fromCompanyId);
+
     return invoice;
   }
 
@@ -166,6 +214,14 @@ export class InvoicesService {
     input: UpdateInvoiceRequest,
   ): Promise<Invoice> {
     const invoice = await this.findOne(userId, id);
+
+    // Check if invoice is immutable (issued or later states)
+    if (invoice.status !== 'draft' && invoice.status !== 'canceled') {
+      throw new BadRequestException(
+        'Cannot modify invoice that has been issued. Only draft invoices can be edited.'
+      );
+    }
+
     const { lineItems: lineItemsInput, ...updateData } = input;
 
     // If line items are provided, update them
@@ -196,9 +252,40 @@ export class InvoicesService {
     // Update invoice fields
     Object.assign(invoice, updateData);
 
-    // If status is changed to paid, set paidDate
-    if (updateData.status === 'paid' && !invoice.paidDate) {
-      invoice.paidDate = new Date().toISOString().split('T')[0];
+    return this.invoiceRepo.save(invoice);
+  }
+
+  /**
+   * Issue an invoice (draft -> issued) - Makes it immutable
+   */
+  async issueInvoice(
+    userId: string, 
+    id: string, 
+    input?: IssueInvoiceRequest
+  ): Promise<Invoice> {
+    const invoice = await this.findOne(userId, id);
+
+    // Can only issue draft invoices
+    if (invoice.status !== 'draft') {
+      throw new BadRequestException(
+        `Cannot issue invoice with status '${invoice.status}'. Only draft invoices can be issued.`
+      );
+    }
+
+    // Validate the invoice has line items
+    if (!invoice.lineItems || invoice.lineItems.length === 0) {
+      throw new BadRequestException(
+        'Cannot issue invoice without line items.'
+      );
+    }
+
+    // Set issued status and timestamp
+    invoice.status = 'issued';
+    invoice.issuedAt = new Date().toISOString();
+    
+    // Update issue date if provided
+    if (input?.issueDate) {
+      invoice.issueDate = input.issueDate;
     }
 
     return this.invoiceRepo.save(invoice);
@@ -227,14 +314,37 @@ export class InvoicesService {
   ): Promise<Invoice> {
     const invoice = await this.findOne(userId, id);
 
-    invoice.amountPaid = Number(invoice.amountPaid) + amount;
-    invoice.balanceDue = Number(invoice.total) - Number(invoice.amountPaid);
+    // Can only record payments on issued invoices
+    if (!['issued', 'partial', 'overdue'].includes(invoice.status)) {
+      throw new BadRequestException(
+        `Cannot record payment on invoice with status '${invoice.status}'. Invoice must be issued first.`
+      );
+    }
 
-    // If fully paid, update status
+    // Validate payment amount
+    if (amount <= 0) {
+      throw new BadRequestException('Payment amount must be greater than 0');
+    }
+
+    const newAmountPaid = Number(invoice.amountPaid) + amount;
+    const newBalance = Number(invoice.total) - newAmountPaid;
+
+    if (newAmountPaid > Number(invoice.total)) {
+      throw new BadRequestException(
+        `Payment amount ($${amount}) exceeds remaining balance ($${invoice.balanceDue})`
+      );
+    }
+
+    invoice.amountPaid = newAmountPaid;
+    invoice.balanceDue = newBalance;
+
+    // Update status based on payment
     if (invoice.balanceDue <= 0) {
       invoice.status = 'paid';
       invoice.paidDate = paidAt || new Date().toISOString().split('T')[0];
-      invoice.balanceDue = 0;
+      invoice.balanceDue = 0; // Ensure it's exactly 0
+    } else {
+      invoice.status = 'partial';
     }
 
     return this.invoiceRepo.save(invoice);
