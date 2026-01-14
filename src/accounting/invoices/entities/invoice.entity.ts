@@ -1,5 +1,6 @@
 import { User } from 'src/auth/entities/user.entity';
 import { Company } from 'src/accounting/companies/entities/company.entity';
+import { Client } from 'src/accounting/clients/entities/client.entity';
 import {
   Column,
   CreateDateColumn,
@@ -35,21 +36,13 @@ export class Invoice {
   @Column({ name: 'from_company_id', nullable: true })
   fromCompanyId?: string;
 
-  /** Bill To fields */
-  @Column({ name: 'bill_to_full_name' })
-  billToFullName: string;
+  /** Client receiving the invoice (Bill To) */
+  @ManyToOne(() => Client, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'bill_to_client_id' })
+  billToClient?: Client;
 
-  @Column({ name: 'bill_to_address', type: 'text', nullable: true })
-  billToAddress?: string;
-
-  @Column({ name: 'bill_to_business_number', nullable: true })
-  billToBusinessNumber?: string;
-
-  @Column({ name: 'bill_to_email', nullable: true })
-  billToEmail?: string;
-
-  @Column({ name: 'bill_to_phone', nullable: true })
-  billToPhone?: string;
+  @Column({ name: 'bill_to_client_id', nullable: true })
+  billToClientId?: string;
 
   /** Invoice details */
   @Column({ name: 'invoice_number', unique: true })

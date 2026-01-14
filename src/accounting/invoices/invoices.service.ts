@@ -136,7 +136,7 @@ export class InvoicesService {
       take: limit,
       skip: offset,
       where,
-      relations: ['fromCompany', 'lineItems'],
+      relations: ['fromCompany', 'billToClient', 'lineItems'],
       order: { createdAt: 'DESC' },
     });
 
@@ -150,7 +150,7 @@ export class InvoicesService {
   async findOne(userId: string, id: string): Promise<Invoice> {
     const invoice = await this.invoiceRepo.findOne({
       where: { id, userId },
-      relations: ['fromCompany', 'lineItems'],
+      relations: ['fromCompany', 'billToClient', 'lineItems'],
     });
 
     if (!invoice) {
@@ -346,25 +346,52 @@ export class InvoicesService {
       });
     }
 
-    // Dates and Bill To
-    const billToStack: Content[] = [
-      { text: 'BILL TO', style: 'sectionLabel' },
-      { text: invoice.billToFullName, style: 'billToName' },
-    ];
-    if (invoice.billToAddress) {
-      billToStack.push({ text: invoice.billToAddress, style: 'billToDetails' });
-    }
-    if (invoice.billToEmail) {
-      billToStack.push({ text: invoice.billToEmail, style: 'billToDetails' });
-    }
-    if (invoice.billToPhone) {
-      billToStack.push({ text: invoice.billToPhone, style: 'billToDetails' });
-    }
-    if (invoice.billToBusinessNumber) {
+    // Dates and Bill To (using billToClient relation)
+    const billToStack: Content[] = [{ text: 'BILL TO', style: 'sectionLabel' }];
+
+    if (invoice.billToClient) {
       billToStack.push({
-        text: `BN: ${invoice.billToBusinessNumber}`,
-        style: 'billToDetails',
+        text: invoice.billToClient.fullName,
+        style: 'billToName',
       });
+      if (invoice.billToClient.address) {
+        billToStack.push({
+          text: invoice.billToClient.address,
+          style: 'billToDetails',
+        });
+      }
+      if (invoice.billToClient.city || invoice.billToClient.province) {
+        const location = [
+          invoice.billToClient.city,
+          invoice.billToClient.province,
+          invoice.billToClient.postalCode,
+        ]
+          .filter(Boolean)
+          .join(', ');
+        if (location) {
+          billToStack.push({ text: location, style: 'billToDetails' });
+        }
+      }
+      if (invoice.billToClient.email) {
+        billToStack.push({
+          text: invoice.billToClient.email,
+          style: 'billToDetails',
+        });
+      }
+      if (invoice.billToClient.phone) {
+        billToStack.push({
+          text: invoice.billToClient.phone,
+          style: 'billToDetails',
+        });
+      }
+      if (invoice.billToClient.businessNumber) {
+        billToStack.push({
+          text: `BN: ${invoice.billToClient.businessNumber}`,
+          style: 'billToDetails',
+        });
+      }
+    } else {
+      billToStack.push({ text: 'Client not found', style: 'billToName' });
     }
 
     headerContent.push({

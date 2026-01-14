@@ -28,20 +28,21 @@ export class Client {
   @Column()
   phone: string;
 
-  @Column()
-  address: string;
+  // === Campos opcionales de dirección ===
+  @Column({ nullable: true })
+  address?: string;
 
-  @Column()
-  city: string;
+  @Column({ nullable: true })
+  city?: string;
 
-  @Column()
-  province: string;
+  @Column({ nullable: true })
+  province?: string;
 
-  @Column()
-  postalCode: string;
+  @Column({ nullable: true })
+  postalCode?: string;
 
-  @Column()
-  country: string;
+  @Column({ nullable: true })
+  country?: string;
 
   // === Campos para individuos ===
   @Column({ nullable: true })
