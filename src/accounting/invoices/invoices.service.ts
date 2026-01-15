@@ -1,4 +1,11 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonMessages } from '@ascencio/shared/i18n';
 import { IsNull, Repository } from 'typeorm';
@@ -39,7 +46,9 @@ export class InvoicesService {
    * Get or create a "Sole Proprietor" company for a user
    * This is used when the user doesn't have any company registered
    */
-  private async getOrCreateSoleProprietorCompany(userId: string): Promise<Company> {
+  private async getOrCreateSoleProprietorCompany(
+    userId: string,
+  ): Promise<Company> {
     // Check if user has any company
     const existingCompany = await this.companyRepo.findOne({
       where: { users: { id: userId } },
@@ -77,8 +86,8 @@ export class InvoicesService {
    * Validate that a user belongs to a company (multi-tenant security)
    */
   private async validateUserCompanyAccess(
-    userId: string, 
-    companyId: string
+    userId: string,
+    companyId: string,
   ): Promise<Company> {
     const company = await this.companyRepo.findOne({
       where: { id: companyId, users: { id: userId } },
@@ -97,8 +106,8 @@ export class InvoicesService {
    * Format: INV-YYYY-XXXX (e.g., INV-2026-0001)
    */
   private async generateInvoiceNumber(
-    userId: string, 
-    companyId: string
+    userId: string,
+    companyId: string,
   ): Promise<{
     invoiceNumber: string;
     invoiceYear: number;
@@ -166,8 +175,10 @@ export class InvoicesService {
     }
 
     // Generate invoice number
-    const { invoiceNumber, invoiceYear } =
-      await this.generateInvoiceNumber(userId, finalCompanyId);
+    const { invoiceNumber, invoiceYear } = await this.generateInvoiceNumber(
+      userId,
+      finalCompanyId,
+    );
 
     // Calculate totals
     const totals = this.calculateTotals(lineItemsInput, input.taxRate ?? 13);
@@ -210,14 +221,14 @@ export class InvoicesService {
     const { limit = 10, offset = 0 } = paginationDto;
 
     const where: any = { userId, deletedAt: IsNull() };
-    
+
     // Multi-tenant filtering
     if (companyId) {
       // Validate user has access to this company
       await this.validateUserCompanyAccess(userId, companyId);
       where.fromCompanyId = companyId;
     }
-    
+
     if (status && status !== 'all') {
       where.status = status;
     }
@@ -263,7 +274,7 @@ export class InvoicesService {
     // Check if invoice is immutable (issued or later states)
     if (invoice.status !== 'draft' && invoice.status !== 'canceled') {
       throw new BadRequestException(
-        'Cannot modify invoice that has been issued. Only draft invoices can be edited.'
+        'Cannot modify invoice that has been issued. Only draft invoices can be edited.',
       );
     }
 
@@ -284,6 +295,7 @@ export class InvoicesService {
       );
 
       await this.lineItemRepo.save(lineItems);
+      invoice.lineItems = lineItems;
 
       // Recalculate totals
       const totals = this.calculateTotals(
@@ -304,37 +316,33 @@ export class InvoicesService {
    * Issue an invoice (draft -> issued) - Makes it immutable
    */
   async issueInvoice(
-    userId: string, 
-    id: string, 
-    input?: IssueInvoiceRequest
+    userId: string,
+    id: string,
+    input?: IssueInvoiceRequest,
   ): Promise<Invoice> {
     const invoice = await this.findOne(userId, id);
 
     // Can only issue draft invoices
     if (invoice.status !== 'draft') {
       throw new BadRequestException(
-        `Cannot issue invoice with status '${invoice.status}'. Only draft invoices can be issued.`
+        `Cannot issue invoice with status '${invoice.status}'. Only draft invoices can be issued.`,
       );
     }
 
     // Validate the invoice has line items
     if (!invoice.lineItems || invoice.lineItems.length === 0) {
-      throw new BadRequestException(
-        'Cannot issue invoice without line items.'
-      );
+      throw new BadRequestException('Cannot issue invoice without line items.');
     }
 
     // Validate invoice has a client
     if (!invoice.billToClientId) {
-      throw new BadRequestException(
-        'Cannot issue invoice without a client.'
-      );
+      throw new BadRequestException('Cannot issue invoice without a client.');
     }
 
     // Set issued status and timestamp
     invoice.status = 'issued';
     invoice.issuedAt = new Date().toISOString();
-    
+
     // Update issue date if provided
     if (input?.issueDate) {
       invoice.issueDate = input.issueDate;
@@ -374,7 +382,7 @@ export class InvoicesService {
     // Can only record payments on issued invoices
     if (!['issued', 'partial', 'overdue'].includes(invoice.status)) {
       throw new BadRequestException(
-        `Cannot record payment on invoice with status '${invoice.status}'. Invoice must be issued first.`
+        `Cannot record payment on invoice with status '${invoice.status}'. Invoice must be issued first.`,
       );
     }
 
@@ -388,7 +396,7 @@ export class InvoicesService {
 
     if (newAmountPaid > Number(invoice.total)) {
       throw new BadRequestException(
-        `Payment amount ($${amount}) exceeds remaining balance ($${invoice.balanceDue})`
+        `Payment amount ($${amount}) exceeds remaining balance ($${invoice.balanceDue})`,
       );
     }
 

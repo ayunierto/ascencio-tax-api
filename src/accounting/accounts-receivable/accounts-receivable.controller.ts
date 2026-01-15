@@ -22,10 +22,7 @@ export class AccountsReceivableController {
 
   @Get('aging/:companyId')
   @Auth()
-  getAgingReport(
-    @Param('companyId') companyId: string,
-    @GetUser() user: User,
-  ) {
+  getAgingReport(@Param('companyId') companyId: string, @GetUser() user: User) {
     return this.arService.getAgingReport(user.id, companyId);
   }
 

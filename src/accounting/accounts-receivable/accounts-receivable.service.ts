@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AccountReceivable } from './entities/account-receivable.entity';
@@ -19,7 +23,10 @@ export class AccountsReceivableService {
   /**
    * Create an Account Receivable from an issued invoice
    */
-  async createFromInvoice(invoice: Invoice, userId: string): Promise<AccountReceivable> {
+  async createFromInvoice(
+    invoice: Invoice,
+    userId: string,
+  ): Promise<AccountReceivable> {
     const ar = this.arRepo.create({
       userId,
       companyId: invoice.fromCompanyId,
@@ -41,7 +48,7 @@ export class AccountsReceivableService {
    */
   private async validateUserCompanyAccess(
     userId: string,
-    companyId: string
+    companyId: string,
   ): Promise<Company> {
     const company = await this.companyRepo.findOne({
       where: { id: companyId, users: { id: userId } },
@@ -78,7 +85,13 @@ export class AccountsReceivableService {
       take: limit,
       skip: offset,
       where,
-      relations: ['client', 'invoice', 'company', 'payments', 'payments.receipt'],
+      relations: [
+        'client',
+        'invoice',
+        'company',
+        'payments',
+        'payments.receipt',
+      ],
       order: { createdAt: 'DESC' },
     });
 
@@ -95,7 +108,13 @@ export class AccountsReceivableService {
   async findOne(userId: string, id: string): Promise<AccountReceivable> {
     const ar = await this.arRepo.findOne({
       where: { id, userId },
-      relations: ['client', 'invoice', 'company', 'payments', 'payments.receipt'],
+      relations: [
+        'client',
+        'invoice',
+        'company',
+        'payments',
+        'payments.receipt',
+      ],
     });
 
     if (!ar) {
@@ -163,7 +182,7 @@ export class AccountsReceivableService {
     ars.forEach((ar) => {
       const dueDate = new Date(ar.dueDate);
       const daysPastDue = Math.floor(
-        (today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)
+        (today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24),
       );
 
       if (daysPastDue < 0) {

@@ -52,7 +52,12 @@ export class InvoicesController {
     @Query('companyId') companyId: string,
     @GetUser() user: User,
   ): Promise<PaginatedResponse<Invoice>> {
-    return this.invoicesService.findAll(paginationDto, user.id, companyId, status);
+    return this.invoicesService.findAll(
+      paginationDto,
+      user.id,
+      companyId,
+      status,
+    );
   }
 
   @Get(':id')

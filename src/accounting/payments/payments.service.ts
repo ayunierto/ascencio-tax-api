@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Payment } from './entities/payment.entity';
@@ -69,7 +73,7 @@ export class PaymentsService {
 
     if (paymentData.amount > Number(ar.balance)) {
       throw new BadRequestException(
-        `Payment amount ($${paymentData.amount}) exceeds remaining balance ($${ar.balance})`
+        `Payment amount ($${paymentData.amount}) exceeds remaining balance ($${ar.balance})`,
       );
     }
 
@@ -84,7 +88,8 @@ export class PaymentsService {
     const savedPayment = await this.paymentRepo.save(payment);
 
     // Generate receipt
-    const { receiptNumber, receiptYear } = await this.generateReceiptNumber(userId);
+    const { receiptNumber, receiptYear } =
+      await this.generateReceiptNumber(userId);
     const receipt = this.receiptRepo.create({
       paymentId: savedPayment.id,
       receiptNumber,
@@ -114,7 +119,10 @@ export class PaymentsService {
   /**
    * Get all payments for a user
    */
-  async findAll(userId: string, accountReceivableId?: string): Promise<Payment[]> {
+  async findAll(
+    userId: string,
+    accountReceivableId?: string,
+  ): Promise<Payment[]> {
     const where: any = { recordedByUserId: userId };
     if (accountReceivableId) {
       where.accountReceivableId = accountReceivableId;
@@ -133,7 +141,12 @@ export class PaymentsService {
   async findOne(userId: string, id: string): Promise<Payment> {
     const payment = await this.paymentRepo.findOne({
       where: { id, recordedByUserId: userId },
-      relations: ['receipt', 'accountReceivable', 'accountReceivable.client', 'accountReceivable.invoice'],
+      relations: [
+        'receipt',
+        'accountReceivable',
+        'accountReceivable.client',
+        'accountReceivable.invoice',
+      ],
     });
 
     if (!payment) {

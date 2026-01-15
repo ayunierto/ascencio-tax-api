@@ -16,7 +16,12 @@ import {
 } from 'typeorm';
 import { Payment } from '../../payments/entities/payment.entity';
 
-export type AccountReceivableStatus = 'open' | 'partial' | 'paid' | 'overdue' | 'written_off';
+export type AccountReceivableStatus =
+  | 'open'
+  | 'partial'
+  | 'paid'
+  | 'overdue'
+  | 'written_off';
 
 @Entity({ name: 'accounts_receivable' })
 export class AccountReceivable {
@@ -58,7 +63,13 @@ export class AccountReceivable {
   @Column({ name: 'original_amount', type: 'decimal', precision: 10, scale: 2 })
   originalAmount: number;
 
-  @Column({ name: 'paid_amount', type: 'decimal', precision: 10, scale: 2, default: 0 })
+  @Column({
+    name: 'paid_amount',
+    type: 'decimal',
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   paidAmount: number;
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
@@ -77,7 +88,9 @@ export class AccountReceivable {
   notes?: string;
 
   /** Payments made against this AR */
-  @OneToMany(() => Payment, (payment) => payment.accountReceivable, { cascade: true })
+  @OneToMany(() => Payment, (payment) => payment.accountReceivable, {
+    cascade: true,
+  })
   payments: Payment[];
 
   @CreateDateColumn({ type: 'timestamp with time zone' })

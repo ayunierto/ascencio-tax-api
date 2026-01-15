@@ -12,7 +12,13 @@ import {
 } from 'typeorm';
 import { Receipt } from './receipt.entity';
 
-export type PaymentMethod = 'cash' | 'check' | 'transfer' | 'credit_card' | 'debit_card' | 'other';
+export type PaymentMethod =
+  | 'cash'
+  | 'check'
+  | 'transfer'
+  | 'credit_card'
+  | 'debit_card'
+  | 'other';
 
 @Entity({ name: 'payments' })
 export class Payment {
@@ -28,7 +34,9 @@ export class Payment {
   recordedByUserId: string;
 
   /** Account receivable this payment is for */
-  @ManyToOne(() => AccountReceivable, (ar) => ar.payments, { onDelete: 'CASCADE' })
+  @ManyToOne(() => AccountReceivable, (ar) => ar.payments, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'account_receivable_id' })
   accountReceivable: AccountReceivable;
 
@@ -52,7 +60,10 @@ export class Payment {
   notes?: string;
 
   /** Receipt generated for this payment */
-  @OneToOne(() => Receipt, (receipt) => receipt.payment, { cascade: true, eager: true })
+  @OneToOne(() => Receipt, (receipt) => receipt.payment, {
+    cascade: true,
+    eager: true,
+  })
   receipt?: Receipt;
 
   @CreateDateColumn({ type: 'timestamp with time zone' })

@@ -11,7 +11,8 @@ export class PaymentsController {
   @Post()
   @Auth()
   recordPayment(
-    @Body() body: {
+    @Body()
+    body: {
       accountReceivableId: string;
       amount: number;
       paymentDate: string;

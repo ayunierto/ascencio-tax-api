@@ -7,10 +7,7 @@ import { Company } from '../companies/entities/company.entity';
 import { AuthModule } from '../../auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([AccountReceivable, Company]),
-    AuthModule,
-  ],
+  imports: [TypeOrmModule.forFeature([AccountReceivable, Company]), AuthModule],
   controllers: [AccountsReceivableController],
   providers: [AccountsReceivableService],
   exports: [AccountsReceivableService],

@@ -14,7 +14,14 @@ import {
 } from 'typeorm';
 import { InvoiceLineItem } from './invoice-line-item.entity';
 
-export type InvoiceStatus = 'draft' | 'issued' | 'partial' | 'paid' | 'overdue' | 'canceled' | 'void';
+export type InvoiceStatus =
+  | 'draft'
+  | 'issued'
+  | 'partial'
+  | 'paid'
+  | 'overdue'
+  | 'canceled'
+  | 'void';
 
 @Entity({ name: 'invoices' })
 export class Invoice {
@@ -83,12 +90,16 @@ export class Invoice {
   dueDate: string;
 
   /** When the invoice was issued (becomes immutable) */
-  @Column({ name: 'issued_at', type: 'timestamp with time zone', nullable: true })
+  @Column({
+    name: 'issued_at',
+    type: 'timestamp with time zone',
+    nullable: true,
+  })
   issuedAt?: string;
 
   /** Line items */
   @OneToMany(() => InvoiceLineItem, (item) => item.invoice, {
-    cascade: true,
+    cascade: false, // manage line items explicitly to avoid unintended null invoice_id updates
     eager: true,
   })
   lineItems: InvoiceLineItem[];

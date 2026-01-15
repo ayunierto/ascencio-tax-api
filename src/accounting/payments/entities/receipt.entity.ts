@@ -14,7 +14,9 @@ export class Receipt {
   id: string;
 
   /** Payment this receipt is for */
-  @OneToOne(() => Payment, (payment) => payment.receipt, { onDelete: 'CASCADE' })
+  @OneToOne(() => Payment, (payment) => payment.receipt, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'payment_id' })
   payment: Payment;
 
