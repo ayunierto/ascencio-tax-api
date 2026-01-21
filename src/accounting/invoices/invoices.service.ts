@@ -23,6 +23,7 @@ import { FilesService } from '../../files/files.service';
 import { TDocumentDefinitions, Content, TableCell } from 'pdfmake/interfaces';
 import { Company } from '../companies/entities/company.entity';
 import { User } from 'src/auth/entities/user.entity';
+import { Client } from '../clients/entities/client.entity';
 import { AccountsReceivableService } from '../accounts-receivable/accounts-receivable.service';
 
 @Injectable()
@@ -36,6 +37,8 @@ export class InvoicesService {
     private readonly companyRepo: Repository<Company>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(Client)
+    private readonly clientRepo: Repository<Client>,
     private readonly printerService: PrinterService,
     private readonly filesService: FilesService,
     @Inject(forwardRef(() => AccountsReceivableService))
@@ -80,6 +83,44 @@ export class InvoicesService {
     });
 
     return (await this.companyRepo.save(soleProprietorCompany)) as Company;
+  }
+
+  /**
+   * Get or create a client from manual invoice data
+   * This is used when the user provides client data directly in the invoice
+   */
+  private async getOrCreateClientFromManualData(
+    userId: string,
+    fullName: string,
+    email: string,
+    phone: string,
+  ): Promise<string> {
+    // Try to find existing client by email and user
+    const existingClient = await this.clientRepo.findOne({
+      where: { email, users: { id: userId } },
+      relations: ['users'],
+    });
+
+    if (existingClient) {
+      return existingClient.id;
+    }
+
+    // Get user to associate with the client
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Create new client
+    const client = this.clientRepo.create({
+      fullName,
+      email,
+      phone,
+      users: [user],
+    });
+
+    const savedClient = await this.clientRepo.save(client);
+    return savedClient.id;
   }
 
   /**
@@ -174,6 +215,17 @@ export class InvoicesService {
       await this.validateUserCompanyAccess(userId, finalCompanyId);
     }
 
+    // If no client ID provided but manual data exists, create or get client
+    let finalClientId = invoiceData.billToClientId;
+    if (!finalClientId && invoiceData.billToFullName && invoiceData.billToEmail && invoiceData.billToPhone) {
+      finalClientId = await this.getOrCreateClientFromManualData(
+        userId,
+        invoiceData.billToFullName,
+        invoiceData.billToEmail,
+        invoiceData.billToPhone,
+      );
+    }
+
     // Generate invoice number
     const { invoiceNumber, invoiceYear } = await this.generateInvoiceNumber(
       userId,
@@ -186,6 +238,7 @@ export class InvoicesService {
     // Create invoice in draft state
     const invoice = this.invoiceRepo.create({
       ...invoiceData,
+      billToClientId: finalClientId,
       fromCompanyId: finalCompanyId,
       userId,
       invoiceNumber,

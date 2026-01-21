@@ -7,7 +7,7 @@ const fonts = {
   Roboto: {
     normal: 'fonts/Roboto-Regular.ttf',
     bold: 'fonts/Roboto-Bold.ttf',
-    italics: 'fonts/Roboto-Italic.ttf',
+    italics: 'fonts/Roboto-Medium.ttf', // Using Medium as fallback for italics
     bolditalics: 'fonts/Roboto-BoldItalic.ttf',
   },
   Times: {
