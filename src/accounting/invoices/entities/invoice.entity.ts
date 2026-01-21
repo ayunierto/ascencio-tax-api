@@ -28,30 +28,28 @@ export class Invoice {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  // User que genera la factura
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
-
   @Column({ name: 'user_id' })
   userId: string;
 
-  /** Company issuing the invoice (auto-created as "Sole Proprietor" if user has no company) */
+  // Company que emite la factura (auto-creada como "Sole Proprietor" si el usuario no tiene compañía)
   @ManyToOne(() => Company, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'from_company_id' })
   fromCompany: Company;
-
   @Column({ name: 'from_company_id' })
   fromCompanyId: string;
 
-  /** Client receiving the invoice (Bill To) */
+  // Client receiving the invoice (Bill To)
   @ManyToOne(() => Client, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'bill_to_client_id' })
   billToClient?: Client;
-
   @Column({ name: 'bill_to_client_id', nullable: true })
   billToClientId?: string;
 
-  /** Bill To fields (inline) - used when billToClientId is null */
+  // Bill To fields (inline) - used when billToClientId is null
   @Column({ name: 'bill_to_name', nullable: true })
   billToName?: string;
 
@@ -76,7 +74,7 @@ export class Invoice {
   @Column({ name: 'bill_to_country', nullable: true })
   billToCountry?: string;
 
-  /** Invoice details */
+  // Invoice details
   @Column({ name: 'invoice_number', unique: true })
   invoiceNumber: string;
 
@@ -89,7 +87,7 @@ export class Invoice {
   @Column({ name: 'due_date', type: 'date' })
   dueDate: string;
 
-  /** When the invoice was issued (becomes immutable) */
+  // When the invoice was issued (becomes immutable)
   @Column({
     name: 'issued_at',
     type: 'timestamp with time zone',
@@ -97,14 +95,14 @@ export class Invoice {
   })
   issuedAt?: string;
 
-  /** Line items */
+  // Line items
   @OneToMany(() => InvoiceLineItem, (item) => item.invoice, {
-    cascade: false, // manage line items explicitly to avoid unintended null invoice_id updates
+    cascade: true,
     eager: true,
   })
   lineItems: InvoiceLineItem[];
 
-  /** Financial fields */
+  // Financial fields
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   subtotal: number;
 
