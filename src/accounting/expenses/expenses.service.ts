@@ -119,7 +119,15 @@ export class ExpensesService {
       // Validar fecha nula
       let expenseDate: Date | undefined;
       if (date) {
-        expenseDate = new Date(date);
+        // Parse date as UTC to avoid timezone issues
+        const dateParts = date.split('T')[0].split('-');
+        expenseDate = new Date(
+          Date.UTC(
+            parseInt(dateParts[0]),
+            parseInt(dateParts[1]) - 1,
+            parseInt(dateParts[2]),
+          ),
+        );
         if (isNaN(expenseDate.getTime())) {
           throw new BadRequestException('Invalid date');
         }
@@ -219,9 +227,20 @@ export class ExpensesService {
         subcategory = expense.subcategory;
       }
 
-      const parsedDate = date ? new Date(date) : expense.date;
-      if (date && isNaN(parsedDate.getTime())) {
-        throw new BadRequestException('Invalid date');
+      let parsedDate = expense.date;
+      if (date) {
+        // Parse date as UTC to avoid timezone issues
+        const dateParts = date.split('T')[0].split('-');
+        parsedDate = new Date(
+          Date.UTC(
+            parseInt(dateParts[0]),
+            parseInt(dateParts[1]) - 1,
+            parseInt(dateParts[2]),
+          ),
+        );
+        if (isNaN(parsedDate.getTime())) {
+          throw new BadRequestException('Invalid date');
+        }
       }
 
       const updatedExpense = await this.expenseRepository.preload({

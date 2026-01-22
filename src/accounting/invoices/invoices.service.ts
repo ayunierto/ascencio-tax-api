@@ -217,7 +217,12 @@ export class InvoicesService {
 
     // If no client ID provided but manual data exists, create or get client
     let finalClientId = invoiceData.billToClientId;
-    if (!finalClientId && invoiceData.billToFullName && invoiceData.billToEmail && invoiceData.billToPhone) {
+    if (
+      !finalClientId &&
+      invoiceData.billToFullName &&
+      invoiceData.billToEmail &&
+      invoiceData.billToPhone
+    ) {
       finalClientId = await this.getOrCreateClientFromManualData(
         userId,
         invoiceData.billToFullName,
