@@ -565,12 +565,26 @@ export class AuthService {
   ): Promise<UpdateProfileResponse> {
     const { password, ...userData } = updateProfileDto;
 
-    if (password && password.trim().length > 0) {
-      const newPassword = await this.hashPassword(password);
+    try {
+      if (password && password.trim().length > 0) {
+        const newPassword = await this.hashPassword(password);
+
+        const updatedUser = await this.usersRepository.preload({
+          id: user.id,
+          password: newPassword,
+          ...userData,
+        });
+
+        if (!updatedUser)
+          throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
+
+        await this.usersRepository.save(updatedUser);
+
+        return UserMapper.toBasicUser(updatedUser);
+      }
 
       const updatedUser = await this.usersRepository.preload({
         id: user.id,
-        password: newPassword,
         ...userData,
       });
 
@@ -580,18 +594,10 @@ export class AuthService {
       await this.usersRepository.save(updatedUser);
 
       return UserMapper.toBasicUser(updatedUser);
+    } catch (error) {
+      throw new InternalServerErrorException(
+        CommonMessages.INTERNAL_SERVER_ERROR,
+      );
     }
-
-    const updatedUser = await this.usersRepository.preload({
-      id: user.id,
-      ...userData,
-    });
-
-    if (!updatedUser)
-      throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
-
-    await this.usersRepository.save(updatedUser);
-
-    return UserMapper.toBasicUser(updatedUser);
   }
 }
