@@ -13,6 +13,7 @@ import { JwtService } from '@nestjs/jwt';
 import { DateTime } from 'luxon';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
+import { OAuth2Client } from 'google-auth-library';
 import type { GoogleUserProfile } from './strategies/google.strategy';
 
 import { AuthMessages, CommonMessages } from '@ascencio/shared/i18n';
@@ -147,7 +148,8 @@ export class AuthService {
     if (user && !user.isActive)
       throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
 
-    if (user?.deletedAt !== null) {
+    // Crear usuario si no existe o si fue eliminado (soft delete)
+    if (!user || user.deletedAt !== null) {
       const passwordHash = await this.hashPassword(randomUUID());
       user = this.usersRepository.create({
         firstName: googleProfile.firstName ?? 'User',
@@ -184,6 +186,41 @@ export class AuthService {
       access_token: await this.generateJWT(user),
       user: UserMapper.toBasicUser(user),
     };
+  }
+
+  async signInWithGoogleIdToken(idToken: string): Promise<SignInResponse> {
+    try {
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+      // Verificar el idToken con Google
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+
+      const payload = ticket.getPayload();
+
+      if (!payload || !payload.email) {
+        throw new BadRequestException(
+          AuthMessages.GOOGLE_PROFILE_MISSING_EMAIL,
+        );
+      }
+
+      // Crear el perfil de usuario desde el payload del token
+      const googleProfile: GoogleUserProfile = {
+        googleId: payload.sub,
+        email: payload.email,
+        firstName: payload.given_name,
+        lastName: payload.family_name,
+        pictureUrl: payload.picture,
+      };
+
+      // Reutilizar la lógica existente de signInWithGoogle
+      return this.signInWithGoogle(googleProfile);
+    } catch (error) {
+      console.error('Error verifying Google ID token:', error);
+      throw new UnauthorizedException('Invalid Google ID token');
+    }
   }
 
   private async comparePasswords(

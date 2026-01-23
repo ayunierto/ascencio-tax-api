@@ -29,17 +29,21 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       clientSecret,
       callbackURL,
       scope: ['email', 'profile'],
+      passReqToCallback: true,
     });
   }
 
   validate(
+    req: any,
     accessToken: string,
     refreshToken: string,
     profile: Profile,
     done: (err: unknown, user?: GoogleUserProfile) => void,
   ) {
     const email = profile.emails?.[0]?.value;
-    const pictureUrl = (profile.photos?.[0] as any)?.value as string | undefined;
+    const pictureUrl = (profile.photos?.[0] as any)?.value as
+      | string
+      | undefined;
 
     if (!email) {
       return done(new Error('Google profile missing email'));
@@ -52,6 +56,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       lastName: profile.name?.familyName,
       pictureUrl,
     };
+
+    // Preservar el authMode del request si existe
+    if ((req as any).authMode) {
+      (req as any).authModeForCallback = (req as any).authMode;
+    }
 
     return done(null, user);
   }

@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SeedService } from './seed/seed.service';
 
 async function bootstrap() {
   const logger = new Logger('AscencioTaxApi');
@@ -40,6 +41,9 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, documentFactory);
 
   const port = process.env.PORT || 3001;
+
+  const seedService = app.get(SeedService);
+  await seedService.runSeed().catch(() => {});
 
   await app.listen(port);
   logger.log(`Server on port ${port} - Environment: ${process.env.STAGE}`);

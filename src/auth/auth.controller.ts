@@ -19,6 +19,7 @@ import { UserMapper } from './mappers/user.mapper';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 import { ZodValidationPipe } from '../common/pipes/zod-validation.pipe';
+import { z } from 'zod';
 import {
   ChangePasswordResponse,
   CheckStatusResponse,
@@ -154,6 +155,14 @@ export class AuthController {
     return this.authService.deleteAccount(deleteAccountDto, user);
   }
 
+  // Sign in with Google using ID Token (for mobile)
+  @Post('google/verify')
+  async googleVerify(
+    @Body() body: { idToken: string },
+  ): Promise<SignInResponse> {
+    return this.authService.signInWithGoogleIdToken(body.idToken);
+  }
+
   // Sign in with Google OAuth (redirect)
   @Get('google')
   @UseGuards(PassportAuthGuard('google'))
@@ -161,21 +170,51 @@ export class AuthController {
     return;
   }
 
+  // Sign in with Google OAuth for mobile
+  @Get('google/mobile')
+  @UseGuards(PassportAuthGuard('google'))
+  googleAuthMobile(@Req() req?: Request, @Res() res?: Response) {
+    // Establecer una cookie temporal para marcar que es mobile
+    if (res) {
+      res.cookie('oauth_mode', 'mobile', {
+        httpOnly: true,
+        secure: process.env.STAGE !== 'dev',
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 5, // 5 minutos
+        path: '/',
+      });
+    }
+    return;
+  }
+
+  // Verify Google ID Token for mobile native sign-in
+  @Post('google/verify')
+  @UsePipes(new ZodValidationPipe(z.object({ idToken: z.string() })))
+  async googleVerifyToken(
+    @Body() body: { idToken: string },
+  ): Promise<SignInResponse> {
+    return this.authService.signInWithGoogleIdToken(body.idToken);
+  }
+
   @Get('google/callback')
   @UseGuards(PassportAuthGuard('google'))
-  async googleCallback(
-    @Req() req: Request,
-    @Res() res: Response,
-    @Query('mode') mode?: 'json',
-  ) {
+  async googleCallback(@Req() req: Request, @Res() res: Response) {
+    // Leer el mode desde la cookie
+    const oauthMode = (req.cookies as any)?.oauth_mode;
     const result = await this.authService.signInWithGoogle(req.user);
 
-    if (mode === 'json') {
-      return res.status(HttpStatus.OK).json(result);
+    // Limpiar la cookie de modo
+    res.clearCookie('oauth_mode');
+
+    // Handle mobile deep link redirect
+    if (oauthMode === 'mobile') {
+      const mobileScheme = process.env.MOBILE_APP_SCHEME ?? 'ascenciotaxapp';
+      const redirectUrl = `${mobileScheme}://auth/google/callback?access_token=${encodeURIComponent(result.access_token)}`;
+      return res.redirect(redirectUrl);
     }
 
     const cookieDomain = process.env.AUTH_COOKIE_DOMAIN;
-    res.cookie('access_to ken', result.access_token, {
+    res.cookie('access_token', result.access_token, {
       httpOnly: true,
       secure: process.env.STAGE !== 'dev',
       sameSite: 'lax',
@@ -187,9 +226,6 @@ export class AuthController {
     const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:3000';
     const successPath = process.env.OAUTH_SUCCESS_REDIRECT ?? '/en/admin';
     const redirectUrl = new URL(successPath, webAppUrl);
-
-    // Remove comment to enable redirect after OAuth if needed
-    // return res.redirect(redirectUrl.toString());
 
     res.redirect(redirectUrl.toString());
   }
