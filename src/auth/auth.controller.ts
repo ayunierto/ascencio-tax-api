@@ -112,9 +112,9 @@ export class AuthController {
   }
 
   @Post('resend-reset-password-code')
-  @UsePipes(new ZodValidationPipe(resendResetPasswordCodeSchema))
   resendResetPasswordCode(
-    @Body() resendResetPasswordCodeDto: ResendResetPasswordCodeRequest,
+    @Body(new ZodValidationPipe(resendResetPasswordCodeSchema))
+    resendResetPasswordCodeDto: ResendResetPasswordCodeRequest,
   ): Promise<ResendResetPasswordCodeResponse> {
     return this.authService.resendResetPasswordCode(resendResetPasswordCodeDto);
   }
@@ -126,30 +126,30 @@ export class AuthController {
   }
 
   @Post('change-password')
-  @UsePipes(new ZodValidationPipe(changePasswordSchema))
   @Auth()
   changePassword(
-    @Body() changePasswordDto: ChangePasswordRequest,
+    @Body(new ZodValidationPipe(changePasswordSchema))
+    changePasswordDto: ChangePasswordRequest,
     @GetUser() user: User,
   ): Promise<ChangePasswordResponse> {
     return this.authService.changePassword(changePasswordDto, user);
   }
 
   @Patch('update-profile')
-  @UsePipes(new ZodValidationPipe(updateProfileSchema))
   @Auth()
   updateProfile(
-    @Body() updateProfileDto: UpdateProfileRequest,
+    @Body(new ZodValidationPipe(updateProfileSchema))
+    updateProfileDto: UpdateProfileRequest,
     @GetUser() user: User,
   ): Promise<UpdateProfileResponse> {
     return this.authService.updateProfile(updateProfileDto, user);
   }
 
   @Post('delete-account')
-  @UsePipes(new ZodValidationPipe(deleteAccountSchema))
   @Auth()
   deleteAccount(
-    @Body() deleteAccountDto: DeleteAccountRequest,
+    @Body(new ZodValidationPipe(deleteAccountSchema))
+    deleteAccountDto: DeleteAccountRequest,
     @GetUser() user: User,
   ): Promise<DeleteAccountResponse> {
     return this.authService.deleteAccount(deleteAccountDto, user);

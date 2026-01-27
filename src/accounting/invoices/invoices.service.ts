@@ -25,6 +25,7 @@ import { Company } from '../companies/entities/company.entity';
 import { User } from 'src/auth/entities/user.entity';
 import { Client } from '../clients/entities/client.entity';
 import { AccountsReceivableService } from '../accounts-receivable/accounts-receivable.service';
+import axios from 'axios';
 
 @Injectable()
 export class InvoicesService {
@@ -449,10 +450,10 @@ export class InvoicesService {
       throw new BadRequestException('Payment amount must be greater than 0');
     }
 
-    const newAmountPaid = Number(invoice.amountPaid) + amount;
-    const newBalance = Number(invoice.total) - newAmountPaid;
+    const newAmountPaid = invoice.amountPaid + amount;
+    const newBalance = invoice.total - newAmountPaid;
 
-    if (newAmountPaid > Number(invoice.total)) {
+    if (newAmountPaid > invoice.total) {
       throw new BadRequestException(
         `Payment amount ($${amount}) exceeds remaining balance ($${invoice.balanceDue})`,
       );
@@ -476,6 +477,25 @@ export class InvoicesService {
   /**
    * Generate PDF for an invoice
    */
+  /**
+   * Convert image URL to base64 string
+   */
+  private async imageUrlToBase64(url: string): Promise<string | null> {
+    try {
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+      });
+
+      const mimeType = response.headers['content-type'];
+      const base64 = Buffer.from(response.data).toString('base64');
+
+      return `data:${mimeType};base64,${base64}`;
+    } catch (error) {
+      console.error('[PDF] Error converting image to base64:', error);
+      return null;
+    }
+  }
+
   async generatePdf(
     userId: string,
     id: string,
@@ -490,9 +510,21 @@ export class InvoicesService {
     const invoice = await this.findOne(userId, id);
     console.log('[PDF] Invoice found:', invoice.invoiceNumber);
 
+    // Get logo URL - prioritize invoice logoUrl, then company logoUrl
+    const logoUrl = invoice.logoUrl ?? invoice.fromCompany?.logoUrl ?? null;
+    console.log('[PDF] Logo URL:', logoUrl);
+
+    // Convert logo to base64 if available
+    let logoBase64: string | null = null;
+    if (logoUrl) {
+      console.log('[PDF] Converting logo to base64...');
+      logoBase64 = await this.imageUrlToBase64(logoUrl);
+      console.log('[PDF] Logo conversion:', logoBase64 ? 'success' : 'failed');
+    }
+
     // Build PDF document definition
     console.log('[PDF] Building PDF definition...');
-    const docDefinition = this.buildInvoicePdfDefinition(invoice);
+    const docDefinition = this.buildInvoicePdfDefinition(invoice, logoBase64);
     console.log('[PDF] PDF definition built successfully');
 
     // Create PDF
@@ -506,7 +538,10 @@ export class InvoicesService {
   /**
    * Build PDF document definition for an invoice
    */
-  private buildInvoicePdfDefinition(invoice: Invoice): TDocumentDefinitions {
+  private buildInvoicePdfDefinition(
+    invoice: Invoice,
+    logoBase64?: string | null,
+  ): TDocumentDefinitions {
     const primaryColor = '#002e5d';
     const formatCurrency = (amount: number) =>
       `CA$${Number(amount).toFixed(2)}`;
@@ -524,28 +559,45 @@ export class InvoicesService {
 
     // Company info (from)
     if (invoice.fromCompany) {
+      // Create company info stack
+      const companyInfoStack: Content[] = [];
+
+      // Add logo if available
+      if (logoBase64) {
+        companyInfoStack.push({
+          image: 'logo',
+          width: 120,
+          margin: [0, 0, 0, 10] as [number, number, number, number],
+        });
+      }
+
+      // Add company legal name and details
+      companyInfoStack.push(
+        {
+          text: invoice.fromCompany.legalName,
+          style: 'companyName',
+        },
+        ...[
+          invoice.fromCompany.address
+            ? { text: invoice.fromCompany.address, style: 'companyDetails' }
+            : '',
+          invoice.fromCompany.phone
+            ? {
+                text: `Tel: ${invoice.fromCompany.phone}`,
+                style: 'companyDetails',
+              }
+            : '',
+          invoice.fromCompany.email
+            ? { text: invoice.fromCompany.email, style: 'companyDetails' }
+            : '',
+        ].filter(Boolean),
+      );
+
       headerContent.push({
         columns: [
           {
             width: '*',
-            stack: [
-              {
-                text: invoice.fromCompany.name,
-                style: 'companyName',
-              },
-              invoice.fromCompany.address
-                ? { text: invoice.fromCompany.address, style: 'companyDetails' }
-                : '',
-              invoice.fromCompany.phone
-                ? {
-                    text: `Tel: ${invoice.fromCompany.phone}`,
-                    style: 'companyDetails',
-                  }
-                : '',
-              invoice.fromCompany.email
-                ? { text: invoice.fromCompany.email, style: 'companyDetails' }
-                : '',
-            ].filter(Boolean),
+            stack: companyInfoStack,
           },
           {
             width: 'auto',
@@ -773,6 +825,11 @@ export class InvoicesService {
     }
 
     return {
+      images: logoBase64
+        ? {
+            logo: logoBase64,
+          }
+        : {},
       content: [
         ...headerContent,
         {

@@ -31,13 +31,13 @@ export class Company {
   @Column()
   address: string;
 
-  @Column()
+  @Column({ nullable: true })
   city: string;
 
-  @Column()
+  @Column({ nullable: true })
   province: string;
 
-  @Column()
+  @Column({ nullable: true })
   postalCode: string;
 
   @Column()
