@@ -1,5 +1,6 @@
 import { SimpleUser } from '@ascencio/shared/interfaces';
 import { User } from '../entities/user.entity';
+import { DateTime } from 'luxon';
 
 export const UserMapper = {
   toBasicUser(user: User): SimpleUser {
@@ -13,13 +14,11 @@ export const UserMapper = {
       phoneNumber: user.phoneNumber ?? undefined,
       locale: user.locale,
       roles: user.roles,
-      lastLoginAt: user.lastLoginAt ?? undefined,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      lastLoginAt: user.lastLoginAt?.toISOString() ?? undefined,
+      createdAt: user.createdAt.toISOString(),
+      updatedAt: user.updatedAt.toISOString(),
       isActive: user.isActive,
-      isEmailVerified: user.isEmailVerified,
       timeZone: user.timeZone,
-      deletedAt: user.deletedAt ?? undefined,
     };
   },
 };

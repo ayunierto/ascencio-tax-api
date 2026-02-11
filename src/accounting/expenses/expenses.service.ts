@@ -4,8 +4,6 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { Between } from 'typeorm';
-import { CreateExpenseDto } from './dto/create-expense.dto';
-import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { User } from 'src/auth/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -19,6 +17,7 @@ import { SubcategoriesService } from '../subcategories/subcategories.service';
 import { FilesService } from 'src/files/files.service';
 import { Category } from '../categories/entities/category.entity';
 import { Subcategory } from '../subcategories/entities/subcategory.entity';
+import { CreateExpenseRequest, UpdateExpenseRequest } from '@ascencio/shared';
 
 @Injectable()
 export class ExpensesService {
@@ -78,7 +77,7 @@ export class ExpensesService {
   }
 
   async create(
-    createExpenseDto: CreateExpenseDto,
+    createExpenseDto: CreateExpenseRequest,
     user: User,
   ): Promise<Expense> {
     try {
@@ -197,7 +196,7 @@ export class ExpensesService {
 
   async update(
     id: string,
-    updateExpenseDto: UpdateExpenseDto,
+    updateExpenseDto: UpdateExpenseRequest,
     user: User,
   ): Promise<Expense> {
     try {

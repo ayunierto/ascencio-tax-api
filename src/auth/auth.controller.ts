@@ -141,7 +141,7 @@ export class AuthController {
     @Body(new ZodValidationPipe(updateProfileSchema))
     updateProfileDto: UpdateProfileRequest,
     @GetUser() user: User,
-  ): Promise<UpdateProfileResponse> {
+  ): Promise<SimpleUser> {
     return this.authService.updateProfile(updateProfileDto, user);
   }
 

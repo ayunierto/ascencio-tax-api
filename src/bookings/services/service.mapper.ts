@@ -1,8 +1,7 @@
-import { ServiceResponse } from '@ascencio/shared/interfaces';
 import { Service } from './entities';
 
 export class ServiceMapper {
-  static toResponse(entity: Service): ServiceResponse {
+  static toResponse(entity: Service): Service {
     return {
       id: entity.id,
       name: entity.name,
@@ -15,6 +14,8 @@ export class ServiceMapper {
       durationMinutes: entity.durationMinutes,
       imageUrl: entity.imageUrl,
       deletedAt: entity.deletedAt,
+      staffMembers: entity.staffMembers,
+      appointments: entity.appointments,
     };
   }
 }

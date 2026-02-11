@@ -13,10 +13,7 @@ import {
 } from '@nestjs/common';
 
 import { ExpensesService } from './expenses.service';
-import { CreateExpenseDto } from './dto/create-expense.dto';
-import { UpdateExpenseDto } from './dto/update-expense.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { AnalyzeExpenseDto } from './dto/analyze-expense.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/auth/entities/user.entity';
@@ -25,6 +22,16 @@ import { FilesService } from 'src/files/files.service';
 import { RemoveReceiptImageDto } from './dto/remove-receipt-image.dto';
 import { OcrService } from 'src/ocr/ocr.service';
 import { OpenaiService } from 'src/openai/openai.service';
+import {
+  AnalyzeExpenseRequest,
+  analyzeExpenseSchema,
+  CreateExpenseRequest,
+  createExpenseSchema,
+  UpdateExpenseRequest,
+  updateExpenseSchema,
+} from '@ascencio/shared';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
+import { Expense } from './entities/expense.entity';
 
 @Controller('expenses')
 export class ExpensesController {
@@ -37,7 +44,11 @@ export class ExpensesController {
 
   @Post()
   @Auth()
-  create(@Body() createExpenseDto: CreateExpenseDto, @GetUser() user: User) {
+  create(
+    @Body(new ZodValidationPipe(createExpenseSchema))
+    createExpenseDto: CreateExpenseRequest,
+    @GetUser() user: User,
+  ): Promise<Expense> {
     return this.expensesService.create(createExpenseDto, user);
   }
 
@@ -57,7 +68,8 @@ export class ExpensesController {
   @Auth()
   update(
     @Param('id') id: string,
-    @Body() updateExpenseDto: UpdateExpenseDto,
+    @Body(new ZodValidationPipe(updateExpenseSchema))
+    updateExpenseDto: UpdateExpenseRequest,
     @GetUser() user: User,
   ) {
     return this.expensesService.update(id, updateExpenseDto, user);
@@ -96,7 +108,10 @@ export class ExpensesController {
 
   @Post('analyze-image-url')
   @Auth()
-  async analyzeExpenseUrl(@Body() { imageUrl }: AnalyzeExpenseDto) {
+  async analyzeExpenseUrl(
+    @Body(new ZodValidationPipe(analyzeExpenseSchema))
+    { imageUrl }: AnalyzeExpenseRequest,
+  ) {
     const text = await this.ocrService.extractTextFromImage(imageUrl);
     const data = await this.openaiService.analyzeReceiptText(text);
     return data;

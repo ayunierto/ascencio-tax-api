@@ -31,6 +31,7 @@ import {
   ResetPasswordResponse,
   SignInResponse,
   SignUpResponse,
+  SimpleUser,
   UpdateProfileResponse,
   VerifyEmailCodeResponse,
 } from '@ascencio/shared/interfaces';
@@ -562,7 +563,7 @@ export class AuthService {
   async updateProfile(
     updateProfileDto: UpdateProfileRequest,
     user: User,
-  ): Promise<UpdateProfileResponse> {
+  ): Promise<SimpleUser> {
     const { password, ...userData } = updateProfileDto;
 
     try {
