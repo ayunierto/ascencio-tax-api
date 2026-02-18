@@ -40,7 +40,9 @@ export class ExpensesService {
         relations: ['category', 'subcategory'],
       });
 
-      console.log(`[EXPENSES] Found ${expenses.length} expenses for user ${user.id}`);
+      console.log(
+        `[EXPENSES] Found ${expenses.length} expenses for user ${user.id}`,
+      );
       console.log('[EXPENSES] Date range:', { startDate, endDate });
 
       const expensesByCategory: ExpensesByCategory = {};
@@ -90,7 +92,10 @@ export class ExpensesService {
         expensesByCategory[categoryName].total.net += net;
       });
 
-      console.log('[EXPENSES] Final aggregation:', JSON.stringify(expensesByCategory, null, 2));
+      console.log(
+        '[EXPENSES] Final aggregation:',
+        JSON.stringify(expensesByCategory, null, 2),
+      );
 
       return {
         expensesByCategory,

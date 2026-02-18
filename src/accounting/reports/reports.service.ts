@@ -33,7 +33,11 @@ export class ReportsService {
   ): Promise<PDFKit.PDFDocument> {
     const { startDate, endDate } = createReportDto;
 
-    console.log('[REPORTS] Generating PDF report', { startDate, endDate, userId: user.id });
+    console.log('[REPORTS] Generating PDF report', {
+      startDate,
+      endDate,
+      userId: user.id,
+    });
 
     // Obtener datos de gastos con categorías y subcategorías calculadas
     const expensesData = await this.expensesService.findAllByDateRange(
@@ -42,14 +46,21 @@ export class ReportsService {
       user,
     );
 
-    console.log('[REPORTS] Expenses data received:', JSON.stringify(expensesData, null, 2));
+    console.log(
+      '[REPORTS] Expenses data received:',
+      JSON.stringify(expensesData, null, 2),
+    );
 
     // Obtener todas las categorías y subcategorías de la base de datos
     const allCategories = await this.categoriesService.findAll();
 
-    console.log(`[REPORTS] Found ${allCategories.length} categories from database`);
+    console.log(
+      `[REPORTS] Found ${allCategories.length} categories from database`,
+    );
     allCategories.forEach((cat) => {
-      console.log(`  - Category: ${cat.name} with ${cat.subcategories?.length || 0} subcategories`);
+      console.log(
+        `  - Category: ${cat.name} with ${cat.subcategories?.length || 0} subcategories`,
+      );
     });
 
     // Calcular totales generales
@@ -71,10 +82,7 @@ export class ReportsService {
     const grandTotals = calculateGrandTotals();
 
     // Función para generar filas de tabla por categoría usando las subcategorías de la BD
-    const getTableRows = (
-      categoryName: string,
-      subcategoriesFromDB: any[],
-    ) => {
+    const getTableRows = (categoryName: string, subcategoriesFromDB: any[]) => {
       const categoryData = expensesData.expensesByCategory[categoryName];
       const rows: TableCell[][] = [];
 
