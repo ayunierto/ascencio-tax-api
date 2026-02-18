@@ -25,20 +25,24 @@ export class OpenaiService {
     const categories = await this.categoriesService.findAll();
 
     const prompt = `
-Extract this data from the receipt text and :
-- merchant
-- date (YYYY-MM-DD)
-- total
-- tax
-- categoryId (the id of the best matching category)
-- subcategoryId (the id of the best matching subcategory)
+Extract this data from the receipt text:
+- merchant (string)
+- date (ISO 8601 datetime format: YYYY-MM-DDTHH:mm:ss.sssZ, use T00:00:00.000Z if only date is known)
+- total (number, not string)
+- tax (number, not string)
+- categoryId (the id of the best matching category as string)
+- subcategoryId (the id of the best matching subcategory as string)
 
 Categories:
 ${JSON.stringify(categories, null, 2)}
 
-If any field is unknown, leave it empty "".
+IMPORTANT: 
+- total and tax must be numbers, not strings
+- date must be in ISO 8601 datetime format with timezone (e.g., "2024-01-15T00:00:00.000Z")
+- If any field is unknown, use: "" for strings, 0 for numbers
+
 Return ONLY valid JSON like:
-{"merchant":"","date":"","total":"","tax":"","categoryId":"","subcategoryId":""}
+{"merchant":"Store Name","date":"2024-01-15T00:00:00.000Z","total":100.50,"tax":8.25,"categoryId":"uuid-here","subcategoryId":"uuid-here"}
 
 Receipt text:
 """${text}"""
