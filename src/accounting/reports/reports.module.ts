@@ -6,6 +6,8 @@ import { Report } from './entities/report.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { PrinterModule } from 'src/printer/printer.module';
 import { ExpensesModule } from '../expenses/expenses.module';
+import { CategoriesModule } from '../categories/categories.module';
+import { SubcategoriesModule } from '../subcategories/subcategories.module';
 
 @Module({
   controllers: [ReportsController],
@@ -15,6 +17,8 @@ import { ExpensesModule } from '../expenses/expenses.module';
     AuthModule,
     PrinterModule,
     ExpensesModule,
+    CategoriesModule,
+    SubcategoriesModule,
   ],
 })
 export class ReportsModule {}

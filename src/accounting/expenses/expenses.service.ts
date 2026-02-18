@@ -40,9 +40,17 @@ export class ExpensesService {
         relations: ['category', 'subcategory'],
       });
 
+      console.log(`[EXPENSES] Found ${expenses.length} expenses for user ${user.id}`);
+      console.log('[EXPENSES] Date range:', { startDate, endDate });
+
       const expensesByCategory: ExpensesByCategory = {};
 
       expenses.forEach((expense) => {
+        if (!expense.category) {
+          console.warn('[EXPENSES] Expense without category:', expense.id);
+          return;
+        }
+
         const categoryName = expense.category.name;
         const subcategoryName =
           expense.subcategory?.name || 'Without subcategory';
@@ -61,17 +69,34 @@ export class ExpensesService {
           };
         }
 
-        expensesByCategory[categoryName][subcategoryName].gross += Number(
-          expense.total,
-        );
+        const gross = Number(expense.total);
+        const hst = Number(expense.tax);
+        const net = gross - hst;
 
-        expensesByCategory[categoryName].total.gross += Number(expense.total);
+        console.log(`[EXPENSES] Processing expense: ${expense.merchant}`, {
+          category: categoryName,
+          subcategory: subcategoryName,
+          gross,
+          hst,
+          net,
+        });
+
+        expensesByCategory[categoryName][subcategoryName].gross += gross;
+        expensesByCategory[categoryName][subcategoryName].hst += hst;
+        expensesByCategory[categoryName][subcategoryName].net += net;
+
+        expensesByCategory[categoryName].total.gross += gross;
+        expensesByCategory[categoryName].total.hst += hst;
+        expensesByCategory[categoryName].total.net += net;
       });
+
+      console.log('[EXPENSES] Final aggregation:', JSON.stringify(expensesByCategory, null, 2));
 
       return {
         expensesByCategory,
       };
     } catch (error) {
+      console.error('[EXPENSES] Error in findAllByDateRange:', error);
       throw error;
     }
   }

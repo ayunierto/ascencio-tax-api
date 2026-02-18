@@ -12,6 +12,8 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PrinterService } from 'src/printer/printer.service';
 import { ExpensesService } from '../expenses/expenses.service';
+import { CategoriesService } from '../categories/categories.service';
+import { SubcategoriesService } from '../subcategories/subcategories.service';
 
 @Injectable()
 export class ReportsService {
@@ -21,6 +23,8 @@ export class ReportsService {
 
     private readonly printer: PrinterService,
     private readonly expensesService: ExpensesService,
+    private readonly categoriesService: CategoriesService,
+    private readonly subcategoriesService: SubcategoriesService,
   ) {}
 
   async generatePdfReport(
@@ -29,40 +33,106 @@ export class ReportsService {
   ): Promise<PDFKit.PDFDocument> {
     const { startDate, endDate } = createReportDto;
 
+    console.log('[REPORTS] Generating PDF report', { startDate, endDate, userId: user.id });
+
+    // Obtener datos de gastos con categorías y subcategorías calculadas
     const expensesData = await this.expensesService.findAllByDateRange(
       new Date(startDate),
       new Date(endDate),
       user,
     );
 
-    // Complete a section of the table
-    const getTableRows = (categoryName: string, subcategories: string[]) => {
-      const categoryData = expensesData.expensesByCategory[categoryName] || {
-        total: { gross: 0, hst: 0, net: 0 },
-      };
+    console.log('[REPORTS] Expenses data received:', JSON.stringify(expensesData, null, 2));
 
-      const rows: TableCell[][] = subcategories.map((subcat) => [
-        { text: subcat, margin: [10, 0, 0, 0], bold: false },
-        {
-          text: categoryData[subcat]
-            ? categoryData[subcat].gross.toFixed(2)
-            : '0.00',
-          alignment: 'right',
-        },
-        {
-          text: categoryData[subcat]
-            ? categoryData[subcat].hst.toFixed(2)
-            : '0.00',
-          alignment: 'right',
-        },
-        {
-          text: categoryData[subcat]
-            ? categoryData[subcat].net.toFixed(2)
-            : '0.00',
-          alignment: 'right',
-        },
-      ]);
+    // Obtener todas las categorías y subcategorías de la base de datos
+    const allCategories = await this.categoriesService.findAll();
 
+    console.log(`[REPORTS] Found ${allCategories.length} categories from database`);
+    allCategories.forEach((cat) => {
+      console.log(`  - Category: ${cat.name} with ${cat.subcategories?.length || 0} subcategories`);
+    });
+
+    // Calcular totales generales
+    const calculateGrandTotals = () => {
+      let totalGross = 0;
+      let totalHst = 0;
+      let totalNet = 0;
+
+      Object.keys(expensesData.expensesByCategory).forEach((categoryName) => {
+        const category = expensesData.expensesByCategory[categoryName];
+        totalGross += category.total.gross;
+        totalHst += category.total.hst;
+        totalNet += category.total.net;
+      });
+
+      return { totalGross, totalHst, totalNet };
+    };
+
+    const grandTotals = calculateGrandTotals();
+
+    // Función para generar filas de tabla por categoría usando las subcategorías de la BD
+    const getTableRows = (
+      categoryName: string,
+      subcategoriesFromDB: any[],
+    ) => {
+      const categoryData = expensesData.expensesByCategory[categoryName];
+      const rows: TableCell[][] = [];
+
+      // Si la categoría tiene subcategorías en la BD, usarlas
+      if (subcategoriesFromDB && subcategoriesFromDB.length > 0) {
+        subcategoriesFromDB.forEach((subcat) => {
+          const subcatData = categoryData?.[subcat.name] || {
+            gross: 0,
+            hst: 0,
+            net: 0,
+          };
+
+          rows.push([
+            { text: subcat.name, margin: [10, 0, 0, 0], bold: false },
+            {
+              text: subcatData.gross.toFixed(2),
+              alignment: 'right',
+            },
+            {
+              text: subcatData.hst.toFixed(2),
+              alignment: 'right',
+            },
+            {
+              text: subcatData.net.toFixed(2),
+              alignment: 'right',
+            },
+          ]);
+        });
+      } else {
+        // Si no tiene subcategorías en la BD, verificar si hay datos de gastos
+        if (categoryData) {
+          const subcategoryNames = Object.keys(categoryData).filter(
+            (key) => key !== 'total',
+          );
+
+          subcategoryNames.forEach((subcatName) => {
+            const subcatData = categoryData[subcatName];
+            rows.push([
+              { text: subcatName, margin: [10, 0, 0, 0], bold: false },
+              {
+                text: subcatData.gross.toFixed(2),
+                alignment: 'right',
+              },
+              {
+                text: subcatData.hst.toFixed(2),
+                alignment: 'right',
+              },
+              {
+                text: subcatData.net.toFixed(2),
+                alignment: 'right',
+              },
+            ]);
+          });
+        }
+      }
+
+      // Fila de total
+      const totalData = categoryData?.total || { gross: 0, hst: 0, net: 0 };
       rows.push([
         {
           text: 'Total',
@@ -70,17 +140,17 @@ export class ReportsService {
           bold: true,
         },
         {
-          text: categoryData.total.gross.toFixed(2) || '0.00',
+          text: totalData.gross.toFixed(2),
           alignment: 'right',
           bold: true,
         },
         {
-          text: categoryData.total.hst.toFixed(2) || '0.00',
+          text: totalData.hst.toFixed(2),
           alignment: 'right',
           bold: true,
         },
         {
-          text: categoryData.total.net.toFixed(2) || '0.00',
+          text: totalData.net.toFixed(2),
           alignment: 'right',
           bold: true,
         },
@@ -89,9 +159,38 @@ export class ReportsService {
       return rows;
     };
 
+    // Generar tablas para TODAS las categorías (con o sin datos)
+    const categoryTables: any[] = [];
+
+    allCategories.forEach((category) => {
+      const rows = getTableRows(category.name, category.subcategories);
+
+      // Siempre agregar la tabla, incluso si no hay gastos
+      categoryTables.push({
+        margin: [0, 0, 0, 10],
+        table: {
+          widths: ['*', 60, 60, 60],
+          body: [
+            [
+              {
+                text: category.name,
+                bold: true,
+                colSpan: 4,
+                fillColor: '#ccc',
+              },
+              { text: '' },
+              { text: '' },
+              { text: '' },
+            ],
+            ...rows,
+          ],
+        },
+      });
+    });
+
     const documentDefinition: TDocumentDefinitions = {
       pageSize: 'A4',
-      pageMargins: [20, 20, 20, 30], // Ajustado [L, T, R, B] para más espacio de cabecera
+      pageMargins: [20, 20, 20, 30],
 
       content: [
         // Header
@@ -140,7 +239,7 @@ export class ReportsService {
           },
           layout: 'noBorders',
         },
-        // First section with date range
+        // Date range section
         {
           margin: [0, 0, 0, 10],
           table: {
@@ -159,51 +258,24 @@ export class ReportsService {
                 { text: 'NET', style: 'tableHeaderField' },
               ],
               [
-                { text: 'Revenues - Sales', bold: true, colSpan: 4 },
-                { text: '' },
-                { text: '' },
-                { text: '' },
-              ],
-              [
                 {
-                  text: 'From Business Account - Deposit',
-                  margin: [10, 0, 0, 0],
-                },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                {
-                  text: 'From Business Account - E-transfer',
-                  margin: [10, 0, 0, 0],
-                },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Total Revenue', bold: true },
-                { text: '0.00', alignment: 'right', bold: true },
-                { text: '0.00', alignment: 'right', bold: true },
-                { text: '0.00', alignment: 'right', bold: true },
-              ],
-              [
-                {
-                  text: `BALANCE ON ${new Date(startDate).toLocaleDateString()} - ${new Date(
+                  text: `Period: ${new Date(startDate).toLocaleDateString()} - ${new Date(
                     endDate,
                   ).toLocaleDateString()}`,
                   bold: true,
                   fillColor: '#cccccc',
+                  colSpan: 4,
                 },
-                { text: '0.00', alignment: 'center', colSpan: 3, bold: true },
                 '',
                 '',
+                '',
               ],
             ],
           },
         },
-        // For Expenses with out HST table
+        // Tablas dinámicas de categorías
+        ...categoryTables,
+        // Total general
         {
           margin: [0, 0, 0, 10],
           table: {
@@ -211,280 +283,28 @@ export class ReportsService {
             body: [
               [
                 {
-                  text: 'Expenses with out HST',
-                  bold: true,
-                  colSpan: 4,
-                  fillColor: '#ccc',
-                },
-                { text: '' },
-                { text: '' },
-                { text: '' },
-              ],
-              [
-                { text: 'Bank Fees', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Bank Interes', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Business Lisences ', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Business Insurance', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Vehicle Insurance ', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'GST', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'WSIB', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Sub-Contracts', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Payroll', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Union Fee ', margin: [10, 0, 0, 0] },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-                { text: '0.00', alignment: 'right' },
-              ],
-              [
-                { text: 'Total', bold: true },
-                { text: '0.00', alignment: 'right', bold: true },
-                { text: '0.00', alignment: 'right', bold: true },
-                { text: '0.00', alignment: 'right', bold: true },
-              ],
-            ],
-          },
-        },
-        // For the first Expenses table
-        {
-          margin: [0, 0, 0, 10],
-          table: {
-            widths: ['*', 60, 60, 60],
-            body: [
-              [
-                {
-                  text: 'Expenses',
-                  bold: true,
-                  colSpan: 4,
-                  fillColor: '#ccc',
-                },
-                { text: '' },
-                { text: '' },
-                { text: '' },
-              ],
-              ...getTableRows('Expenses', [
-                'Advertising/ Promotion',
-                'Meals/ Entertainment',
-                'Expenses office',
-                'Expenses supplies',
-                'Office Stationery',
-                'Office Rental',
-                'Office Utilities',
-                'Office Phone',
-                'Office Internet',
-                'Office maintenance/ Repairs',
-                'Storage Rent',
-                'Uniform',
-                'Rental Equipment/ Car Rental',
-                'Accounting/ Legal/ Other professional Fees',
-                'Memberships/ Subscriptions',
-              ]),
-            ],
-          },
-        },
-        // For the second Motor Vehicle Expenses table
-        {
-          margin: [0, 0, 0, 10],
-          table: {
-            widths: ['*', 60, 60, 60],
-            body: [
-              [
-                {
-                  text: 'Motor Vehicle Expenses (Business)',
-                  bold: true,
-                  colSpan: 4,
-                  fillColor: '#ccc',
-                },
-                { text: '' },
-                { text: '' },
-                { text: '' },
-              ],
-              ...getTableRows('Motor Vehicle Expenses (Business)', [
-                'Gasoline',
-                '407 Ert',
-                'Parking',
-                'Parking Fines',
-                'Repair/ Maintenance Car',
-                'Licence/ Registration ',
-                'Car Wash',
-                'Lease Payments',
-                'Purchase/ Financing',
-              ]),
-            ],
-          },
-        },
-        // For the third Business-use-of-home (Utilities) table
-        {
-          margin: [0, 0, 0, 10],
-          table: {
-            widths: ['*', 60, 60, 60],
-            body: [
-              [
-                {
-                  text: 'Business-use-of- home (Utilities)',
-                  bold: true,
-                  colSpan: 4,
-                  fillColor: '#ccc',
-                },
-                { text: '' },
-                { text: '' },
-                { text: '' },
-              ],
-              ...getTableRows('Business-use-of- home (Utilities)', [
-                'Rental Water Heater',
-                'Gas Natural',
-                'Hydro/ Electricity',
-                'Water',
-                'Maintenance & Repairs',
-                'Interest Mortgage',
-                'Property Tax Bill',
-                'Home Insurance',
-              ]),
-            ],
-          },
-        },
-        // For the fourth Expenses with out HST + Expenses + Motor Vehicle Expenses table
-        {
-          margin: [0, 0, 0, 10],
-          table: {
-            widths: ['*', 60, 60, 60],
-            body: [
-              [
-                {
-                  text: 'Expenses with out HST + Expenses + Motor Vehicle Expenses',
+                  text: 'TOTAL EXPENSES',
                   bold: true,
                   fillColor: '#ccc',
                 },
                 {
-                  text: '0.00',
+                  text: grandTotals.totalGross.toFixed(2),
                   alignment: 'right',
                   bold: true,
                   fillColor: '#ccc',
                 },
                 {
-                  text: '0.00',
+                  text: grandTotals.totalHst.toFixed(2),
                   alignment: 'right',
                   bold: true,
                   fillColor: '#ccc',
                 },
                 {
-                  text: '0.00',
+                  text: grandTotals.totalNet.toFixed(2),
                   alignment: 'right',
                   bold: true,
                   fillColor: '#ccc',
                 },
-              ],
-            ],
-          },
-        },
-        // For the Total Revenue NET - Total Expenses GROSS = PROFIT table
-        {
-          margin: [0, 0, 0, 10],
-          table: {
-            widths: ['*', 60, 60, 60],
-            body: [
-              [
-                {
-                  text: 'Total Revenue NET - Total Expenses GROSS = PROFIT',
-                  bold: true,
-                  fillColor: '#ccc',
-                },
-                {
-                  text: '0.00',
-                  alignment: 'right',
-                  bold: true,
-                  fillColor: '#ccc',
-                },
-                { text: '', border: [false, false, false, false] },
-                { text: '', border: [false, false, false, false] },
-              ],
-            ],
-          },
-        },
-        {
-          margin: [0, 0, 0, 20],
-          table: {
-            widths: ['*', 60, 60, 60],
-            body: [
-              [
-                { text: '*MEDICAL EXPENSES', bold: true, fillColor: '#ccc' },
-                {
-                  text: expensesData.expensesByCategory['Medical Expenses']
-                    ? Number(
-                        expensesData.expensesByCategory['Medical Expenses']
-                          .total.gross,
-                      ).toFixed(2)
-                    : '0.00',
-                  alignment: 'right',
-                  bold: true,
-                  fillColor: '#ccc',
-                },
-                {
-                  text: 'FOR PERSONAL TAXES',
-                  colSpan: 2,
-                  rowSpan: 2,
-                  margin: [0, 10, 0, 0],
-                },
-                { text: '' },
-              ],
-              [
-                { text: '*RENTA', bold: true, fillColor: '#ccc' },
-                {
-                  text: expensesData.expensesByCategory.Rent
-                    ? Number(
-                        expensesData.expensesByCategory.Rent.total.gross,
-                      ).toFixed(2)
-                    : '0.00',
-                  alignment: 'right',
-                  bold: true,
-                  fillColor: '#ccc',
-                },
-                { text: '' },
-                { text: '' },
               ],
             ],
           },
@@ -499,13 +319,12 @@ export class ReportsService {
         },
         tableHeader: {
           bold: true,
-
           fillColor: '#ccc',
         },
       },
 
       defaultStyle: {
-        font: 'Roboto', // Asegúrate que esta fuente esté configurada
+        font: 'Roboto',
         fontSize: 10,
       },
     };
