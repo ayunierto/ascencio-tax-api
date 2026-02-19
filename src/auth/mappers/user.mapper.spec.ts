@@ -29,6 +29,8 @@ const buildUser = (overrides: Partial<User> = {}): User => {
     logs: [],
     posts: [],
     reports: [],
+    companies: [],
+    clients: [],
   } as User;
   return { ...base, ...overrides } as User;
 };

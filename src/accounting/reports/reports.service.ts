@@ -37,7 +37,37 @@ export class ReportsService {
       startDate,
       endDate,
       userId: user.id,
+      userName: `${user.firstName} ${user.lastName}`,
     });
+
+    // Guardar registro del reporte en la base de datos
+    try {
+      console.log('[REPORTS] Creating report record...');
+      const reportRecord = this.reportRepository.create({
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        user,
+      });
+      console.log('[REPORTS] Report record created, saving...', {
+        startDate: reportRecord.startDate,
+        endDate: reportRecord.endDate,
+        userId: user.id,
+      });
+
+      const savedReport = await this.reportRepository.save(reportRecord);
+
+      console.log('[REPORTS] ✅ Report record saved successfully in database', {
+        reportId: savedReport.id,
+        createdAt: savedReport.createdAt,
+      });
+    } catch (error) {
+      console.error('[REPORTS] ❌ Error saving report record:', error);
+      console.error('[REPORTS] Error details:', {
+        message: error.message,
+        stack: error.stack,
+      });
+      // No lanzar error aquí, continuar con la generación del PDF
+    }
 
     // Obtener datos de gastos con categorías y subcategorías calculadas
     const expensesData = await this.expensesService.findAllByDateRange(
@@ -352,6 +382,13 @@ export class ReportsService {
 
   async findAll(paginationDto: PaginationDto, user: User): Promise<Report[]> {
     try {
+      console.log('[REPORTS] Finding reports for user:', {
+        userId: user.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        limit: paginationDto.limit,
+        offset: paginationDto.offset,
+      });
+
       const { limit = 10, offset = 0 } = paginationDto;
       const userReportLogs = await this.reportRepository.find({
         take: limit,
@@ -361,8 +398,20 @@ export class ReportsService {
           createdAt: 'DESC',
         },
       });
+
+      console.log('[REPORTS] Found reports:', {
+        count: userReportLogs.length,
+        reports: userReportLogs.map((r) => ({
+          id: r.id,
+          startDate: r.startDate,
+          endDate: r.endDate,
+          createdAt: r.createdAt,
+        })),
+      });
+
       return userReportLogs;
     } catch (error) {
+      console.error('[REPORTS] Error finding reports:', error);
       throw new InternalServerErrorException('Unable to find reports');
     }
   }
