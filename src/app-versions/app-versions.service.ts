@@ -28,13 +28,21 @@ export class AppVersionsService {
   }
 
   async getForPlatform(platform: AppPlatform) {
-    const version = await this.repo.findOne({
-      where: [{ platform }, { platform: AppPlatform.ALL }],
+    const platformVersion = await this.repo.findOne({
+      where: { platform },
       order: { updatedAt: 'DESC' },
     });
 
-    if (!version) throw new NotFoundException('No version config found');
-    return version;
+    if (platformVersion) return platformVersion;
+
+    const fallbackVersion = await this.repo.findOne({
+      where: { platform: AppPlatform.ALL },
+      order: { updatedAt: 'DESC' },
+    });
+
+    if (fallbackVersion) return fallbackVersion;
+
+    throw new NotFoundException('No version config found');
   }
 
   async update(id: number, dto: UpdateAppVersionDto) {

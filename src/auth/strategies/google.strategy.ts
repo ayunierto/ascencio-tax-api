@@ -18,6 +18,11 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const clientSecret = configService.get<string>('GOOGLE_CLIENT_SECRET');
     const callbackURL = configService.get<string>('GOOGLE_CALLBACK_URL');
 
+    console.log('🔍 GoogleStrategy Configuration:');
+    console.log('  ✓ Client ID:', clientID ? `${clientID.substring(0, 20)}...` : '❌ MISSING');
+    console.log('  ✓ Client Secret:', clientSecret ? '***' : '❌ MISSING');
+    console.log('  ✓ Callback URL:', callbackURL || '❌ MISSING');
+
     if (!clientID || !clientSecret || !callbackURL) {
       throw new Error(
         'Google OAuth not configured. Please set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET and GOOGLE_CALLBACK_URL',
@@ -31,6 +36,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       scope: ['email', 'profile'],
       passReqToCallback: true,
     });
+    
+    console.log('✅ GoogleStrategy initialized successfully');
   }
 
   validate(
@@ -40,12 +47,17 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     profile: Profile,
     done: (err: unknown, user?: GoogleUserProfile) => void,
   ) {
+    console.log('🔐 Google OAuth Validation Started');
+    console.log('  Profile ID:', profile.id);
+    console.log('  Emails:', profile.emails);
+    
     const email = profile.emails?.[0]?.value;
     const pictureUrl = (profile.photos?.[0] as any)?.value as
       | string
       | undefined;
 
     if (!email) {
+      console.error('❌ Google profile missing email');
       return done(new Error('Google profile missing email'));
     }
 
@@ -56,6 +68,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       lastName: profile.name?.familyName,
       pictureUrl,
     };
+    
+    console.log('✅ Google OAuth Validation Success:', email);
 
     // Preservar el authMode del request si existe
     if ((req as any).authMode) {

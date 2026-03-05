@@ -223,10 +223,14 @@ export class AuthController {
       path: '/',
     });
 
-    const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:3000';
-    const successPath = process.env.OAUTH_SUCCESS_REDIRECT ?? '/en/admin';
-    const redirectUrl = new URL(successPath, webAppUrl);
+    const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:4000';
+    const locale = result.user.locale || 'en';
+    
+    // Todos los usuarios van a /admin independientemente de su rol
+    // El sidebar mostrará solo los módulos a los que tienen acceso según su rol/suscripción
+    const successPath = `/${locale}/admin`;
 
+    const redirectUrl = new URL(successPath, webAppUrl);
     res.redirect(redirectUrl.toString());
   }
 }
