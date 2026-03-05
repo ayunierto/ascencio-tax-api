@@ -19,7 +19,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const callbackURL = configService.get<string>('GOOGLE_CALLBACK_URL');
 
     console.log('🔍 GoogleStrategy Configuration:');
-    console.log('  ✓ Client ID:', clientID ? `${clientID.substring(0, 20)}...` : '❌ MISSING');
+    console.log(
+      '  ✓ Client ID:',
+      clientID ? `${clientID.substring(0, 20)}...` : '❌ MISSING',
+    );
     console.log('  ✓ Client Secret:', clientSecret ? '***' : '❌ MISSING');
     console.log('  ✓ Callback URL:', callbackURL || '❌ MISSING');
 
@@ -36,7 +39,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       scope: ['email', 'profile'],
       passReqToCallback: true,
     });
-    
+
     console.log('✅ GoogleStrategy initialized successfully');
   }
 
@@ -50,7 +53,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     console.log('🔐 Google OAuth Validation Started');
     console.log('  Profile ID:', profile.id);
     console.log('  Emails:', profile.emails);
-    
+
     const email = profile.emails?.[0]?.value;
     const pictureUrl = (profile.photos?.[0] as any)?.value as
       | string
@@ -68,7 +71,7 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       lastName: profile.name?.familyName,
       pictureUrl,
     };
-    
+
     console.log('✅ Google OAuth Validation Success:', email);
 
     // Preservar el authMode del request si existe

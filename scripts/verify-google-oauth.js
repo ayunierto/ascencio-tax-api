@@ -25,8 +25,10 @@ envContent.split('\n').forEach((line) => {
   if (match) {
     let value = match[2].trim();
     // Remove quotes if present
-    if ((value.startsWith('"') && value.endsWith('"')) || 
-        (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1);
     }
     envVars[match[1].trim()] = value;
@@ -72,12 +74,19 @@ if (envVars.GOOGLE_CLIENT_ID) {
 // Verificar formato de Callback URL
 if (envVars.GOOGLE_CALLBACK_URL) {
   const callbackUrl = envVars.GOOGLE_CALLBACK_URL;
-  if (!callbackUrl.startsWith('http://') && !callbackUrl.startsWith('https://')) {
-    console.warn('⚠️  ADVERTENCIA: GOOGLE_CALLBACK_URL debe comenzar con http:// o https://');
+  if (
+    !callbackUrl.startsWith('http://') &&
+    !callbackUrl.startsWith('https://')
+  ) {
+    console.warn(
+      '⚠️  ADVERTENCIA: GOOGLE_CALLBACK_URL debe comenzar con http:// o https://',
+    );
     hasErrors = true;
   }
   if (!callbackUrl.includes('/auth/google/callback')) {
-    console.warn('⚠️  ADVERTENCIA: GOOGLE_CALLBACK_URL debería incluir /auth/google/callback');
+    console.warn(
+      '⚠️  ADVERTENCIA: GOOGLE_CALLBACK_URL debería incluir /auth/google/callback',
+    );
   }
 }
 
@@ -85,8 +94,12 @@ console.log();
 
 // Verificar que WEB_APP_URL también esté configurado
 if (!envVars.WEB_APP_URL || envVars.WEB_APP_URL === 'http://localhost:3000') {
-  console.warn('⚠️  ADVERTENCIA: WEB_APP_URL no está configurado o usa el valor por defecto');
-  console.log('   Asegúrate de que apunte a tu frontend (ej: http://localhost:4000)');
+  console.warn(
+    '⚠️  ADVERTENCIA: WEB_APP_URL no está configurado o usa el valor por defecto',
+  );
+  console.log(
+    '   Asegúrate de que apunte a tu frontend (ej: http://localhost:4000)',
+  );
 }
 
 console.log();
@@ -98,7 +111,9 @@ console.log('3. Ve a "APIs & Services" → "Credentials"');
 console.log('4. Clic en "Create Credentials" → "OAuth client ID"');
 console.log('5. Tipo de aplicación: "Web application"');
 console.log('6. Authorized redirect URIs:');
-console.log(`   - ${envVars.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/v1/auth/google/callback'}`);
+console.log(
+  `   - ${envVars.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/v1/auth/google/callback'}`,
+);
 console.log('7. Guarda el Client ID y Client Secret en tu .env');
 console.log('─'.repeat(60));
 
@@ -112,8 +127,12 @@ if (hasErrors) {
   console.log('✅ Configuración de Google OAuth parece correcta');
   console.log();
   console.log('Si aún tienes problemas:');
-  console.log('1. Verifica que las credenciales en .env coincidan con Google Cloud Console');
-  console.log('2. Verifica que la URL de callback esté autorizada en Google Cloud Console');
+  console.log(
+    '1. Verifica que las credenciales en .env coincidan con Google Cloud Console',
+  );
+  console.log(
+    '2. Verifica que la URL de callback esté autorizada en Google Cloud Console',
+  );
   console.log('3. Reinicia el servidor después de cambiar .env');
   console.log('4. Revisa los logs del servidor para más detalles');
 }

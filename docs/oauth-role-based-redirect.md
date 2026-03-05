@@ -10,10 +10,10 @@ Se implementó un sistema de **redirección inteligente** basado en roles para e
 
 **Ahora:** Los usuarios son redirigidos a la página apropiada según su rol:
 
-| Rol | Redirección | Descripción |
-|-----|-------------|-------------|
-| `superUser`, `admin`, `staff` | `/{locale}/admin` | Panel de administración (con permisos según rol) |
-| `user` | `/{locale}/booking` | Página de reservas de citas |
+| Rol                           | Redirección         | Descripción                                      |
+| ----------------------------- | ------------------- | ------------------------------------------------ |
+| `superUser`, `admin`, `staff` | `/{locale}/admin`   | Panel de administración (con permisos según rol) |
+| `user`                        | `/{locale}/booking` | Página de reservas de citas                      |
 
 ## 🔧 Cambios Implementados
 
@@ -23,15 +23,13 @@ Se implementó un sistema de **redirección inteligente** basado en roles para e
 // Antes
 const successPath = process.env.OAUTH_SUCCESS_REDIRECT ?? '/en/admin';
 
-// Ahora  
+// Ahora
 const userRoles = result.user.roles || [];
 const locale = result.user.locale || 'en';
-const hasAdminAccess = userRoles.some(role => 
-  ['superUser', 'admin', 'staff'].includes(role)
+const hasAdminAccess = userRoles.some((role) =>
+  ['superUser', 'admin', 'staff'].includes(role),
 );
-const successPath = hasAdminAccess 
-  ? `/${locale}/admin` 
-  : `/${locale}/booking`;
+const successPath = hasAdminAccess ? `/${locale}/admin` : `/${locale}/booking`;
 ```
 
 ### 2. Roles Disponibles
@@ -72,6 +70,7 @@ WEB_APP_URL="http://localhost:4000"
 ### Google Cloud Console
 
 Asegúrate de tener configurado en **Authorized redirect URIs**:
+
 - Desarrollo: `http://localhost:3000/api/v1/auth/google/callback`
 - Producción: `https://tu-dominio.com/api/v1/auth/google/callback`
 
@@ -83,7 +82,7 @@ Los roles se asignan desde la base de datos. Para un nuevo usuario:
 
 ```sql
 -- Actualizar rol de un usuario existente
-UPDATE users 
+UPDATE users
 SET roles = ARRAY['admin']  -- o ['staff'], ['user']
 WHERE email = 'usuario@ejemplo.com';
 
@@ -94,6 +93,7 @@ SELECT email, roles FROM users WHERE email = 'usuario@ejemplo.com';
 ### Roles por Defecto
 
 Cuando un usuario se registra por primera vez (con Google o email):
+
 - **Google OAuth**: Se asigna automáticamente `['user']`
 - **Email/Password**: Se asigna automáticamente `['user']`
 
@@ -120,7 +120,7 @@ if (!user) {
 **Recomendación:** Agregar validación de roles específica en secciones críticas:
 
 ```tsx
-if (!user.roles.some(r => ['admin', 'superUser'].includes(r))) {
+if (!user.roles.some((r) => ['admin', 'superUser'].includes(r))) {
   return <div>No tienes permisos para esta sección</div>;
 }
 ```
@@ -132,7 +132,7 @@ if (!user.roles.some(r => ['admin', 'superUser'].includes(r))) {
    - Iniciar sesión con Google
    - Resultado: Redirigido a `http://localhost:4000/en/booking` o `/es/booking`
 
-2. **Administrador (rol: admin)**  
+2. **Administrador (rol: admin)**
    - Ir a: `http://localhost:3000/api/v1/auth/google`
    - Iniciar sesión con Google
    - Resultado: Redirigido a `http://localhost:4000/en/admin` o `/es/admin`
@@ -154,7 +154,8 @@ El modo móvil **siempre** devuelve el token sin redirecciones web.
 
 **Causa:** El usuario no tiene el rol correcto para acceder a `/admin`
 
-**Solución:** 
+**Solución:**
+
 1. Verificar roles del usuario en la BD
 2. Asignar rol correcto con SQL:
    ```sql
@@ -166,6 +167,7 @@ El modo móvil **siempre** devuelve el token sin redirecciones web.
 **Causa:** Credenciales de Google incorrectas o expiradas
 
 **Solución:**
+
 1. Verificar `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` en `.env`
 2. Verificar que la URL de callback esté registrada en Google Cloud Console
 3. Reiniciar el servidor después de cambiar `.env`

@@ -225,7 +225,7 @@ export class AuthController {
 
     const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:4000';
     const locale = result.user.locale || 'en';
-    
+
     // Todos los usuarios van a /admin independientemente de su rol
     // El sidebar mostrará solo los módulos a los que tienen acceso según su rol/suscripción
     const successPath = `/${locale}/admin`;
