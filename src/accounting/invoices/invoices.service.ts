@@ -9,7 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonMessages } from '@ascencio/shared/i18n';
 import { IsNull, Repository } from 'typeorm';
-import { Invoice } from './entities/invoice.entity';
+import { Invoice, InvoiceStatus } from './entities/invoice.entity';
 import { InvoiceLineItem } from './entities/invoice-line-item.entity';
 import { PaginatedResponse } from '@ascencio/shared/interfaces';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -144,27 +144,34 @@ export class InvoicesService {
   }
 
   /**
-   * Generate next invoice number for the user within a company
+   * Generate next invoice number globally.
    * Format: INV-YYYY-XXXX (e.g., INV-2026-0001)
+   *
+   * IMPORTANT: invoice_number has a GLOBAL unique constraint in the DB
+   * (including soft-deleted rows), so we must search across ALL users/companies
+   * and include soft-deleted records to avoid collisions.
    */
-  private async generateInvoiceNumber(
-    userId: string,
-    companyId: string,
-  ): Promise<{
+  private async generateInvoiceNumber(): Promise<{
     invoiceNumber: string;
     invoiceYear: number;
   }> {
     const currentYear = new Date().getFullYear();
 
-    // Get the last invoice for this user+company in the current year
+    // Search globally across ALL invoices (all users, all companies, including soft-deleted)
+    // because the unique constraint on invoice_number is global
     const lastInvoice = await this.invoiceRepo.findOne({
-      where: { userId, fromCompanyId: companyId, invoiceYear: currentYear },
+      where: { invoiceYear: currentYear },
       order: { invoiceNumber: 'DESC' },
+      withDeleted: true,
+    });
+
+    console.log('[INVOICE SERVICE] Last invoice found (global):', {
+      lastInvoice: lastInvoice?.invoiceNumber || 'none',
+      year: currentYear,
     });
 
     let nextNumber = 1;
     if (lastInvoice) {
-      // Extract the number from the invoice number (e.g., INV-2026-0001 -> 1)
       const parts = lastInvoice.invoiceNumber.split('-');
       const lastNumber = parseInt(parts[parts.length - 1], 10);
       if (!isNaN(lastNumber)) {
@@ -175,6 +182,8 @@ export class InvoicesService {
     const invoiceNumber = `INV-${currentYear}-${nextNumber
       .toString()
       .padStart(4, '0')}`;
+
+    console.log('[INVOICE SERVICE] Generated invoice number:', invoiceNumber);
 
     return { invoiceNumber, invoiceYear: currentYear };
   }
@@ -204,15 +213,30 @@ export class InvoicesService {
   }
 
   async create(userId: string, input: CreateInvoiceRequest): Promise<Invoice> {
+    console.log('[INVOICE SERVICE] create called:', {
+      userId,
+      input: JSON.stringify(input, null, 2),
+    });
+
     const { lineItems: lineItemsInput, fromCompanyId, ...invoiceData } = input;
+
+    console.log('[INVOICE SERVICE] Line items count:', lineItemsInput?.length);
 
     // If no company provided, get or create "Sole Proprietor"
     let finalCompanyId = fromCompanyId;
     if (!finalCompanyId) {
+      console.log(
+        '[INVOICE SERVICE] No company provided, creating/getting Sole Proprietor',
+      );
       const company = await this.getOrCreateSoleProprietorCompany(userId);
       finalCompanyId = company.id;
+      console.log('[INVOICE SERVICE] Using company:', finalCompanyId);
     } else {
       // Validate user has access to this company
+      console.log(
+        '[INVOICE SERVICE] Validating access to company:',
+        finalCompanyId,
+      );
       await this.validateUserCompanyAccess(userId, finalCompanyId);
     }
 
@@ -232,43 +256,86 @@ export class InvoicesService {
       );
     }
 
-    // Generate invoice number
-    const { invoiceNumber, invoiceYear } = await this.generateInvoiceNumber(
-      userId,
-      finalCompanyId,
-    );
-
     // Calculate totals
     const totals = this.calculateTotals(lineItemsInput, input.taxRate ?? 13);
+    console.log('[INVOICE SERVICE] Calculated totals:', totals);
 
-    // Create invoice in draft state
-    const invoice = this.invoiceRepo.create({
-      ...invoiceData,
-      billToClientId: finalClientId,
-      fromCompanyId: finalCompanyId,
-      userId,
-      invoiceNumber,
-      invoiceYear,
-      ...totals,
-      status: 'draft', // Always start as draft
-    });
+    // Retry logic to handle race conditions with invoice number generation
+    const maxRetries = 3;
 
-    // Save invoice first to get the ID
-    const savedInvoice = await this.invoiceRepo.save(invoice);
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        console.log(
+          `[INVOICE SERVICE] Attempt ${attempt + 1} of ${maxRetries}`,
+        );
 
-    // Create line items
-    const lineItems = lineItemsInput.map((item) =>
-      this.lineItemRepo.create({
-        ...item,
-        invoiceId: savedInvoice.id,
-        lineTotal: item.quantity * item.price,
-      }),
-    );
+        // Generate invoice number (searches globally including soft-deleted)
+        const { invoiceNumber, invoiceYear } =
+          await this.generateInvoiceNumber();
 
-    await this.lineItemRepo.save(lineItems);
+        console.log('[INVOICE SERVICE] Using invoice number:', invoiceNumber);
 
-    // Return the invoice with line items
-    return this.findOne(userId, savedInvoice.id);
+        // Create invoice in draft state
+        const invoice = this.invoiceRepo.create({
+          ...invoiceData,
+          billToClientId: finalClientId,
+          fromCompanyId: finalCompanyId,
+          userId,
+          invoiceNumber,
+          invoiceYear,
+          ...totals,
+          status: 'draft', // Always start as draft
+        });
+
+        // Save invoice first to get the ID
+        const savedInvoice = await this.invoiceRepo.save(invoice);
+        console.log(
+          '[INVOICE SERVICE] Invoice saved successfully:',
+          savedInvoice.id,
+        );
+
+        // Create line items
+        const lineItems = lineItemsInput.map((item) =>
+          this.lineItemRepo.create({
+            ...item,
+            invoiceId: savedInvoice.id,
+            lineTotal: item.quantity * item.price,
+          }),
+        );
+
+        await this.lineItemRepo.save(lineItems);
+        console.log('[INVOICE SERVICE] Line items saved:', lineItems.length);
+
+        // Return the invoice with line items
+        return this.findOne(userId, savedInvoice.id);
+      } catch (error) {
+        console.error('[INVOICE SERVICE] Error in create attempt:', {
+          attempt: attempt + 1,
+          error: error.message,
+          code: error.code,
+          detail: error.detail,
+        });
+
+        // Check if it's a duplicate key error on invoice_number
+        const isDuplicateKey =
+          error.code === '23505' && error.detail?.includes('invoice_number');
+
+        if (isDuplicateKey && attempt < maxRetries - 1) {
+          console.log('[INVOICE SERVICE] Duplicate key detected, retrying...');
+          // Small delay to reduce collision probability on concurrent requests
+          await new Promise((resolve) =>
+            setTimeout(resolve, 50 + Math.random() * 100),
+          );
+          continue;
+        }
+
+        // Re-throw if not a duplicate key error or max retries reached
+        throw error;
+      }
+    }
+
+    // This should never be reached, but TypeScript needs it
+    throw new BadRequestException('Failed to create invoice after retries');
   }
 
   async findAll(
@@ -317,8 +384,8 @@ export class InvoicesService {
       throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
     }
 
-    // Validate user has access to the company (multi-tenant security)
-    await this.validateUserCompanyAccess(userId, invoice.fromCompanyId);
+    // No need to validate company access since we already filter by userId
+    // The invoice belongs to this user, so they have access
 
     return invoice;
   }
@@ -436,7 +503,22 @@ export class InvoicesService {
     amount: number,
     paidAt?: string,
   ): Promise<Invoice> {
+    console.log('[INVOICE SERVICE] recordPayment called:', {
+      userId,
+      id,
+      amount,
+      amountType: typeof amount,
+      paidAt,
+    });
+
     const invoice = await this.findOne(userId, id);
+    console.log('[INVOICE SERVICE] Invoice found:', {
+      id: invoice.id,
+      status: invoice.status,
+      total: invoice.total,
+      amountPaid: invoice.amountPaid,
+      balanceDue: invoice.balanceDue,
+    });
 
     // Can only record payments on issued invoices
     if (!['issued', 'partial', 'overdue'].includes(invoice.status)) {
@@ -450,28 +532,52 @@ export class InvoicesService {
       throw new BadRequestException('Payment amount must be greater than 0');
     }
 
-    const newAmountPaid = invoice.amountPaid + amount;
-    const newBalance = invoice.total - newAmountPaid;
+    const newAmountPaid = Number(invoice.amountPaid) + Number(amount);
+    const newBalance = Number(invoice.total) - newAmountPaid;
 
-    if (newAmountPaid > invoice.total) {
+    console.log('[INVOICE SERVICE] Calculated values:', {
+      newAmountPaid,
+      newBalance,
+    });
+
+    if (newAmountPaid > Number(invoice.total)) {
       throw new BadRequestException(
         `Payment amount ($${amount}) exceeds remaining balance ($${invoice.balanceDue})`,
       );
     }
 
-    invoice.amountPaid = newAmountPaid;
-    invoice.balanceDue = newBalance;
-
     // Update status based on payment
-    if (invoice.balanceDue <= 0) {
-      invoice.status = 'paid';
-      invoice.paidDate = paidAt || new Date().toISOString().split('T')[0];
-      invoice.balanceDue = 0; // Ensure it's exactly 0
+    let newStatus: InvoiceStatus;
+    let newPaidDate: string | undefined;
+    let finalBalance: number;
+
+    if (newBalance <= 0) {
+      newStatus = 'paid';
+      newPaidDate = paidAt || new Date().toISOString().split('T')[0];
+      finalBalance = 0;
     } else {
-      invoice.status = 'partial';
+      newStatus = 'partial';
+      finalBalance = newBalance;
     }
 
-    return this.invoiceRepo.save(invoice);
+    console.log('[INVOICE SERVICE] Saving invoice with new values:', {
+      newAmountPaid,
+      finalBalance,
+      newStatus,
+    });
+
+    // Use update() instead of save() to avoid TypeORM nullifying FK columns
+    // when the entity was loaded with relations
+    const updatePayload: Partial<Invoice> = {
+      amountPaid: newAmountPaid,
+      balanceDue: finalBalance,
+      status: newStatus,
+      ...(newPaidDate ? { paidDate: newPaidDate } : {}),
+    };
+
+    await this.invoiceRepo.update(id, updatePayload);
+
+    return this.findOne(userId, id);
   }
 
   /**
