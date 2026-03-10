@@ -187,6 +187,23 @@ export class AuthController {
     return;
   }
 
+  // Sign in with Google OAuth for web
+  @Get('google/web')
+  @UseGuards(PassportAuthGuard('google'))
+  googleAuthWeb(@Req() req?: Request, @Res() res?: Response) {
+    // Establecer una cookie temporal para marcar que es web
+    if (res) {
+      res.cookie('oauth_mode', 'web', {
+        httpOnly: true,
+        secure: process.env.STAGE !== 'dev',
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 5, // 5 minutos
+        path: '/',
+      });
+    }
+    return;
+  }
+
   // Verify Google ID Token for mobile native sign-in
   @Post('google/verify')
   @UsePipes(new ZodValidationPipe(z.object({ idToken: z.string() })))
@@ -199,38 +216,52 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(PassportAuthGuard('google'))
   async googleCallback(@Req() req: Request, @Res() res: Response) {
-    // Leer el mode desde la cookie
-    const oauthMode = (req.cookies as any)?.oauth_mode;
-    const result = await this.authService.signInWithGoogle(req.user);
+    try {
+      // Leer el mode desde la cookie
+      const oauthMode = (req.cookies as any)?.oauth_mode || 'web';
+      const result = await this.authService.signInWithGoogle(req.user);
 
-    // Limpiar la cookie de modo
-    res.clearCookie('oauth_mode');
+      // Limpiar la cookie de modo
+      res.clearCookie('oauth_mode', { path: '/' });
 
-    // Handle mobile deep link redirect
-    if (oauthMode === 'mobile') {
-      const mobileScheme = process.env.MOBILE_APP_SCHEME ?? 'ascenciotaxapp';
-      const redirectUrl = `${mobileScheme}://auth/google/callback?access_token=${encodeURIComponent(result.access_token)}`;
-      return res.redirect(redirectUrl);
+      // Handle mobile deep link redirect
+      if (oauthMode === 'mobile') {
+        const mobileScheme = process.env.MOBILE_APP_SCHEME ?? 'ascenciotaxapp';
+        const redirectUrl = `${mobileScheme}://auth/google/callback?access_token=${encodeURIComponent(result.access_token)}`;
+        return res.redirect(redirectUrl);
+      }
+
+      // Handle web redirect
+      const cookieDomain = process.env.AUTH_COOKIE_DOMAIN;
+      res.cookie('access_token', result.access_token, {
+        httpOnly: true,
+        secure: process.env.STAGE !== 'dev',
+        sameSite: 'lax',
+        ...(cookieDomain ? { domain: cookieDomain } : {}),
+        maxAge: 1000 * 60 * 60 * 24 * 7,
+        path: '/',
+      });
+
+      const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:4000';
+      const userLocale = result.user.locale || 'en';
+
+      // Extraer solo el código de idioma (ej: 'es-ES' -> 'es', 'en-CA' -> 'en')
+      const lang = userLocale.split('-')[0];
+
+      // Todos los usuarios van a /admin independientemente de su rol
+      // El sidebar mostrará solo los módulos a los que tienen acceso según su rol/suscripción
+      const successPath = `/${lang}/admin`;
+
+      const redirectUrl = new URL(successPath, webAppUrl);
+      return res.redirect(redirectUrl.toString());
+    } catch (error) {
+      console.error('❌ Error in Google OAuth callback:', error);
+      const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:4000';
+      const errorUrl = new URL(
+        '/en/signin?error=google_auth_failed',
+        webAppUrl,
+      );
+      return res.redirect(errorUrl.toString());
     }
-
-    const cookieDomain = process.env.AUTH_COOKIE_DOMAIN;
-    res.cookie('access_token', result.access_token, {
-      httpOnly: true,
-      secure: process.env.STAGE !== 'dev',
-      sameSite: 'lax',
-      ...(cookieDomain ? { domain: cookieDomain } : {}),
-      maxAge: 1000 * 60 * 60 * 24 * 7,
-      path: '/',
-    });
-
-    const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:4000';
-    const locale = result.user.locale || 'en';
-
-    // Todos los usuarios van a /admin independientemente de su rol
-    // El sidebar mostrará solo los módulos a los que tienen acceso según su rol/suscripción
-    const successPath = `/${locale}/admin`;
-
-    const redirectUrl = new URL(successPath, webAppUrl);
-    res.redirect(redirectUrl.toString());
   }
 }

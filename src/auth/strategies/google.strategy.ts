@@ -23,7 +23,12 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       '  ✓ Client ID:',
       clientID ? `${clientID.substring(0, 20)}...` : '❌ MISSING',
     );
+    console.log('  ✓ Client ID (full):', clientID || '❌ MISSING');
     console.log('  ✓ Client Secret:', clientSecret ? '***' : '❌ MISSING');
+    console.log(
+      '  ✓ Client Secret (length):',
+      clientSecret ? clientSecret.length : 0,
+    );
     console.log('  ✓ Callback URL:', callbackURL || '❌ MISSING');
 
     if (!clientID || !clientSecret || !callbackURL) {
