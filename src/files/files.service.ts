@@ -101,7 +101,7 @@ export class FilesService {
 
   async getUploadSignature(folder = 'temp_files') {
     const timestamp = Math.floor(Date.now() / 1000);
-    const publicId = `${folder}/${timestamp}-${Math.random()
+    const publicId = `${timestamp}-${Math.random()
       .toString(16)
       .slice(2, 8)}`;
 

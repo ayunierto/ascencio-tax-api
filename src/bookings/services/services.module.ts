@@ -6,6 +6,7 @@ import { Service } from './entities/';
 import { AuthModule } from 'src/auth/auth.module';
 import { StaffMember } from 'src/bookings/staff-members/entities/staff-member.entity';
 import { Appointment } from 'src/bookings/appointments/entities/appointment.entity';
+import { FilesModule } from 'src/files/files.module';
 
 @Module({
   controllers: [ServicesController],
@@ -13,6 +14,7 @@ import { Appointment } from 'src/bookings/appointments/entities/appointment.enti
   imports: [
     TypeOrmModule.forFeature([Service, StaffMember, Appointment]),
     AuthModule,
+    FilesModule,
   ],
   exports: [ServicesService],
 })
