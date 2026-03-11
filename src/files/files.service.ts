@@ -101,9 +101,7 @@ export class FilesService {
 
   async getUploadSignature(folder = 'temp_files') {
     const timestamp = Math.floor(Date.now() / 1000);
-    const publicId = `${timestamp}-${Math.random()
-      .toString(16)
-      .slice(2, 8)}`;
+    const publicId = `${timestamp}-${Math.random().toString(16).slice(2, 8)}`;
 
     const signature = cloudinary.utils.api_sign_request(
       {
