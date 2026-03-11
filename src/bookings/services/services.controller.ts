@@ -10,12 +10,17 @@ import {
   Query,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { UpdateServiceDto } from './dto/update-service.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Role } from 'src/auth/enums/role.enum';
 import { Service } from './entities';
+import {
+  serviceSchema,
+  updateServiceSchema,
+  type CreateServiceRequest,
+  type UpdateServiceRequest,
+} from '@ascencio/shared';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 
 @Controller('services')
 export class ServicesController {
@@ -23,7 +28,10 @@ export class ServicesController {
 
   @Post()
   @Auth(Role.Admin, Role.Staff, Role.SuperUser)
-  create(@Body() createServiceDto: CreateServiceDto): Promise<Service> {
+  create(
+    @Body(new ZodValidationPipe(serviceSchema))
+    createServiceDto: CreateServiceRequest,
+  ): Promise<Service> {
     return this.servicesService.create(createServiceDto);
   }
 
@@ -41,7 +49,8 @@ export class ServicesController {
   @Auth(Role.Admin, Role.Staff, Role.SuperUser)
   update(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() updateServiceDto: UpdateServiceDto,
+    @Body(new ZodValidationPipe(updateServiceSchema))
+    updateServiceDto: UpdateServiceRequest,
   ) {
     return this.servicesService.update(id, updateServiceDto);
   }

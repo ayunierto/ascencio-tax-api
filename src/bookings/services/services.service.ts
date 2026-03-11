@@ -3,8 +3,6 @@ import {
   NotFoundException,
   BadRequestException,
 } from '@nestjs/common';
-import { CreateServiceDto } from './dto/create-service.dto';
-import { UpdateServiceDto } from './dto/update-service.dto';
 import { In, Repository, IsNull } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -14,6 +12,7 @@ import { PaginatedResponse } from '@ascencio/shared/interfaces';
 import { DateTime } from 'luxon';
 import { CommonMessages, ValidationMessages } from '@ascencio/shared/i18n';
 import { FilesService } from 'src/files/files.service';
+import type { CreateServiceRequest, UpdateServiceRequest } from '@ascencio/shared';
 
 @Injectable()
 export class ServicesService {
@@ -25,7 +24,7 @@ export class ServicesService {
     private readonly filesService: FilesService,
   ) {}
 
-  async create(createServiceDto: CreateServiceDto): Promise<Service> {
+  async create(createServiceDto: CreateServiceRequest): Promise<Service> {
     const {
       staffIds,
       imageUrl: imageUrlOrPublicId,
@@ -116,7 +115,7 @@ export class ServicesService {
 
   async update(
     id: string,
-    updateServiceDto: UpdateServiceDto,
+    updateServiceDto: UpdateServiceRequest,
   ): Promise<Service> {
     const {
       staffIds,
