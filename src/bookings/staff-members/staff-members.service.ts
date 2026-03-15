@@ -4,13 +4,15 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateStaffMemberDto } from './dto/create-staff-member.dto';
-import { UpdateStaffMemberDto } from './dto/update-staff-member.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { StaffMember } from './entities/staff-member.entity';
 import { In, Repository } from 'typeorm';
 import { Schedule } from 'src/bookings/schedules/entities/schedule.entity';
 import { Service } from '../services/entities';
+import type {
+  CreateStaffMemberRequest,
+  UpdateStaffMemberRequest,
+} from '@ascencio/shared';
 
 @Injectable()
 export class StaffMembersService {
@@ -25,7 +27,7 @@ export class StaffMembersService {
     private readonly scheduleRepository: Repository<Schedule>,
   ) {}
 
-  async create(createStaffDto: CreateStaffMemberDto) {
+  async create(createStaffDto: CreateStaffMemberRequest): Promise<StaffMember> {
     const {
       services: servicesIds,
       schedules: schedulesIds,
@@ -54,7 +56,7 @@ export class StaffMembersService {
         services,
         schedules,
         ...rest,
-      });
+      }) as StaffMember;
 
       return await this.staffRepository.save(staff);
     } catch (error) {
@@ -102,7 +104,10 @@ export class StaffMembersService {
     }
   }
 
-  async update(id: string, updateStaffDto: UpdateStaffMemberDto) {
+  async update(
+    id: string,
+    updateStaffDto: UpdateStaffMemberRequest,
+  ): Promise<StaffMember> {
     const {
       services: servicesIds,
       schedules: schedulesIds,
@@ -145,7 +150,7 @@ export class StaffMembersService {
     }
   }
 
-  async remove(id: string) {
+  async remove(id: string): Promise<StaffMember> {
     try {
       const staff = await this.findOne(id);
       await this.staffRepository.remove(staff);

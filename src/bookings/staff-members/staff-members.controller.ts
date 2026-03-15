@@ -8,10 +8,15 @@ import {
   Delete,
 } from '@nestjs/common';
 import { StaffMembersService } from './staff-members.service';
-import { CreateStaffMemberDto } from './dto/create-staff-member.dto';
-import { UpdateStaffMemberDto } from './dto/update-staff-member.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { Role } from 'src/auth/enums/role.enum';
+import {
+  staffMemberSchema,
+  updateStaffMemberSchema,
+  type CreateStaffMemberRequest,
+  type UpdateStaffMemberRequest,
+} from '@ascencio/shared';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 
 @Controller('staff-members')
 export class StaffMembersController {
@@ -19,7 +24,10 @@ export class StaffMembersController {
 
   @Post()
   @Auth(Role.Admin)
-  create(@Body() createStaffMemberDto: CreateStaffMemberDto) {
+  create(
+    @Body(new ZodValidationPipe(staffMemberSchema))
+    createStaffMemberDto: CreateStaffMemberRequest,
+  ) {
     return this.staffService.create(createStaffMemberDto);
   }
 
@@ -37,7 +45,8 @@ export class StaffMembersController {
   @Auth(Role.Admin)
   update(
     @Param('id') id: string,
-    @Body() updateStaffMemberDto: UpdateStaffMemberDto,
+    @Body(new ZodValidationPipe(updateStaffMemberSchema))
+    updateStaffMemberDto: UpdateStaffMemberRequest,
   ) {
     return this.staffService.update(id, updateStaffMemberDto);
   }
