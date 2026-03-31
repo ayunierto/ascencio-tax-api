@@ -24,7 +24,7 @@ export class CompaniesService {
     let logoUrl: string | undefined;
 
     // If a mediaToken is provided, promote the temp image to permanent storage
-    if (mediaToken && mediaToken.startsWith('temp_files/')) {
+    if (mediaToken?.startsWith('temp_files/')) {
       const result = await this.filesService.promoteImage(
         mediaToken,
         'companies',

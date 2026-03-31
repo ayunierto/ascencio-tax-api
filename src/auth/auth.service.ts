@@ -150,7 +150,7 @@ export class AuthService {
       throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
 
     // Crear usuario si no existe o si fue eliminado (soft delete)
-    if (!user || user.deletedAt !== null) {
+    if (user?.deletedAt !== null) {
       const passwordHash = await this.hashPassword(randomUUID());
       user = this.usersRepository.create({
         firstName: googleProfile.firstName ?? 'User',
@@ -201,7 +201,7 @@ export class AuthService {
 
       const payload = ticket.getPayload();
 
-      if (!payload || !payload.email) {
+      if (!payload?.email) {
         throw new BadRequestException(
           AuthMessages.GOOGLE_PROFILE_MISSING_EMAIL,
         );

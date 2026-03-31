@@ -66,7 +66,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
     if (!email) {
       console.error('❌ Google profile missing email');
-      return done(new Error('Google profile missing email'));
+      done(new Error('Google profile missing email'));
+      return;
     }
 
     const user: GoogleUserProfile = {
@@ -80,10 +81,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     console.log('✅ Google OAuth Validation Success:', email);
 
     // Preservar el authMode del request si existe
-    if ((req as any).authMode) {
-      (req as any).authModeForCallback = (req as any).authMode;
+    if (req.authMode) {
+      req.authModeForCallback = req.authMode;
     }
 
-    return done(null, user);
+    done(null, user);
   }
 }

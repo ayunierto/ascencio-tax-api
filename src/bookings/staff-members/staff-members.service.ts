@@ -56,7 +56,7 @@ export class StaffMembersService {
         services,
         schedules,
         ...rest,
-      }) as StaffMember;
+      });
 
       return await this.staffRepository.save(staff);
     } catch (error) {

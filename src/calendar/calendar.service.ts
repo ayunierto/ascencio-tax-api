@@ -15,7 +15,7 @@ import {
   CalendarStatus,
 } from './entities/calendar.entity';
 
-type CreateEventOptions = {
+interface CreateEventOptions {
   staffMemberId?: string;
   serviceId?: string;
   sourceType?: CalendarSourceType;
@@ -23,7 +23,7 @@ type CreateEventOptions = {
   externalCalendarId?: string;
   isBusy?: boolean;
   sync?: boolean;
-};
+}
 
 type UpdateEventOptions = CreateEventOptions & { status?: CalendarStatus };
 

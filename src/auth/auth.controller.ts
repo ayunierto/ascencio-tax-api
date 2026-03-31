@@ -228,7 +228,8 @@ export class AuthController {
       if (oauthMode === 'mobile') {
         const mobileScheme = process.env.MOBILE_APP_SCHEME ?? 'ascenciotaxapp';
         const redirectUrl = `${mobileScheme}://auth/google/callback?access_token=${encodeURIComponent(result.access_token)}`;
-        return res.redirect(redirectUrl);
+        res.redirect(redirectUrl);
+        return;
       }
 
       // Handle web redirect
@@ -253,7 +254,8 @@ export class AuthController {
       const successPath = `/${lang}/admin`;
 
       const redirectUrl = new URL(successPath, webAppUrl);
-      return res.redirect(redirectUrl.toString());
+      res.redirect(redirectUrl.toString());
+      return;
     } catch (error) {
       console.error('❌ Error in Google OAuth callback:', error);
       const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:4000';
@@ -261,7 +263,8 @@ export class AuthController {
         '/en/signin?error=google_auth_failed',
         webAppUrl,
       );
-      return res.redirect(errorUrl.toString());
+      res.redirect(errorUrl.toString());
+      return;
     }
   }
 }

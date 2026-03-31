@@ -7,6 +7,8 @@ export class FilesService {
   private readonly cloudName: string;
   private readonly apiKey: string;
   private readonly apiSecret: string;
+  private readonly MAX_MOVE_RETRIES = 2;
+  private readonly MOVE_RETRY_DELAY_MS = 800;
 
   constructor() {
     const cloudName = process.env.CLOUDINARY_NAME;
@@ -124,9 +126,29 @@ export class FilesService {
   }
 
   async move(oldPublicId: string, newPublicId: string) {
-    return await cloudinary.uploader.rename(oldPublicId, newPublicId, {
-      overwrite: true, // Replace the file if it already exists
-    });
+    let attempt = 0;
+
+    while (true) {
+      try {
+        return await cloudinary.uploader.rename(oldPublicId, newPublicId, {
+          overwrite: true, // Replace the file if it already exists
+        });
+      } catch (error: any) {
+        const isTimeoutError =
+          error?.name === 'TimeoutError' || error?.http_code === 499;
+
+        if (!isTimeoutError || attempt >= this.MAX_MOVE_RETRIES) {
+          throw error;
+        }
+
+        attempt += 1;
+        const delay = this.MOVE_RETRY_DELAY_MS * attempt;
+        console.warn(
+          `[FilesService] Cloudinary rename timeout (${attempt}/${this.MAX_MOVE_RETRIES}). Retrying in ${delay}ms...`,
+        );
+        await this.sleep(delay);
+      }
+    }
   }
 
   /**

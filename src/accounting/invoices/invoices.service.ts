@@ -83,7 +83,7 @@ export class InvoicesService {
       users: [user], // Associate user directly during creation
     });
 
-    return (await this.companyRepo.save(soleProprietorCompany)) as Company;
+    return await this.companyRepo.save(soleProprietorCompany);
   }
 
   /**

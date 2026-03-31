@@ -12,7 +12,10 @@ import { PaginatedResponse } from '@ascencio/shared/interfaces';
 import { DateTime } from 'luxon';
 import { CommonMessages, ValidationMessages } from '@ascencio/shared/i18n';
 import { FilesService } from 'src/files/files.service';
-import type { CreateServiceRequest, UpdateServiceRequest } from '@ascencio/shared';
+import type {
+  CreateServiceRequest,
+  UpdateServiceRequest,
+} from '@ascencio/shared';
 
 @Injectable()
 export class ServicesService {
@@ -266,7 +269,7 @@ export class ServicesService {
     // Try to extract publicId from Cloudinary URL
     if (imageUrlOrPublicId.includes('res.cloudinary.com')) {
       // Match pattern: /upload/{optional_version}/{publicId}.{extension}
-      const match = imageUrlOrPublicId.match(/\/upload\/(?:v\d+\/)?(.*)/);
+      const match = /\/upload\/(?:v\d+\/)?(.*)/.exec(imageUrlOrPublicId);
       if (match && match[1]) {
         // Remove file extension from publicId
         const publicIdWithExt = match[1];
@@ -294,8 +297,8 @@ export class ServicesService {
     if (!imageUrl) return undefined;
     if (!imageUrl.includes('res.cloudinary.com')) return undefined;
 
-    const match = imageUrl.match(/\/upload\/(?:v\d+\/)?(.*)/);
-    if (!match || !match[1]) return undefined;
+    const match = /\/upload\/(?:v\d+\/)?(.*)/.exec(imageUrl);
+    if (!match?.[1]) return undefined;
 
     const publicIdWithExt = match[1];
     const lastDotIndex = publicIdWithExt.lastIndexOf('.');

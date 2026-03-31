@@ -61,12 +61,12 @@ export class ZoomIntegrationService {
         `Error updating Zoom meeting ${meetingId}:`,
         (error as Error).message,
       );
-      if ((error as any).response) {
+      if (error.response) {
         this.logger.error(
           `Zoom API Error Response:`,
-          JSON.stringify((error as any).response.data, null, 2),
+          JSON.stringify(error.response.data, null, 2),
         );
-        this.logger.error(`Status: ${(error as any).response.status}`);
+        this.logger.error(`Status: ${error.response.status}`);
       }
       throw error;
     }

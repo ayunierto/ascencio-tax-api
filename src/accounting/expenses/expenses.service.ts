@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  HttpException,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
@@ -114,18 +115,8 @@ export class ExpensesService {
       const { categoryId, subcategoryId, date, imageUrl, ...rest } =
         createExpenseDto;
 
-      // Validar imageUrl nulo
-      let updatedImageUrl: string | null = null;
-      if (imageUrl) {
-        const oldPath = this.extractPublicId(imageUrl);
-        if (oldPath) {
-          const newPath = oldPath.replace('temp_receipts', 'receipts');
-          updatedImageUrl = imageUrl.replace(oldPath, newPath);
-          await this.filesService.move(oldPath, newPath);
-        } else {
-          updatedImageUrl = imageUrl;
-        }
-      }
+      // Promote receipt image from temp folder to permanent folder when possible.
+      const updatedImageUrl = await this.resolvePersistedImageUrl(imageUrl);
 
       // Validar si la categoría existe (puede ser nula)
       let category: Category | null = null;
@@ -181,6 +172,11 @@ export class ExpensesService {
       return newExpense;
     } catch (error) {
       console.error(error);
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException(
         error.message || 'Error creating expense. Please try again later.',
       );
@@ -230,7 +226,8 @@ export class ExpensesService {
     user: User,
   ): Promise<Expense> {
     try {
-      const { categoryId, subcategoryId, date, ...rest } = updateExpenseDto;
+      const { categoryId, subcategoryId, date, imageUrl, ...rest } =
+        updateExpenseDto;
 
       const expense = await this.expenseRepository.findOne({
         where: { id: id, user: { id: user.id } },
@@ -272,10 +269,16 @@ export class ExpensesService {
         }
       }
 
+      const updatedImageUrl =
+        imageUrl !== undefined
+          ? await this.resolvePersistedImageUrl(imageUrl)
+          : expense.imageUrl;
+
       const updatedExpense = await this.expenseRepository.preload({
         id,
         ...rest,
         date: parsedDate,
+        imageUrl: updatedImageUrl,
         category: category ?? undefined,
         subcategory: subcategory ?? undefined,
         user: user,
@@ -294,6 +297,10 @@ export class ExpensesService {
 
       return updatedExpense;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new InternalServerErrorException(
         'Error updating expense. Please try again later.',
       );
@@ -334,6 +341,39 @@ export class ExpensesService {
       return path.replace(/^v\d+\//, '');
     } catch {
       return null;
+    }
+  }
+
+  private async resolvePersistedImageUrl(
+    imageUrl?: string | null,
+  ): Promise<string | null> {
+    if (!imageUrl) {
+      return null;
+    }
+
+    const oldPath = this.extractPublicId(imageUrl);
+    if (!oldPath) {
+      return imageUrl;
+    }
+
+    // Only move files from temp_receipts to receipts.
+    if (!oldPath.includes('temp_receipts')) {
+      return imageUrl;
+    }
+
+    const newPath = oldPath.replace('temp_receipts', 'receipts');
+    const promotedImageUrl = imageUrl.replace(oldPath, newPath);
+
+    try {
+      await this.filesService.move(oldPath, newPath);
+      return promotedImageUrl;
+    } catch (error) {
+      // Do not block expense persistence because of external storage transient failures.
+      console.warn(
+        `[EXPENSES] Could not promote receipt image ${oldPath} -> ${newPath}. Saving expense with temp image URL.`,
+      );
+      console.warn(error);
+      return imageUrl;
     }
   }
 }
