@@ -7,8 +7,6 @@ import {
   Param,
   Delete,
   Query,
-  UseInterceptors,
-  UploadedFile,
   BadRequestException,
 } from '@nestjs/common';
 
@@ -17,7 +15,6 @@ import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/auth/entities/user.entity';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { FilesService } from 'src/files/files.service';
 import { RemoveReceiptImageDto } from './dto/remove-receipt-image.dto';
 import { OcrService } from 'src/ocr/ocr.service';
@@ -79,31 +76,6 @@ export class ExpensesController {
   @Auth()
   remove(@Param('id') id: string, @GetUser() user: User) {
     return this.expensesService.remove(id, user);
-  }
-
-  @Post('upload-receipt-image')
-  @Auth()
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadReceipt(
-    @UploadedFile() file: Express.Multer.File,
-    @GetUser() user: User,
-  ) {
-    if (!file) {
-      throw new BadRequestException(
-        'File is required, please upload a file in the "file" field',
-      );
-    }
-    // Create temp folder for user.
-    const folderPath = `ascencio_tax_inc/temp_receipts/${user.id}`;
-    const uploadResult = await this.filesService.upload(file, folderPath);
-
-    if (!uploadResult || !('secure_url' in uploadResult)) {
-      throw new BadRequestException('Failed to upload receipt image');
-    }
-
-    return {
-      url: uploadResult.secure_url,
-    };
   }
 
   @Post('analyze-image-url')

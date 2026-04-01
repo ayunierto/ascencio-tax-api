@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonMessages } from '@ascencio/shared/i18n';
-import { IsNull, Repository } from 'typeorm';
+import { In, IsNull, Repository } from 'typeorm';
 import { Invoice, InvoiceStatus } from './entities/invoice.entity';
 import { InvoiceLineItem } from './entities/invoice-line-item.entity';
 import { PaginatedResponse } from '@ascencio/shared/interfaces';
@@ -356,7 +356,12 @@ export class InvoicesService {
     }
 
     if (status && status !== 'all') {
-      where.status = status;
+      if (status === 'pending') {
+        // Pending in UI represents invoices still collectible.
+        where.status = In(['draft', 'issued', 'partial']);
+      } else {
+        where.status = status;
+      }
     }
 
     const [invoices, total] = await this.invoiceRepo.findAndCount({

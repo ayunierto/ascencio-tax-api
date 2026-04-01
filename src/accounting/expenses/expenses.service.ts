@@ -273,6 +273,7 @@ export class ExpensesService {
         imageUrl !== undefined
           ? await this.resolvePersistedImageUrl(imageUrl)
           : expense.imageUrl;
+      const previousImageUrl = expense.imageUrl;
 
       const updatedExpense = await this.expenseRepository.preload({
         id,
@@ -295,6 +296,8 @@ export class ExpensesService {
         user,
       );
 
+      this.scheduleDeleteIfReplaced(previousImageUrl, updatedImageUrl);
+
       return updatedExpense;
     } catch (error) {
       if (error instanceof HttpException) {
@@ -315,8 +318,14 @@ export class ExpensesService {
       if (!expense) {
         throw new BadRequestException('Expense not found');
       }
-      // TODO: delete temp file
       await this.expenseRepository.remove(expense);
+
+      const previousImagePath = expense.imageUrl
+        ? this.extractPublicId(expense.imageUrl)
+        : null;
+      if (previousImagePath) {
+        this.filesService.scheduleDelete(previousImagePath);
+      }
 
       await this.logService.create(
         { description: `Expense deleted: ${expense.merchant}` },
@@ -375,5 +384,29 @@ export class ExpensesService {
       console.warn(error);
       return imageUrl;
     }
+  }
+
+  private scheduleDeleteIfReplaced(
+    previousImageUrl?: string | null,
+    currentImageUrl?: string | null,
+  ): void {
+    if (!previousImageUrl) {
+      return;
+    }
+
+    const previousPublicId = this.extractPublicId(previousImageUrl);
+    if (!previousPublicId) {
+      return;
+    }
+
+    const currentPublicId = currentImageUrl
+      ? this.extractPublicId(currentImageUrl)
+      : null;
+
+    if (currentPublicId && currentPublicId === previousPublicId) {
+      return;
+    }
+
+    this.filesService.scheduleDelete(previousPublicId);
   }
 }
