@@ -11,4 +11,5 @@ import { AuthModule } from 'src/auth/auth.module';
   providers: [PostsService],
   exports: [PostsService, TypeOrmModule],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class PostsModule {}

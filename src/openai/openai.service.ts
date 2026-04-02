@@ -65,6 +65,7 @@ Receipt text:
       throw new Error('OpenAI response content is empty');
     }
 
-    return JSON.parse(content);
+    const parsed: unknown = JSON.parse(content);
+    return parsed;
   }
 }

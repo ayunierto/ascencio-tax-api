@@ -328,14 +328,14 @@ export const dd: TDocumentDefinitions = {
           return i === 0 || i === node.table.body.length ? 2 : 1;
         },
         vLineWidth: function (i, node) {
-          const widthsLength = node.table?.widths?.length ?? 0;
+          const widthsLength = node.table.widths?.length ?? 0;
           return i === 0 || i === widthsLength ? 2 : 1;
         },
         hLineColor: function (i, node) {
           return i === 0 || i === node.table.body.length ? 'black' : 'gray';
         },
         vLineColor: function (i, node) {
-          const widthsLength = node.table?.widths?.length ?? 0;
+          const widthsLength = node.table.widths?.length ?? 0;
           return i === 0 || i === widthsLength ? 'black' : 'gray';
         },
         // hLineStyle: function (i, node) { return {dash: { length: 10, space: 4 }}; },
@@ -360,7 +360,7 @@ export const dd: TDocumentDefinitions = {
         ],
       },
       layout: {
-        fillColor: function (rowIndex, node, columnIndex) {
+        fillColor: function (rowIndex) {
           return rowIndex % 2 === 0 ? '#CCCCCC' : null;
         },
       },
@@ -388,13 +388,13 @@ export const dd: TDocumentDefinitions = {
           return i === 0 || i === node.table.body.length ? 2 : 1;
         },
         vLineWidth: function (i, node) {
-          const widthsLength = node.table?.widths?.length ?? 0;
+          const widthsLength = node.table.widths?.length ?? 0;
           return i === 0 || i === widthsLength ? 2 : 1;
         },
-        hLineColor: function (i, node) {
+        hLineColor: function () {
           return 'black';
         },
-        vLineColor: function (i, node) {
+        vLineColor: function () {
           return 'black';
         },
         hLineStyle: function (i, node) {
@@ -404,7 +404,7 @@ export const dd: TDocumentDefinitions = {
           return { dash: { length: 10, space: 4 } };
         },
         vLineStyle: function (i, node) {
-          const widthsLength = node.table?.widths?.length ?? 0;
+          const widthsLength = node.table.widths?.length ?? 0;
           if (i === 0 || i === widthsLength) {
             return null;
           }

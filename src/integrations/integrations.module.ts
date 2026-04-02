@@ -6,4 +6,5 @@ import { ZoomIntegrationModule } from './zoom/zoom.module';
   imports: [GoogleCalendarIntegrationModule, ZoomIntegrationModule],
   exports: [GoogleCalendarIntegrationModule, ZoomIntegrationModule],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class IntegrationsModule {}

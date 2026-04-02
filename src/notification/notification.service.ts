@@ -11,7 +11,7 @@ export class NotificationService {
   private readonly companyAddress = '123 Tax Ave, Finance City'; // Placeholder or env var
 
   constructor(private readonly mailService: MailService) {
-    this.senderName = process.env.MAILERSEND_SENDER_NAME || 'Ascencio Tax';
+    this.senderName = process.env.MAILERSEND_SENDER_NAME ?? 'Ascencio Tax';
     if (!process.env.MAILERSEND_SENDER_NAME)
       this.logger.error('MAILERSEND_SENDER_NAME is not configured.');
   }
@@ -58,7 +58,7 @@ export class NotificationService {
                   ${content}
               </div>
               <div class="footer">
-                  <p>&copy; ${year} ${this.senderName}. All rights reserved.</p>
+                  <p>&copy; ${String(year)} ${this.senderName}. All rights reserved.</p>
                   <p>This email was sent to you because you have an account or appointment with us.</p>
               </div>
           </div>
@@ -80,12 +80,12 @@ export class NotificationService {
       <div class="code-block">
         <span class="code">${code}</span>
       </div>
-      <p>This code will expire in <strong>${expirationTime} minutes</strong>.</p>
+      <p>This code will expire in <strong>${String(expirationTime)} minutes</strong>.</p>
       <p>If you did not create an account with us, you can safely ignore this email.</p>
     `;
 
     const htmlBody = this.getEmailTemplate(subject, content);
-    const textBody = `Hello ${clientName},\n\nYour verification code is: ${code}\n\nExpires in ${expirationTime} minutes.`;
+    const textBody = `Hello ${clientName},\n\nYour verification code is: ${code}\n\nExpires in ${String(expirationTime)} minutes.`;
 
     return this.sendMailSafe(
       recipientEmail,
@@ -110,12 +110,12 @@ export class NotificationService {
       <div class="code-block">
         <span class="code">${code}</span>
       </div>
-      <p>This code is valid for <strong>${expirationTime} minutes</strong>.</p>
+      <p>This code is valid for <strong>${String(expirationTime)} minutes</strong>.</p>
       <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
     `;
 
     const htmlBody = this.getEmailTemplate(subject, content);
-    const textBody = `Hello ${clientName},\n\nYour password reset code is: ${code}\n\nExpires in ${expirationTime} minutes.`;
+    const textBody = `Hello ${clientName},\n\nYour password reset code is: ${code}\n\nExpires in ${String(expirationTime)} minutes.`;
 
     return this.sendMailSafe(
       recipientEmail,
@@ -271,7 +271,7 @@ export class NotificationService {
     clientName?: string,
   ): Promise<boolean> {
     const mailOptions: SendMailOptions = {
-      clientName: clientName || '',
+      clientName: clientName ?? '',
       to,
       subject,
       text,
@@ -284,11 +284,10 @@ export class NotificationService {
         `Email sent successfully to: ${to} | Subject: ${subject}`,
       );
       return true;
-    } catch (error) {
-      this.logger.error(
-        `Failed to send email to ${to}: ${error.message}`,
-        error.stack,
-      );
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const stack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`Failed to send email to ${to}: ${message}`, stack);
       return false;
     }
   }

@@ -2,13 +2,11 @@ import {
   Controller,
   Post,
   Body,
-  HttpStatus,
   Get,
   Patch,
   UseGuards,
   Req,
   Res,
-  Query,
   UsePipes,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -31,7 +29,6 @@ import {
   SignInResponse,
   SignUpResponse,
   SimpleUser,
-  UpdateProfileResponse,
   VerifyEmailCodeResponse,
 } from '@ascencio/shared/interfaces';
 import {
@@ -155,14 +152,6 @@ export class AuthController {
     return this.authService.deleteAccount(deleteAccountDto, user);
   }
 
-  // Sign in with Google using ID Token (for mobile)
-  @Post('google/verify')
-  async googleVerify(
-    @Body() body: { idToken: string },
-  ): Promise<SignInResponse> {
-    return this.authService.signInWithGoogleIdToken(body.idToken);
-  }
-
   // Sign in with Google OAuth (redirect)
   @Get('google')
   @UseGuards(PassportAuthGuard('google'))
@@ -218,7 +207,9 @@ export class AuthController {
   async googleCallback(@Req() req: Request, @Res() res: Response) {
     try {
       // Leer el mode desde la cookie
-      const oauthMode = (req.cookies as any)?.oauth_mode || 'web';
+      const oauthMode =
+        (req.cookies as Record<string, string | undefined> | undefined)
+          ?.oauth_mode ?? 'web';
       const result = await this.authService.signInWithGoogle(req.user);
 
       // Limpiar la cookie de modo
@@ -244,13 +235,9 @@ export class AuthController {
       });
 
       const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:4000';
-      const userLocale = result.user.locale || 'en';
-
-      // Extraer solo el código de idioma (ej: 'es-ES' -> 'es', 'en-CA' -> 'en')
-      const lang = userLocale.split('-')[0];
-
-      // Todos los usuarios van a /admin independientemente de su rol
-      // El sidebar mostrará solo los módulos a los que tienen acceso según su rol/suscripción
+      const userLocale = (result.user.locale ?? 'en').toLowerCase();
+      const langCandidate = userLocale.split(/[-_]/)[0];
+      const lang = ['en', 'es'].includes(langCandidate) ? langCandidate : 'en';
       const successPath = `/${lang}/admin`;
 
       const redirectUrl = new URL(successPath, webAppUrl);

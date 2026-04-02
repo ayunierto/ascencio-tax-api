@@ -22,12 +22,14 @@ export class PostsService {
     try {
       const post = this.postRepository.create({
         user,
-        ...createPostDto,
+        title: createPostDto.title,
+        url: createPostDto.url,
       });
       await this.postRepository.save(post);
       return post;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new InternalServerErrorException(message);
     }
   }
 
@@ -43,8 +45,9 @@ export class PostsService {
       });
 
       return posts;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new InternalServerErrorException(message);
     }
   }
 
@@ -55,8 +58,9 @@ export class PostsService {
         throw new NotFoundException('Post not found');
       }
       return post;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new InternalServerErrorException(message);
     }
   }
 
@@ -75,9 +79,10 @@ export class PostsService {
       this.postRepository.merge(post, updatePostDto);
       await this.postRepository.save(post);
       return post;
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message ||
+        message ??
           'An unexpected error occurred while updating the post. Please try again later.',
       );
     }
@@ -93,8 +98,9 @@ export class PostsService {
       }
       await this.postRepository.remove(post);
       return post;
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new InternalServerErrorException(message);
     }
   }
 }

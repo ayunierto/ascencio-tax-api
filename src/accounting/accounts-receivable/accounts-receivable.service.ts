@@ -2,10 +2,14 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { AccountReceivable } from './entities/account-receivable.entity';
+import {
+  AccountReceivable,
+  AccountReceivableStatus,
+} from './entities/account-receivable.entity';
 import { Invoice } from '../invoices/entities/invoice.entity';
 import { PaginatedResponse } from '@ascencio/shared/interfaces';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -27,10 +31,14 @@ export class AccountsReceivableService {
     invoice: Invoice,
     userId: string,
   ): Promise<AccountReceivable> {
+    if (!invoice.billToClientId) {
+      throw new BadRequestException('Invoice must include a client');
+    }
+
     const ar = this.arRepo.create({
       userId,
       companyId: invoice.fromCompanyId,
-      clientId: invoice.billToClientId!,
+      clientId: invoice.billToClientId,
       invoiceId: invoice.id,
       originalAmount: invoice.total,
       paidAmount: 0,
@@ -76,9 +84,13 @@ export class AccountsReceivableService {
     // Validate access
     await this.validateUserCompanyAccess(userId, companyId);
 
-    const where: any = { userId, companyId };
+    const where: {
+      userId: string;
+      companyId: string;
+      status?: AccountReceivableStatus;
+    } = { userId, companyId };
     if (status && status !== 'all') {
-      where.status = status;
+      where.status = status as AccountReceivableStatus;
     }
 
     const [items, total] = await this.arRepo.findAndCount({
@@ -139,8 +151,8 @@ export class AccountsReceivableService {
       throw new NotFoundException('Account receivable not found');
     }
 
-    ar.paidAmount = Number(ar.paidAmount) + paymentAmount;
-    ar.balance = Number(ar.originalAmount) - Number(ar.paidAmount);
+    ar.paidAmount = ar.paidAmount + paymentAmount;
+    ar.balance = ar.originalAmount - ar.paidAmount;
 
     // Update status
     if (ar.balance <= 0) {

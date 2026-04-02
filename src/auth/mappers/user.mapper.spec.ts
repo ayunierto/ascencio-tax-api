@@ -32,7 +32,7 @@ const buildUser = (overrides: Partial<User> = {}): User => {
     companies: [],
     clients: [],
   } as User;
-  return { ...base, ...overrides } as User;
+  return Object.assign(base, overrides);
 };
 
 describe('UserMapper', () => {

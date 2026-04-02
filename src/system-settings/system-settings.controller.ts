@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Body,
-  Patch,
-  Param,
-  Post,
-  NotFoundException,
-} from '@nestjs/common';
+import { Controller, Get, Body, Patch, Param, Post } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -41,9 +33,7 @@ export class SystemSettingsController {
   @ApiResponse({ status: 200, description: 'Return the setting' })
   @ApiResponse({ status: 404, description: 'Setting not found' })
   async findOne(@Param('key') key: string) {
-    const setting = await this.settingsService.findOne(key);
-    if (!setting) throw new NotFoundException('Setting not found');
-    return setting;
+    return this.settingsService.findOne(key);
   }
 
   @Post()

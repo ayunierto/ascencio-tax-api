@@ -7,4 +7,5 @@ import { MailModule } from 'src/mail/mail.module';
   exports: [NotificationService],
   imports: [MailModule],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NotificationModule {}

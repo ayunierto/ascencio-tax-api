@@ -1,6 +1,13 @@
-import { Controller, Post, Body, Get, Query, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query } from '@nestjs/common';
 import { CalendarService } from './calendar.service';
 import { calendar_v3 } from 'googleapis';
+
+interface ImportExternalEventsDto {
+  startDateTime: string;
+  endDateTime: string;
+  calendarId?: string;
+  defaultTimeZone?: string;
+}
 
 @Controller('calendar')
 export class CalendarController {
@@ -31,5 +38,10 @@ export class CalendarController {
     );
     return events;
     // return { hasEvents: events.length > 0 };
+  }
+
+  @Post('import-external')
+  async importExternalEvents(@Body() body: ImportExternalEventsDto) {
+    return this.googleCalendarService.importExternalEventsInRange(body);
   }
 }

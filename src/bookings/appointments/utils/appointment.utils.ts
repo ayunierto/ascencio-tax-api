@@ -16,7 +16,7 @@ export const validateWorkingHours = (
   endDateAndTime: DateTime,
   timeZone: string,
 ): void => {
-  if (!schedule || !startDateAndTime || !endDateAndTime || !timeZone) {
+  if (!timeZone) {
     throw new BadRequestException(
       'Missing required parameters for schedule validation',
     );
@@ -115,15 +115,14 @@ export const validateTimeZone = (timeZone: string | undefined): string => {
     const testDate = DateTime.now().setZone(timeZone);
 
     // Verificar si la zona horaria es válida
-    if (!testDate.isValid || testDate.invalidReason === 'unsupported zone') {
+    if (!testDate.isValid) {
       throw new BadRequestException(`Invalid time zone: ${timeZone}`);
     }
 
     return timeZone;
   } catch (error) {
-    throw new BadRequestException(
-      `Error validating time zone: ${error.message}`,
-    );
+    const message = error instanceof Error ? error.message : String(error);
+    throw new BadRequestException(`Error validating time zone: ${message}`);
   }
 };
 
@@ -134,8 +133,8 @@ export const validateDatesForUpdate = (
   existingEndDate: DateTime | null,
 ): { startDateAndTime: DateTime; endDateAndTime: DateTime } => {
   // Determinar las fechas a usar
-  const startDateAndTime = startDate || existingStartDate;
-  const endDateAndTime = endDate || existingEndDate;
+  const startDateAndTime = startDate ?? existingStartDate;
+  const endDateAndTime = endDate ?? existingEndDate;
 
   // Validar que tengamos fechas para trabajar
   if (!startDateAndTime || !endDateAndTime) {

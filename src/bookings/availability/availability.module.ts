@@ -19,4 +19,5 @@ import { ServicesModule } from '../services/services.module';
   ],
   exports: [AvailabilityService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AvailabilityModule {}

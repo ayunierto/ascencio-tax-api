@@ -9,7 +9,6 @@ import {
 } from '@nestjs/common';
 import { FilesService } from './files.service';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { FileFilter } from './helpers/fileFilter.helper';
 import { UploadSignaturePayload } from '@ascencio/shared';
 import { UploadApiResponse } from 'cloudinary';
 
@@ -18,9 +17,7 @@ export class FilesController {
   constructor(private readonly filesService: FilesService) {}
 
   @Post('signature')
-  async signImage(
-    @Body('folder') folder?: string,
-  ): Promise<UploadSignaturePayload> {
+  signImage(@Body('folder') folder?: string): UploadSignaturePayload {
     return this.filesService.getUploadSignature(folder);
   }
 
@@ -44,7 +41,7 @@ export class FilesController {
   async moveFile(
     @Body('publicId') publicId: string,
     @Body('targetFolder') targetFolder: string,
-  ) {
+  ): Promise<unknown> {
     if (!publicId || !targetFolder) {
       throw new Error('publicId and targetFolder are required');
     }
@@ -60,7 +57,7 @@ export class FilesController {
   }
 
   @Delete(':publicId')
-  async deleteFile(@Param('publicId') publicId: string) {
+  async deleteFile(@Param('publicId') publicId: string): Promise<unknown> {
     return this.filesService.delete(publicId);
   }
 }

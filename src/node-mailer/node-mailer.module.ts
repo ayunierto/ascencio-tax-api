@@ -5,4 +5,5 @@ import { NodeMailerService } from './node-mailer.service';
   providers: [NodeMailerService],
   exports: [NodeMailerService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class NodeMailerModule {}

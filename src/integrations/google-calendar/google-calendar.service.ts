@@ -9,6 +9,21 @@ import {
 import { Auth, calendar_v3, google } from 'googleapis';
 import { DateTime, Interval } from 'luxon';
 
+interface GoogleApiErrorPayload {
+  message?: string;
+  code?: number;
+}
+
+interface GoogleApiErrorResponse {
+  response?: {
+    data?: {
+      error?: GoogleApiErrorPayload;
+    };
+  };
+  message?: string;
+  stack?: string;
+}
+
 @Injectable()
 export class GoogleCalendarIntegrationService implements OnModuleInit {
   private readonly logger = new Logger(GoogleCalendarIntegrationService.name);
@@ -71,7 +86,7 @@ export class GoogleCalendarIntegrationService implements OnModuleInit {
     body: calendar_v3.Schema$Event,
     calendarId?: string,
   ): Promise<string | undefined> {
-    if (!body?.start || !body.end) {
+    if (!body.start || !body.end) {
       throw new BadRequestException('Event body, start and end are required');
     }
     if (!this.calendar) {
@@ -94,7 +109,9 @@ export class GoogleCalendarIntegrationService implements OnModuleInit {
         calendarId: targetCalendarId,
         requestBody: body,
       });
-      this.logger.log(`Evento creado en Google Calendar: ${response.data.id}`);
+      this.logger.log(
+        `Evento creado en Google Calendar: ${response.data.id ?? 'N/A'}`,
+      );
       return response.data.id ?? undefined;
     } catch (error) {
       this.handleGoogleApiError(error, 'Error creating event');
@@ -106,7 +123,7 @@ export class GoogleCalendarIntegrationService implements OnModuleInit {
     eventDetails: calendar_v3.Schema$Event,
     calendarId?: string,
   ): Promise<calendar_v3.Schema$Event | undefined> {
-    if (!eventId || !eventDetails) {
+    if (!eventId) {
       throw new BadRequestException('eventId and eventDetails are required');
     }
     if (!this.calendar) {
@@ -187,7 +204,7 @@ export class GoogleCalendarIntegrationService implements OnModuleInit {
         singleEvents: true,
         orderBy: 'startTime',
       });
-      return response.data.items || [];
+      return response.data.items ?? [];
     } catch (error) {
       this.handleGoogleApiError(error, 'Failed to list upcoming events');
     }
@@ -224,15 +241,15 @@ export class GoogleCalendarIntegrationService implements OnModuleInit {
         singleEvents: true,
         orderBy: 'startTime',
       });
-      const eventIntervals = (response.data.items || [])
+      const eventIntervals = (response.data.items ?? [])
         .filter((event) => event.start?.dateTime && event.end?.dateTime)
         .map((event) =>
           Interval.fromDateTimes(
             DateTime.fromISO(event.start?.dateTime ?? '', {
-              zone: event.start?.timeZone || targetTimeZone,
+              zone: event.start?.timeZone ?? targetTimeZone,
             }).setZone(targetTimeZone),
             DateTime.fromISO(event.end?.dateTime ?? '', {
-              zone: event.end?.timeZone || targetTimeZone,
+              zone: event.end?.timeZone ?? targetTimeZone,
             }).setZone(targetTimeZone),
           ),
         );
@@ -246,18 +263,59 @@ export class GoogleCalendarIntegrationService implements OnModuleInit {
     }
   }
 
-  private handleGoogleApiError(error: any, contextMsg: string): never {
-    const message = error?.message ?? 'Unknown error';
-    this.logger.error(`${contextMsg}: ${message}`, error?.stack);
-    const googleApiError = error.response?.data?.error;
+  async listEventsInRange(
+    startDateTime: string,
+    endDateTime: string,
+    calendarId?: string,
+  ): Promise<calendar_v3.Schema$Event[]> {
+    if (!startDateTime || !endDateTime) {
+      throw new BadRequestException(
+        'startDateTime and endDateTime are required',
+      );
+    }
+
+    if (!this.calendar) {
+      this.logger.warn(
+        'Google Calendar no inicializado; no se listan eventos por rango.',
+      );
+      return [];
+    }
+
+    const targetCalendarId = this.getCalendarId(calendarId);
+    if (!targetCalendarId) {
+      return [];
+    }
+
+    try {
+      const response = await this.calendar.events.list({
+        calendarId: targetCalendarId,
+        timeMin: new Date(startDateTime).toISOString(),
+        timeMax: new Date(endDateTime).toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+
+      return response.data.items ?? [];
+    } catch (error) {
+      this.handleGoogleApiError(error, 'Failed to list events in range');
+    }
+  }
+
+  private handleGoogleApiError(error: unknown, contextMsg: string): never {
+    const parsedError = error as GoogleApiErrorResponse;
+    const message = parsedError.message ?? 'Unknown error';
+    this.logger.error(`${contextMsg}: ${message}`, parsedError.stack);
+    const googleApiError = parsedError.response?.data?.error;
     if (googleApiError) {
       this.logger.error(
-        `Google API Error: ${googleApiError.message} (Code: ${googleApiError.code})`,
+        `Google API Error: ${googleApiError.message ?? 'Unknown'} (Code: ${String(googleApiError.code ?? 0)})`,
       );
       if (googleApiError.code === 404) {
         throw new NotFoundException(`${contextMsg}: Not found.`);
       }
-      throw new BadRequestException(`${contextMsg}: ${googleApiError.message}`);
+      throw new BadRequestException(
+        `${contextMsg}: ${googleApiError.message ?? 'Unknown Google API error'}`,
+      );
     }
     throw new InternalServerErrorException(`${contextMsg}: ${message}`);
   }

@@ -16,7 +16,7 @@ export class LogsService {
   async create(createLogDto: CreateLogDto, user: User): Promise<Log> {
     try {
       const newLog = this.logRepository.create({
-        ...createLogDto,
+        description: createLogDto.description,
         user,
       });
       await this.logRepository.save(newLog);

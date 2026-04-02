@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Payment } from './entities/payment.entity';
+import { Payment, PaymentMethod } from './entities/payment.entity';
 import { Receipt } from './entities/receipt.entity';
 import { AccountsReceivableService } from '../accounts-receivable/accounts-receivable.service';
 import { InvoicesService } from '../invoices/invoices.service';
@@ -45,7 +45,7 @@ export class PaymentsService {
       }
     }
 
-    const receiptNumber = `RCP-${currentYear}-${nextNumber.toString().padStart(4, '0')}`;
+    const receiptNumber = `RCP-${String(currentYear)}-${nextNumber.toString().padStart(4, '0')}`;
     return { receiptNumber, receiptYear: currentYear };
   }
 
@@ -58,7 +58,7 @@ export class PaymentsService {
     paymentData: {
       amount: number;
       paymentDate: string;
-      paymentMethod: string;
+      paymentMethod: PaymentMethod;
       reference?: string;
       notes?: string;
     },
@@ -71,9 +71,9 @@ export class PaymentsService {
       throw new BadRequestException('Payment amount must be greater than 0');
     }
 
-    if (paymentData.amount > Number(ar.balance)) {
+    if (paymentData.amount > ar.balance) {
       throw new BadRequestException(
-        `Payment amount ($${paymentData.amount}) exceeds remaining balance ($${ar.balance})`,
+        `Payment amount ($${String(paymentData.amount)}) exceeds remaining balance ($${String(ar.balance)})`,
       );
     }
 
@@ -82,7 +82,7 @@ export class PaymentsService {
       ...paymentData,
       accountReceivableId,
       recordedByUserId: userId,
-      paymentMethod: paymentData.paymentMethod as any,
+      paymentMethod: paymentData.paymentMethod,
     });
 
     const savedPayment = await this.paymentRepo.save(payment);
@@ -110,10 +110,16 @@ export class PaymentsService {
     );
 
     // Return payment with receipt
-    return this.paymentRepo.findOne({
+    const paymentWithRelations = await this.paymentRepo.findOne({
       where: { id: savedPayment.id },
       relations: ['receipt', 'accountReceivable', 'accountReceivable.client'],
-    }) as Promise<Payment>;
+    });
+
+    if (!paymentWithRelations) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return paymentWithRelations;
   }
 
   /**
@@ -123,7 +129,10 @@ export class PaymentsService {
     userId: string,
     accountReceivableId?: string,
   ): Promise<Payment[]> {
-    const where: any = { recordedByUserId: userId };
+    const where: {
+      recordedByUserId: string;
+      accountReceivableId?: string;
+    } = { recordedByUserId: userId };
     if (accountReceivableId) {
       where.accountReceivableId = accountReceivableId;
     }

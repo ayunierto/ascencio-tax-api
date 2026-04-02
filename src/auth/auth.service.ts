@@ -32,7 +32,6 @@ import {
   SignInResponse,
   SignUpResponse,
   SimpleUser,
-  UpdateProfileResponse,
   VerifyEmailCodeResponse,
 } from '@ascencio/shared/interfaces';
 import { SignInDto } from './dto/sign-in.dto';
@@ -217,7 +216,7 @@ export class AuthService {
       };
 
       // Reutilizar la lógica existente de signInWithGoogle
-      return this.signInWithGoogle(googleProfile);
+      return await this.signInWithGoogle(googleProfile);
     } catch (error) {
       console.error('Error verifying Google ID token:', error);
       throw new UnauthorizedException('Invalid Google ID token');
@@ -595,7 +594,7 @@ export class AuthService {
       await this.usersRepository.save(updatedUser);
 
       return UserMapper.toBasicUser(updatedUser);
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         CommonMessages.INTERNAL_SERVER_ERROR,
       );

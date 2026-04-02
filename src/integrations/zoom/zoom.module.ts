@@ -5,4 +5,5 @@ import { ZoomIntegrationService } from './zoom.service';
   providers: [ZoomIntegrationService],
   exports: [ZoomIntegrationService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ZoomIntegrationModule {}

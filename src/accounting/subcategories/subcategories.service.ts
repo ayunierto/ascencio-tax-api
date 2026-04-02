@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
@@ -31,11 +30,12 @@ export class SubcategoriesService {
         name: createSubcategoryDto.name,
         category: category,
       });
-      this.subcategoryRepository.save(newSubcategory);
+      await this.subcategoryRepository.save(newSubcategory);
       return newSubcategory;
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message ||
+        message ??
           'An unexpected error occurred while creating subcategory. Please try again later.',
       );
     }
@@ -45,9 +45,10 @@ export class SubcategoriesService {
     try {
       const subcategories = await this.subcategoryRepository.find({});
       return subcategories;
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message || 'Error fetching subcategories',
+        message ?? 'Error fetching subcategories',
       );
     }
   }
@@ -59,9 +60,10 @@ export class SubcategoriesService {
         throw new NotFoundException('Subcategory not found');
       }
       return subcategory;
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message || 'Error fetching subcategory',
+        message ?? 'Error fetching subcategory',
       );
     }
   }
@@ -80,10 +82,11 @@ export class SubcategoriesService {
 
       await this.subcategoryRepository.save(updatedSubcategory);
       return updatedSubcategory;
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(
         'Error updating subcategory',
-        error.message,
+        message,
       );
     }
   }
@@ -94,10 +97,11 @@ export class SubcategoriesService {
 
       await this.subcategoryRepository.remove(subcategory);
       return subcategory;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message || 'Error deleting subcategory',
+        message ?? 'Error deleting subcategory',
       );
     }
   }

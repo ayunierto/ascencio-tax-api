@@ -11,4 +11,5 @@ import { AuthModule } from '../../auth/auth.module';
   providers: [EmployeesService],
   exports: [EmployeesService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class EmployeesModule {}

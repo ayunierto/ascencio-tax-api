@@ -94,7 +94,7 @@ export class CompaniesService {
     // Handle image update
     if (mediaToken !== undefined) {
       // Case 1: New temp image provided - promote it
-      if (mediaToken && mediaToken.startsWith('temp_files/')) {
+      if (mediaToken?.startsWith('temp_files/')) {
         // Promover nueva imagen primero
         const result = await this.filesService.promoteImage(
           mediaToken,

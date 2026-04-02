@@ -7,4 +7,5 @@ import { OcrController } from './ocr.controller';
   providers: [OcrService],
   exports: [OcrService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class OcrModule {}

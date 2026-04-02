@@ -15,4 +15,5 @@ import { DashboardController } from './dashboard.controller';
   providers: [DashboardService],
   exports: [DashboardService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class DashboardModule {}

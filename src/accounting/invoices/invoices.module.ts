@@ -23,4 +23,5 @@ import { AccountsReceivableModule } from '../accounts-receivable/accounts-receiv
   providers: [InvoicesService],
   exports: [InvoicesService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class InvoicesModule {}

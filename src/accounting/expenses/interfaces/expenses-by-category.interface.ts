@@ -1,9 +1,11 @@
-export type ExpensesByCategory = Record<
-  string,
-  {
-    [subcategory: string]: ExpenseValues;
-    total: ExpenseValues;
-  }
+export type ExpensesByCategory = Partial<
+  Record<
+    string,
+    {
+      [subcategory: string]: ExpenseValues;
+      total: ExpenseValues;
+    }
+  >
 >;
 
 export interface ExpenseValues {

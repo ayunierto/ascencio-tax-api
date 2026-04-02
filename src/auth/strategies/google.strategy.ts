@@ -11,6 +11,11 @@ export interface GoogleUserProfile {
   googleId: string;
 }
 
+interface GoogleAuthRequest {
+  authMode?: string;
+  authModeForCallback?: string;
+}
+
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor(private readonly configService: ConfigService) {
@@ -23,13 +28,13 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       '  ✓ Client ID:',
       clientID ? `${clientID.substring(0, 20)}...` : '❌ MISSING',
     );
-    console.log('  ✓ Client ID (full):', clientID || '❌ MISSING');
+    console.log('  ✓ Client ID (full):', clientID ?? '❌ MISSING');
     console.log('  ✓ Client Secret:', clientSecret ? '***' : '❌ MISSING');
     console.log(
       '  ✓ Client Secret (length):',
       clientSecret ? clientSecret.length : 0,
     );
-    console.log('  ✓ Callback URL:', callbackURL || '❌ MISSING');
+    console.log('  ✓ Callback URL:', callbackURL ?? '❌ MISSING');
 
     if (!clientID || !clientSecret || !callbackURL) {
       throw new Error(
@@ -49,20 +54,20 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   }
 
   validate(
-    req: any,
+    req: GoogleAuthRequest,
     accessToken: string,
     refreshToken: string,
     profile: Profile,
     done: (err: unknown, user?: GoogleUserProfile) => void,
   ) {
+    void accessToken;
+    void refreshToken;
     console.log('🔐 Google OAuth Validation Started');
     console.log('  Profile ID:', profile.id);
     console.log('  Emails:', profile.emails);
 
     const email = profile.emails?.[0]?.value;
-    const pictureUrl = (profile.photos?.[0] as any)?.value as
-      | string
-      | undefined;
+    const pictureUrl = profile.photos?.[0]?.value;
 
     if (!email) {
       console.error('❌ Google profile missing email');

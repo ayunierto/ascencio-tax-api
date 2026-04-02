@@ -5,4 +5,5 @@ import { GoogleCalendarIntegrationService } from './google-calendar.service';
   providers: [GoogleCalendarIntegrationService],
   exports: [GoogleCalendarIntegrationService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class GoogleCalendarIntegrationModule {}

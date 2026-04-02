@@ -160,7 +160,7 @@ export class ServicesService {
         );
       }
       // Case 2: Explicitly clearing the image
-      else if (imageUrlOrPublicId === null || imageUrlOrPublicId === '') {
+      else if (imageUrlOrPublicId === '') {
         finalImageUrl = undefined;
         oldImagePublicIdToDelete = this.extractCloudinaryPublicId(
           existing.imageUrl,
@@ -206,7 +206,7 @@ export class ServicesService {
     const service = await this.findOne(id);
     service.deletedAt = DateTime.now().toISO();
 
-    const deletedService = await this.serviceRepository.softDelete(service);
+    await this.serviceRepository.softDelete(service);
 
     return service;
   }
@@ -270,7 +270,7 @@ export class ServicesService {
     if (imageUrlOrPublicId.includes('res.cloudinary.com')) {
       // Match pattern: /upload/{optional_version}/{publicId}.{extension}
       const match = /\/upload\/(?:v\d+\/)?(.*)/.exec(imageUrlOrPublicId);
-      if (match && match[1]) {
+      if (match?.[1]) {
         // Remove file extension from publicId
         const publicIdWithExt = match[1];
         const lastDotIndex = publicIdWithExt.lastIndexOf('.');

@@ -29,7 +29,7 @@ export class UsersService {
     if (user)
       throw new ConflictException('Email already in use.', {
         cause: 'email_already_in_use',
-        description: `The email ${userData.email} is already registered.`,
+        description: `The email ${userData.email ?? 'unknown'} is already registered.`,
       });
 
     if (!userData.password) {
@@ -149,12 +149,12 @@ export class UsersService {
 
     try {
       return await query.delete().where({}).execute();
-    } catch (error) {
+    } catch (error: unknown) {
       throw new HttpException(
         {
           code: HttpStatus.BAD_REQUEST,
           message: 'Can not delete users',
-          error: error,
+          error: error instanceof Error ? error.message : String(error),
           cause: 'Unknown',
         },
         HttpStatus.BAD_REQUEST,

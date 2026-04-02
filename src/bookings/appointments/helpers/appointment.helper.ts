@@ -8,6 +8,27 @@ import { ServicesService } from 'src/bookings/services/services.service';
 import { Service } from 'src/bookings/services/entities/service.entity';
 import { StaffMember } from 'src/bookings/staff-members/entities/staff-member.entity';
 
+interface ZoomService {
+  updateMeeting(
+    meetingId: string,
+    payload: {
+      start_time: string;
+      timezone: string;
+      topic: string;
+    },
+  ): Promise<unknown>;
+}
+
+interface CalendarService {
+  updateEvent(eventId: string, payload: unknown): Promise<void>;
+}
+
+interface AppointmentExternalRefs {
+  zoomMeetingId?: string | null;
+  zoomMeetingLink?: string | null;
+  calendarEventId?: string | null;
+}
+
 export class AppointmentHelper {
   private readonly logger = new Logger(AppointmentHelper.name);
 
@@ -57,9 +78,9 @@ export class AppointmentHelper {
   }
 
   async updateExternalServices(
-    zoomService: any,
-    calendarService: any,
-    appointment: any,
+    zoomService: ZoomService,
+    calendarService: CalendarService,
+    appointment: AppointmentExternalRefs,
     updateData: {
       startDateAndTime: DateTime;
       endDateAndTime: DateTime;
@@ -105,7 +126,9 @@ export class AppointmentHelper {
             `Zoom meeting ${appointment.zoomMeetingId} updated successfully`,
           );
         } catch (zoomError) {
-          this.logger.error('Error updating Zoom meeting:', zoomError.message);
+          const message =
+            zoomError instanceof Error ? zoomError.message : String(zoomError);
+          this.logger.error(`Error updating Zoom meeting: ${message}`);
           // Continuar con la actualización del calendario aunque Zoom falle
         }
       }
@@ -123,19 +146,23 @@ export class AppointmentHelper {
             `Updating Calendar event ${appointment.calendarEventId}`,
           );
           this.logger.log(
-            `Original start (UTC): ${startDateAndTime.toUTC().toISO()}`,
+            `Original start (UTC): ${startDateAndTime.toUTC().toISO() ?? 'N/A'}`,
           );
           this.logger.log(
-            `Original end (UTC): ${endDateAndTime.toUTC().toISO()}`,
+            `Original end (UTC): ${endDateAndTime.toUTC().toISO() ?? 'N/A'}`,
           );
-          this.logger.log(`Calendar start (${timeZone}): ${calendarStartTime}`);
-          this.logger.log(`Calendar end (${timeZone}): ${calendarEndTime}`);
+          this.logger.log(
+            `Calendar start (${timeZone}): ${calendarStartTime ?? 'N/A'}`,
+          );
+          this.logger.log(
+            `Calendar end (${timeZone}): ${calendarEndTime ?? 'N/A'}`,
+          );
 
           const updatePayload = {
             summary: `Appointment: ${serviceName}`,
             location: serviceAddress,
             description: formatAppointmentDescription(
-              appointment.zoomMeetingLink,
+              appointment.zoomMeetingLink ?? 'N/A',
               staffName.firstName,
               staffName.lastName,
               userName.firstName,
@@ -161,10 +188,11 @@ export class AppointmentHelper {
             `Calendar event ${appointment.calendarEventId} updated successfully`,
           );
         } catch (calendarError) {
-          this.logger.error(
-            'Error updating Calendar event:',
-            calendarError.message,
-          );
+          const message =
+            calendarError instanceof Error
+              ? calendarError.message
+              : String(calendarError);
+          this.logger.error(`Error updating Calendar event: ${message}`);
         }
       }
     } catch (error) {

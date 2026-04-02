@@ -11,4 +11,5 @@ import { AuthModule } from 'src/auth/auth.module';
   imports: [TypeOrmModule.forFeature([Category]), AuthModule],
   exports: [CategoriesService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class CategoriesModule {}

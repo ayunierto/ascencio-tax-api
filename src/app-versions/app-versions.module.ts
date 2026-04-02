@@ -11,4 +11,5 @@ import { AuthModule } from 'src/auth/auth.module';
   providers: [AppVersionsService],
   exports: [AppVersionsService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AppVersionsModule {}

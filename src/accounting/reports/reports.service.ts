@@ -9,11 +9,24 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { CreateReportDto } from './dto/create-report.dto';
 import { User } from 'src/auth/entities/user.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
+import { Content, TableCell, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { PrinterService } from 'src/printer/printer.service';
 import { ExpensesService } from '../expenses/expenses.service';
 import { CategoriesService } from '../categories/categories.service';
 import { SubcategoriesService } from '../subcategories/subcategories.service';
+
+interface CategoryTotals {
+  gross: number;
+  hst: number;
+  net: number;
+}
+
+interface CategoryData {
+  total: CategoryTotals;
+  [subcategory: string]: CategoryTotals;
+}
+
+type ExpenseCategoryMap = Record<string, CategoryData>;
 
 @Injectable()
 export class ReportsService {
@@ -60,11 +73,13 @@ export class ReportsService {
         reportId: savedReport.id,
         createdAt: savedReport.createdAt,
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      const stack = error instanceof Error ? error.stack : undefined;
       console.error('[REPORTS] ❌ Error saving report record:', error);
       console.error('[REPORTS] Error details:', {
-        message: error.message,
-        stack: error.stack,
+        message,
+        stack,
       });
       // No lanzar error aquí, continuar con la generación del PDF
     }
@@ -85,11 +100,14 @@ export class ReportsService {
     const allCategories = await this.categoriesService.findAll();
 
     console.log(
-      `[REPORTS] Found ${allCategories.length} categories from database`,
+      `[REPORTS] Found ${String(allCategories.length)} categories from database`,
     );
     allCategories.forEach((cat) => {
+      const subcategoriesCount = Array.isArray(cat.subcategories)
+        ? cat.subcategories.length
+        : 0;
       console.log(
-        `  - Category: ${cat.name} with ${cat.subcategories?.length || 0} subcategories`,
+        `  - Category: ${cat.name} with ${String(subcategoriesCount)} subcategories`,
       );
     });
 
@@ -98,9 +116,11 @@ export class ReportsService {
       let totalGross = 0;
       let totalHst = 0;
       let totalNet = 0;
+      const categoriesMap =
+        expensesData.expensesByCategory as ExpenseCategoryMap;
 
-      Object.keys(expensesData.expensesByCategory).forEach((categoryName) => {
-        const category = expensesData.expensesByCategory[categoryName];
+      Object.keys(categoriesMap).forEach((categoryName) => {
+        const category = categoriesMap[categoryName];
         totalGross += category.total.gross;
         totalHst += category.total.hst;
         totalNet += category.total.net;
@@ -112,14 +132,19 @@ export class ReportsService {
     const grandTotals = calculateGrandTotals();
 
     // Función para generar filas de tabla por categoría usando las subcategorías de la BD
-    const getTableRows = (categoryName: string, subcategoriesFromDB: any[]) => {
-      const categoryData = expensesData.expensesByCategory[categoryName];
+    const getTableRows = (
+      categoryName: string,
+      subcategoriesFromDB: { name: string }[],
+    ) => {
+      const categoryData = (
+        expensesData.expensesByCategory as ExpenseCategoryMap
+      )[categoryName];
       const rows: TableCell[][] = [];
 
       // Si la categoría tiene subcategorías en la BD, usarlas
-      if (subcategoriesFromDB && subcategoriesFromDB.length > 0) {
+      if (subcategoriesFromDB.length > 0) {
         subcategoriesFromDB.forEach((subcat) => {
-          const subcatData = categoryData?.[subcat.name] || {
+          const subcatData = categoryData[subcat.name] ?? {
             gross: 0,
             hst: 0,
             net: 0,
@@ -143,34 +168,36 @@ export class ReportsService {
         });
       } else {
         // Si no tiene subcategorías en la BD, verificar si hay datos de gastos
-        if (categoryData) {
-          const subcategoryNames = Object.keys(categoryData).filter(
-            (key) => key !== 'total',
-          );
+        const subcategoryNames = Object.keys(categoryData).filter(
+          (key) => key !== 'total',
+        );
 
-          subcategoryNames.forEach((subcatName) => {
-            const subcatData = categoryData[subcatName];
-            rows.push([
-              { text: subcatName, margin: [10, 0, 0, 0], bold: false },
-              {
-                text: subcatData.gross.toFixed(2),
-                alignment: 'right',
-              },
-              {
-                text: subcatData.hst.toFixed(2),
-                alignment: 'right',
-              },
-              {
-                text: subcatData.net.toFixed(2),
-                alignment: 'right',
-              },
-            ]);
-          });
-        }
+        subcategoryNames.forEach((subcatName) => {
+          const subcatData = categoryData[subcatName] ?? {
+            gross: 0,
+            hst: 0,
+            net: 0,
+          };
+          rows.push([
+            { text: subcatName, margin: [10, 0, 0, 0], bold: false },
+            {
+              text: subcatData.gross.toFixed(2),
+              alignment: 'right',
+            },
+            {
+              text: subcatData.hst.toFixed(2),
+              alignment: 'right',
+            },
+            {
+              text: subcatData.net.toFixed(2),
+              alignment: 'right',
+            },
+          ]);
+        });
       }
 
       // Fila de total
-      const totalData = categoryData?.total || { gross: 0, hst: 0, net: 0 };
+      const totalData = categoryData.total;
       rows.push([
         {
           text: 'Total',
@@ -198,7 +225,7 @@ export class ReportsService {
     };
 
     // Generar tablas para TODAS las categorías (con o sin datos)
-    const categoryTables: any[] = [];
+    const categoryTables: Content[] = [];
 
     allCategories.forEach((category) => {
       const rows = getTableRows(category.name, category.subcategories);
@@ -253,7 +280,7 @@ export class ReportsService {
                   font: 'Times',
                 },
                 {
-                  text: `${user.firstName} ${user.lastName} / ${user.phoneNumber}`,
+                  text: `${user.firstName} ${user.lastName} / ${user.phoneNumber ?? ''}`,
                   fontSize: 12,
                   bold: true,
                   alignment: 'center',
@@ -372,10 +399,14 @@ export class ReportsService {
 
   async create(createReportDto: CreateReportDto, user: User) {
     try {
-      const plan = this.reportRepository.create({ user, ...createReportDto });
+      const plan = this.reportRepository.create({
+        user,
+        startDate: createReportDto.startDate,
+        endDate: createReportDto.endDate,
+      });
       await this.reportRepository.save(plan);
       return plan;
-    } catch (error) {
+    } catch {
       throw new BadRequestException('Unable to create plans');
     }
   }

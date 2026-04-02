@@ -18,4 +18,5 @@ import { Service } from '../services/entities';
   providers: [StaffMembersService],
   exports: [StaffMembersService, TypeOrmModule],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class StaffMembersModule {}

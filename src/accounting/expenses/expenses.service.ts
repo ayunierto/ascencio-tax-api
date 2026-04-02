@@ -42,38 +42,28 @@ export class ExpensesService {
       });
 
       console.log(
-        `[EXPENSES] Found ${expenses.length} expenses for user ${user.id}`,
+        `[EXPENSES] Found ${String(expenses.length)} expenses for user ${user.id}`,
       );
       console.log('[EXPENSES] Date range:', { startDate, endDate });
 
       const expensesByCategory: ExpensesByCategory = {};
 
       expenses.forEach((expense) => {
-        if (!expense.category) {
-          console.warn('[EXPENSES] Expense without category:', expense.id);
-          return;
-        }
-
         const categoryName = expense.category.name;
-        const subcategoryName =
-          expense.subcategory?.name || 'Without subcategory';
+        const subcategoryName = expense.subcategory.name;
 
-        if (!expensesByCategory[categoryName]) {
-          expensesByCategory[categoryName] = {
-            total: { gross: 0, hst: 0, net: 0 },
-          };
-        }
+        const categoryBucket = (expensesByCategory[categoryName] ??= {
+          total: { gross: 0, hst: 0, net: 0 },
+        });
 
-        if (!expensesByCategory[categoryName][subcategoryName]) {
-          expensesByCategory[categoryName][subcategoryName] = {
-            gross: 0,
-            hst: 0,
-            net: 0,
-          };
-        }
+        const subcategoryBucket = (categoryBucket[subcategoryName] ??= {
+          gross: 0,
+          hst: 0,
+          net: 0,
+        });
 
-        const gross = Number(expense.total);
-        const hst = Number(expense.tax);
+        const gross = expense.total;
+        const hst = expense.tax;
         const net = gross - hst;
 
         console.log(`[EXPENSES] Processing expense: ${expense.merchant}`, {
@@ -84,13 +74,13 @@ export class ExpensesService {
           net,
         });
 
-        expensesByCategory[categoryName][subcategoryName].gross += gross;
-        expensesByCategory[categoryName][subcategoryName].hst += hst;
-        expensesByCategory[categoryName][subcategoryName].net += net;
+        subcategoryBucket.gross += gross;
+        subcategoryBucket.hst += hst;
+        subcategoryBucket.net += net;
 
-        expensesByCategory[categoryName].total.gross += gross;
-        expensesByCategory[categoryName].total.hst += hst;
-        expensesByCategory[categoryName].total.net += net;
+        categoryBucket.total.gross += gross;
+        categoryBucket.total.hst += hst;
+        categoryBucket.total.net += net;
       });
 
       console.log(
@@ -101,7 +91,7 @@ export class ExpensesService {
       return {
         expensesByCategory,
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('[EXPENSES] Error in findAllByDateRange:', error);
       throw error;
     }
@@ -122,18 +112,12 @@ export class ExpensesService {
       let category: Category | null = null;
       if (categoryId) {
         category = await this.categoriesService.findOne(categoryId);
-        if (!category) {
-          throw new BadRequestException('Category not found');
-        }
       }
 
       // Validar si la subcategoría existe (puede ser nula)
       let subcategory: Subcategory | null = null;
       if (subcategoryId) {
         subcategory = await this.subcategoriesService.findOne(subcategoryId);
-        if (!subcategory) {
-          throw new BadRequestException('Subcategory not found');
-        }
       }
 
       // Validar fecha nula
@@ -170,15 +154,17 @@ export class ExpensesService {
       );
 
       return newExpense;
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
 
       if (error instanceof HttpException) {
         throw error;
       }
 
+      const message = error instanceof Error ? error.message : undefined;
+
       throw new InternalServerErrorException(
-        error.message || 'Error creating expense. Please try again later.',
+        message ?? 'Error creating expense. Please try again later.',
       );
     }
   }
@@ -196,7 +182,7 @@ export class ExpensesService {
         },
       });
       return expenses;
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         'Error fetching expenses. Please try again later.',
       );
@@ -213,9 +199,10 @@ export class ExpensesService {
         throw new BadRequestException('Expense not found');
       }
       return expense;
-    } catch (error) {
+    } catch (error: unknown) {
       throw new BadRequestException(
-        error.message || 'Error fetching expense. Please try again later.',
+        (error instanceof Error ? error.message : undefined) ??
+          'Error fetching expense. Please try again later.',
       );
     }
   }
@@ -246,9 +233,6 @@ export class ExpensesService {
       let subcategory: Subcategory | null = null;
       if (subcategoryId) {
         subcategory = await this.subcategoriesService.findOne(subcategoryId);
-        if (!subcategory) {
-          throw new BadRequestException('Subcategory not found');
-        }
       } else {
         subcategory = expense.subcategory;
       }
@@ -280,8 +264,8 @@ export class ExpensesService {
         ...rest,
         date: parsedDate,
         imageUrl: updatedImageUrl,
-        category: category ?? undefined,
-        subcategory: subcategory ?? undefined,
+        category,
+        subcategory,
         user: user,
       });
 
@@ -299,7 +283,7 @@ export class ExpensesService {
       this.scheduleDeleteIfReplaced(previousImageUrl, updatedImageUrl);
 
       return updatedExpense;
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof HttpException) {
         throw error;
       }
@@ -333,7 +317,7 @@ export class ExpensesService {
       );
 
       return expense;
-    } catch (error) {
+    } catch {
       throw new InternalServerErrorException(
         'Error deleting expense. Please try again later.',
       );
@@ -376,7 +360,7 @@ export class ExpensesService {
     try {
       await this.filesService.move(oldPath, newPath);
       return promotedImageUrl;
-    } catch (error) {
+    } catch (error: unknown) {
       // Do not block expense persistence because of external storage transient failures.
       console.warn(
         `[EXPENSES] Could not promote receipt image ${oldPath} -> ${newPath}. Saving expense with temp image URL.`,
@@ -399,9 +383,7 @@ export class ExpensesService {
       return;
     }
 
-    const currentPublicId = currentImageUrl
-      ? this.extractPublicId(currentImageUrl)
-      : null;
+    const currentPublicId = this.extractPublicId(currentImageUrl ?? '');
 
     if (currentPublicId && currentPublicId === previousPublicId) {
       return;

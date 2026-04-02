@@ -19,4 +19,5 @@ import { AuthModule } from '../../auth/auth.module';
   providers: [PaymentsService],
   exports: [PaymentsService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class PaymentsModule {}

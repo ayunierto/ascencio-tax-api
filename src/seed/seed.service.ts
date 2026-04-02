@@ -457,9 +457,9 @@ export class SeedService {
         message: 'Seed Executed',
         status: 'ok',
       };
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
-      return error.message;
+      return error instanceof Error ? error.message : String(error);
     }
   }
 }

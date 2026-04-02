@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonMessages } from '@ascencio/shared/i18n';
-import { In, IsNull, Repository } from 'typeorm';
+import { FindOptionsWhere, In, IsNull, Repository } from 'typeorm';
 import { Invoice, InvoiceStatus } from './entities/invoice.entity';
 import { InvoiceLineItem } from './entities/invoice-line-item.entity';
 import { PaginatedResponse } from '@ascencio/shared/interfaces';
@@ -75,7 +75,7 @@ export class InvoicesService {
       legalName: `${user.firstName} ${user.lastName}`,
       businessNumber: '', // User to fill later
       email: user.email,
-      phone: user.phoneNumber || '',
+      phone: user.phoneNumber ?? '',
       address: '', // User to fill later
       city: '',
       province: '',
@@ -166,7 +166,7 @@ export class InvoicesService {
     });
 
     console.log('[INVOICE SERVICE] Last invoice found (global):', {
-      lastInvoice: lastInvoice?.invoiceNumber || 'none',
+      lastInvoice: lastInvoice?.invoiceNumber ?? 'none',
       year: currentYear,
     });
 
@@ -179,7 +179,7 @@ export class InvoicesService {
       }
     }
 
-    const invoiceNumber = `INV-${currentYear}-${nextNumber
+    const invoiceNumber = `INV-${String(currentYear)}-${nextNumber
       .toString()
       .padStart(4, '0')}`;
 
@@ -220,7 +220,7 @@ export class InvoicesService {
 
     const { lineItems: lineItemsInput, fromCompanyId, ...invoiceData } = input;
 
-    console.log('[INVOICE SERVICE] Line items count:', lineItemsInput?.length);
+    console.log('[INVOICE SERVICE] Line items count:', lineItemsInput.length);
 
     // If no company provided, get or create "Sole Proprietor"
     let finalCompanyId = fromCompanyId;
@@ -257,7 +257,7 @@ export class InvoicesService {
     }
 
     // Calculate totals
-    const totals = this.calculateTotals(lineItemsInput, input.taxRate ?? 13);
+    const totals = this.calculateTotals(lineItemsInput, input.taxRate);
     console.log('[INVOICE SERVICE] Calculated totals:', totals);
 
     // Retry logic to handle race conditions with invoice number generation
@@ -266,7 +266,7 @@ export class InvoicesService {
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
         console.log(
-          `[INVOICE SERVICE] Attempt ${attempt + 1} of ${maxRetries}`,
+          `[INVOICE SERVICE] Attempt ${String(attempt + 1)} of ${String(maxRetries)}`,
         );
 
         // Generate invoice number (searches globally including soft-deleted)
@@ -307,18 +307,31 @@ export class InvoicesService {
         console.log('[INVOICE SERVICE] Line items saved:', lineItems.length);
 
         // Return the invoice with line items
-        return this.findOne(userId, savedInvoice.id);
-      } catch (error) {
+        return await this.findOne(userId, savedInvoice.id);
+      } catch (error: unknown) {
+        const errorRecord =
+          error && typeof error === 'object'
+            ? (error as Record<string, unknown>)
+            : {};
+        const errorCode =
+          typeof errorRecord.code === 'string' ? errorRecord.code : undefined;
+        const errorDetail =
+          typeof errorRecord.detail === 'string'
+            ? errorRecord.detail
+            : undefined;
         console.error('[INVOICE SERVICE] Error in create attempt:', {
           attempt: attempt + 1,
-          error: error.message,
-          code: error.code,
-          detail: error.detail,
+          error:
+            typeof errorRecord.message === 'string'
+              ? errorRecord.message
+              : String(error),
+          code: errorCode,
+          detail: errorDetail,
         });
 
         // Check if it's a duplicate key error on invoice_number
         const isDuplicateKey =
-          error.code === '23505' && error.detail?.includes('invoice_number');
+          errorCode === '23505' && errorDetail?.includes('invoice_number');
 
         if (isDuplicateKey && attempt < maxRetries - 1) {
           console.log('[INVOICE SERVICE] Duplicate key detected, retrying...');
@@ -346,7 +359,10 @@ export class InvoicesService {
   ): Promise<PaginatedResponse<Invoice>> {
     const { limit = 10, offset = 0 } = paginationDto;
 
-    const where: any = { userId, deletedAt: IsNull() };
+    const where: FindOptionsWhere<Invoice> = {
+      userId,
+      deletedAt: IsNull(),
+    };
 
     // Multi-tenant filtering
     if (companyId) {
@@ -360,7 +376,7 @@ export class InvoicesService {
         // Pending in UI represents invoices still collectible.
         where.status = In(['draft', 'issued', 'partial']);
       } else {
-        where.status = status;
+        where.status = status as InvoiceStatus;
       }
     }
 
@@ -461,7 +477,7 @@ export class InvoicesService {
     }
 
     // Validate the invoice has line items
-    if (!invoice.lineItems || invoice.lineItems.length === 0) {
+    if (invoice.lineItems.length === 0) {
       throw new BadRequestException('Cannot issue invoice without line items.');
     }
 
@@ -537,17 +553,17 @@ export class InvoicesService {
       throw new BadRequestException('Payment amount must be greater than 0');
     }
 
-    const newAmountPaid = Number(invoice.amountPaid) + Number(amount);
-    const newBalance = Number(invoice.total) - newAmountPaid;
+    const newAmountPaid = invoice.amountPaid + amount;
+    const newBalance = invoice.total - newAmountPaid;
 
     console.log('[INVOICE SERVICE] Calculated values:', {
       newAmountPaid,
       newBalance,
     });
 
-    if (newAmountPaid > Number(invoice.total)) {
+    if (newAmountPaid > invoice.total) {
       throw new BadRequestException(
-        `Payment amount ($${amount}) exceeds remaining balance ($${invoice.balanceDue})`,
+        `Payment amount ($${String(amount)}) exceeds remaining balance ($${String(invoice.balanceDue)})`,
       );
     }
 
@@ -558,7 +574,7 @@ export class InvoicesService {
 
     if (newBalance <= 0) {
       newStatus = 'paid';
-      newPaidDate = paidAt || new Date().toISOString().split('T')[0];
+      newPaidDate = paidAt ?? new Date().toISOString().split('T')[0];
       finalBalance = 0;
     } else {
       newStatus = 'partial';
@@ -593,11 +609,15 @@ export class InvoicesService {
    */
   private async imageUrlToBase64(url: string): Promise<string | null> {
     try {
-      const response = await axios.get(url, {
+      const response = await axios.get<ArrayBuffer>(url, {
         responseType: 'arraybuffer',
       });
 
-      const mimeType = response.headers['content-type'];
+      const mimeTypeHeader: unknown = response.headers['content-type'];
+      const mimeType =
+        typeof mimeTypeHeader === 'string'
+          ? mimeTypeHeader
+          : 'application/octet-stream';
       const base64 = Buffer.from(response.data).toString('base64');
 
       return `data:${mimeType};base64,${base64}`;
@@ -622,7 +642,7 @@ export class InvoicesService {
     console.log('[PDF] Invoice found:', invoice.invoiceNumber);
 
     // Get logo URL - prioritize invoice logoUrl, then company logoUrl
-    const logoUrl = invoice.logoUrl ?? invoice.fromCompany?.logoUrl ?? null;
+    const logoUrl = invoice.logoUrl ?? invoice.fromCompany.logoUrl ?? null;
     console.log('[PDF] Logo URL:', logoUrl);
 
     // Convert logo to base64 if available
@@ -654,8 +674,7 @@ export class InvoicesService {
     logoBase64?: string | null,
   ): TDocumentDefinitions {
     const primaryColor = '#002e5d';
-    const formatCurrency = (amount: number) =>
-      `CA$${Number(amount).toFixed(2)}`;
+    const formatCurrency = (amount: number) => `CA$${amount.toFixed(2)}`;
     const formatDate = (dateStr: string) => {
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-CA', {
@@ -669,78 +688,61 @@ export class InvoicesService {
     const headerContent: Content[] = [];
 
     // Company info (from)
-    if (invoice.fromCompany) {
-      // Create company info stack
-      const companyInfoStack: Content[] = [];
+    const fromCompany: Company = invoice.fromCompany;
+    const companyInfoStack: Content[] = [];
 
-      // Add logo if available
-      if (logoBase64) {
-        companyInfoStack.push({
-          image: 'logo',
-          width: 120,
-          margin: [0, 0, 0, 10] as [number, number, number, number],
-        });
-      }
-
-      // Add company legal name and details
-      companyInfoStack.push(
-        {
-          text: invoice.fromCompany.legalName,
-          style: 'companyName',
-        },
-        ...[
-          invoice.fromCompany.address
-            ? { text: invoice.fromCompany.address, style: 'companyDetails' }
-            : '',
-          invoice.fromCompany.phone
-            ? {
-                text: `Tel: ${invoice.fromCompany.phone}`,
-                style: 'companyDetails',
-              }
-            : '',
-          invoice.fromCompany.email
-            ? { text: invoice.fromCompany.email, style: 'companyDetails' }
-            : '',
-        ].filter(Boolean),
-      );
-
-      headerContent.push({
-        columns: [
-          {
-            width: '*',
-            stack: companyInfoStack,
-          },
-          {
-            width: 'auto',
-            stack: [
-              {
-                text: 'INVOICE',
-                style: 'invoiceTitle',
-              },
-              {
-                text: `#${invoice.invoiceNumber}`,
-                style: 'invoiceNumber',
-              },
-            ],
-            alignment: 'right',
-          },
-        ],
-        margin: [0, 0, 0, 20] as [number, number, number, number],
-      });
-    } else {
-      headerContent.push({
-        text: 'INVOICE',
-        style: 'invoiceTitle',
-        alignment: 'right',
-        margin: [0, 0, 0, 5] as [number, number, number, number],
-      });
-      headerContent.push({
-        text: `#${invoice.invoiceNumber}`,
-        style: 'invoiceNumber',
-        alignment: 'right',
-        margin: [0, 0, 0, 20] as [number, number, number, number],
+    if (logoBase64) {
+      companyInfoStack.push({
+        image: 'logo',
+        width: 120,
+        margin: [0, 0, 0, 10] as [number, number, number, number],
       });
     }
+
+    companyInfoStack.push(
+      {
+        text: fromCompany.legalName,
+        style: 'companyName',
+      },
+      ...[
+        fromCompany.address
+          ? { text: fromCompany.address, style: 'companyDetails' }
+          : '',
+        fromCompany.phone
+          ? {
+              text: `Tel: ${fromCompany.phone}`,
+              style: 'companyDetails',
+            }
+          : '',
+        fromCompany.email
+          ? { text: fromCompany.email, style: 'companyDetails' }
+          : '',
+      ].filter(Boolean),
+    );
+
+    headerContent.push({
+      columns: [
+        {
+          width: '*',
+          stack: companyInfoStack,
+        },
+        {
+          width: 'auto',
+          stack: [
+            {
+              text: 'INVOICE',
+              style: 'invoiceTitle',
+            },
+            {
+              text: `#${invoice.invoiceNumber}`,
+              style: 'invoiceNumber',
+            },
+          ],
+          alignment: 'right',
+        },
+      ],
+      margin: [0, 0, 0, 20] as [number, number, number, number],
+    });
 
     // Dates and Bill To (using billToClient relation)
     const billToStack: Content[] = [{ text: 'BILL TO', style: 'sectionLabel' }];
@@ -750,12 +752,14 @@ export class InvoicesService {
         text: invoice.billToClient.fullName,
         style: 'billToName',
       });
+
       if (invoice.billToClient.address) {
         billToStack.push({
           text: invoice.billToClient.address,
           style: 'billToDetails',
         });
       }
+
       if (invoice.billToClient.city || invoice.billToClient.province) {
         const location = [
           invoice.billToClient.city,
@@ -768,18 +772,21 @@ export class InvoicesService {
           billToStack.push({ text: location, style: 'billToDetails' });
         }
       }
+
       if (invoice.billToClient.email) {
         billToStack.push({
           text: invoice.billToClient.email,
           style: 'billToDetails',
         });
       }
+
       if (invoice.billToClient.phone) {
         billToStack.push({
           text: invoice.billToClient.phone,
           style: 'billToDetails',
         });
       }
+
       if (invoice.billToClient.businessNumber) {
         billToStack.push({
           text: `BN: ${invoice.billToClient.businessNumber}`,
@@ -877,7 +884,10 @@ export class InvoicesService {
                 },
               ],
               [
-                { text: `Tax (${invoice.taxRate}%)`, style: 'summaryLabel' },
+                {
+                  text: `Tax (${String(invoice.taxRate)}%)`,
+                  style: 'summaryLabel',
+                },
                 {
                   text: formatCurrency(invoice.taxAmount),
                   style: 'summaryValue',

@@ -64,7 +64,7 @@ export class AppointmentsService {
 
       // Obtener timezone de negocio con fallback profesional
       const defaultBusinessTz =
-        process.env.BUSINESS_TZ || process.env.BUSINESS_TIMEZONE || 'UTC';
+        process.env.BUSINESS_TZ ?? process.env.BUSINESS_TIMEZONE ?? 'UTC';
       const businessTimeZone = await this.settingsService.findOneOrDefault(
         'timezone',
         defaultBusinessTz,
@@ -109,6 +109,7 @@ export class AppointmentsService {
         startDateAndTime,
         endDateAndTime,
         validatedTimeZone,
+        staff.id,
       );
 
       // 5. Verificar conflictos con otras citas
@@ -238,7 +239,10 @@ export class AppointmentsService {
 
       return newAppointment;
     } catch (error) {
-      this.logger.error('Error creating appointment', error.stack);
+      this.logger.error(
+        'Error creating appointment',
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }
@@ -298,7 +302,7 @@ export class AppointmentsService {
       const { staffId, serviceId, start, end, timeZone, ...rest } =
         updateAppointmentDto;
       const appointmentTimeZone = validateTimeZone(
-        timeZone || appointment.timeZone,
+        timeZone ?? appointment.timeZone,
       );
 
       // 2. Obtener servicio y personal actualizado usando el helper
@@ -313,7 +317,7 @@ export class AppointmentsService {
       // 3. Si se actualizan las fechas, validar disponibilidad
       if (start && end) {
         this.logger.log(
-          `Received start: ${start}, end: ${end}, timeZone: ${timeZone}`,
+          `Received start: ${start}, end: ${end}, timeZone: ${timeZone ?? appointment.timeZone}`,
         );
 
         const startDateAndTime = DateTime.fromISO(start, { zone: 'utc' });
@@ -361,6 +365,7 @@ export class AppointmentsService {
           startDateAndTime,
           endDateAndTime,
           appointmentTimeZone,
+          staff.id,
         );
 
         // Verificar conflictos con otras citas
@@ -419,7 +424,7 @@ export class AppointmentsService {
               user.firstName,
               user.lastName,
               user.email,
-              user.phoneNumber || '',
+              user.phoneNumber ?? '',
             ),
             start: {
               dateTime: startIsoTz,
@@ -533,7 +538,7 @@ export class AppointmentsService {
               user.firstName,
               user.lastName,
               user.email,
-              user.phoneNumber || '',
+              user.phoneNumber ?? '',
             ),
             start: {
               dateTime: startIsoTz,
@@ -592,7 +597,10 @@ export class AppointmentsService {
         return updatedAppointment;
       }
     } catch (error) {
-      this.logger.error('Error updating appointment', error.stack);
+      this.logger.error(
+        'Error updating appointment',
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }
@@ -604,27 +612,22 @@ export class AppointmentsService {
     try {
       const now = DateTime.utc().toJSDate();
 
-      if (state === 'pending') {
-        const appts = await this.appointmentsRepository.find({
-          where: { user: { id: user.id }, start: MoreThan(now) },
-          relations: ['staffMember', 'service'],
-        });
-        return appts;
+      switch (state) {
+        case 'pending':
+          return await this.appointmentsRepository.find({
+            where: { user: { id: user.id }, start: MoreThan(now) },
+            relations: ['staffMember', 'service'],
+          });
+        case 'past':
+          return await this.appointmentsRepository.find({
+            where: { user: { id: user.id }, start: LessThan(now) },
+            relations: ['staffMember', 'service'],
+          });
       }
-
-      if (state === 'past') {
-        const appts = await this.appointmentsRepository.find({
-          where: { user: { id: user.id }, start: LessThan(now) },
-          relations: ['staffMember', 'service'],
-        });
-        return appts;
-      }
-
-      return [];
     } catch (error) {
       console.error(error);
       throw new InternalServerErrorException(
-        error.message ||
+        (error instanceof Error ? error.message : undefined) ??
           'An unexpected error occurred while fetching the appointments. Please try again later.',
       );
     }
@@ -712,8 +715,8 @@ export class AppointmentsService {
         appointment.staffMember.lastName,
       serviceName: appointment.service.name,
       clientPhoneNumber: appointment.user.phoneNumber ?? '',
-      location: appointment.service.address ?? '',
-      meetingLink: appointment.zoomMeetingLink ?? '',
+      location: appointment.service.address,
+      meetingLink: appointment.zoomMeetingLink,
     });
 
     // 8. Opcional: Registrar en log/auditoría
@@ -786,6 +789,7 @@ export class AppointmentsService {
     start: DateTime,
     end: DateTime,
     timeZone: string,
+    staffMemberId: string,
   ): Promise<void> {
     const startIso = start.setZone(timeZone).toISO();
     const endIso = end.setZone(timeZone).toISO();
@@ -798,6 +802,7 @@ export class AppointmentsService {
       startIso,
       endIso,
       timeZone,
+      staffMemberId,
     );
 
     if (conflicts.length > 0) {

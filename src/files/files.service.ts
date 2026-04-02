@@ -2,6 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import streamifier from 'streamifier';
 
+interface CloudinaryLikeError {
+  name?: string;
+  http_code?: number;
+}
+
 @Injectable()
 export class FilesService {
   private readonly cloudName: string;
@@ -46,7 +51,11 @@ export class FilesService {
         },
         (error, result) => {
           if (error) {
-            reject(error);
+            const message =
+              error instanceof Error
+                ? error.message
+                : 'Upload failed with unknown error';
+            reject(new Error(message));
             return;
           }
           if (!result) {
@@ -75,7 +84,7 @@ export class FilesService {
     return new Promise((resolve, reject) => {
       const publicId = filename
         ? `${folder}/${filename}`
-        : `${folder}/${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+        : `${folder}/${String(Date.now())}-${Math.random().toString(16).slice(2, 8)}`;
 
       const uploadStream = cloudinary.uploader.upload_stream(
         {
@@ -86,7 +95,11 @@ export class FilesService {
         },
         (error, result) => {
           if (error) {
-            reject(error);
+            const message =
+              error instanceof Error
+                ? error.message
+                : 'Upload failed with unknown error';
+            reject(new Error(message));
             return;
           }
           if (!result) {
@@ -101,9 +114,9 @@ export class FilesService {
     });
   }
 
-  async getUploadSignature(folder = 'temp_files') {
+  getUploadSignature(folder = 'temp_files') {
     const timestamp = Math.floor(Date.now() / 1000);
-    const publicId = `${timestamp}-${Math.random().toString(16).slice(2, 8)}`;
+    const publicId = `${String(timestamp)}-${Math.random().toString(16).slice(2, 8)}`;
 
     const signature = cloudinary.utils.api_sign_request(
       {
@@ -125,17 +138,19 @@ export class FilesService {
     };
   }
 
-  async move(oldPublicId: string, newPublicId: string) {
+  async move(oldPublicId: string, newPublicId: string): Promise<unknown> {
     let attempt = 0;
 
-    while (true) {
+    for (;;) {
       try {
         return await cloudinary.uploader.rename(oldPublicId, newPublicId, {
           overwrite: true, // Replace the file if it already exists
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const cloudinaryError = error as CloudinaryLikeError;
         const isTimeoutError =
-          error?.name === 'TimeoutError' || error?.http_code === 499;
+          cloudinaryError.name === 'TimeoutError' ||
+          cloudinaryError.http_code === 499;
 
         if (!isTimeoutError || attempt >= this.MAX_MOVE_RETRIES) {
           throw error;
@@ -144,7 +159,7 @@ export class FilesService {
         attempt += 1;
         const delay = this.MOVE_RETRY_DELAY_MS * attempt;
         console.warn(
-          `[FilesService] Cloudinary rename timeout (${attempt}/${this.MAX_MOVE_RETRIES}). Retrying in ${delay}ms...`,
+          `[FilesService] Cloudinary rename timeout (${String(attempt)}/${String(this.MAX_MOVE_RETRIES)}). Retrying in ${String(delay)}ms...`,
         );
         await this.sleep(delay);
       }
@@ -170,9 +185,13 @@ export class FilesService {
     // Build new public_id with target folder
     const newPublicId = `${targetFolder}/${filename}`;
 
-    const result = await cloudinary.uploader.rename(tempPublicId, newPublicId, {
-      overwrite: true,
-    });
+    const result = (await cloudinary.uploader.rename(
+      tempPublicId,
+      newPublicId,
+      {
+        overwrite: true,
+      },
+    )) as UploadApiResponse;
 
     return {
       publicId: result.public_id,
@@ -199,10 +218,10 @@ export class FilesService {
    */
   scheduleDelete(publicId: string): void {
     // Fire and forget - no bloquea la operación principal
-    this.deleteWithRetry(publicId, 1).catch((error) => {
+    this.deleteWithRetry(publicId, 1).catch((error: unknown) => {
       // Log final después de agotar todos los reintentos
       console.error(
-        `[FilesService] FAILED to delete image after ${this.MAX_DELETE_RETRIES} attempts: ${publicId}`,
+        `[FilesService] FAILED to delete image after ${String(this.MAX_DELETE_RETRIES)} attempts: ${publicId}`,
         error,
       );
       // TODO: Considerar agregar a una cola de limpieza o notificar a admins
@@ -222,11 +241,11 @@ export class FilesService {
     try {
       await this.delete(publicId);
       console.log(`[FilesService] Successfully deleted image: ${publicId}`);
-    } catch (error) {
+    } catch (error: unknown) {
       if (attempt < this.MAX_DELETE_RETRIES) {
         const delay = this.RETRY_DELAY_MS * attempt;
         console.warn(
-          `[FilesService] Delete attempt ${attempt} failed for ${publicId}, retrying in ${delay}ms...`,
+          `[FilesService] Delete attempt ${String(attempt)} failed for ${publicId}, retrying in ${String(delay)}ms...`,
         );
         await this.sleep(delay);
         return this.deleteWithRetry(publicId, attempt + 1);
@@ -242,10 +261,10 @@ export class FilesService {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
-  async delete(publicId: string) {
+  async delete(publicId: string): Promise<unknown> {
     try {
       return await cloudinary.uploader.destroy(publicId);
-    } catch (error) {
+    } catch {
       throw new BadRequestException('Delete Failed');
     }
   }

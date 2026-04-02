@@ -3,7 +3,7 @@ import {
   ArgumentMetadata,
   BadRequestException,
 } from '@nestjs/common';
-import { ZodSchema, ZodError } from 'zod';
+import { z, ZodError } from 'zod';
 import { parseZodIssueMessage } from '@ascencio/shared';
 
 export interface ValidationError {
@@ -13,9 +13,10 @@ export interface ValidationError {
 }
 
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private schema: ZodSchema) {}
+  constructor(private schema: z.ZodType) {}
 
   transform(value: unknown, metadata: ArgumentMetadata) {
+    void metadata;
     try {
       return this.schema.parse(value);
     } catch (error) {

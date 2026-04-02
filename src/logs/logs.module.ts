@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { LogsService } from './logs.service';
 import { LogsController } from './logs.controller';
 import { Log } from './entities/log.entity';
@@ -11,4 +11,5 @@ import { AuthModule } from 'src/auth/auth.module';
   imports: [TypeOrmModule.forFeature([Log]), AuthModule],
   exports: [TypeOrmModule, LogsService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class LogsModule {}

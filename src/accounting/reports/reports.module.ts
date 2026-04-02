@@ -21,4 +21,5 @@ import { SubcategoriesModule } from '../subcategories/subcategories.module';
     SubcategoriesModule,
   ],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ReportsModule {}

@@ -26,4 +26,5 @@ import { OpenaiModule } from 'src/openai/openai.module';
   ],
   exports: [ExpensesService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ExpensesModule {}

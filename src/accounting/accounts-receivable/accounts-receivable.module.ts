@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountsReceivableService } from './accounts-receivable.service';
 import { AccountsReceivableController } from './accounts-receivable.controller';
@@ -12,4 +12,5 @@ import { AuthModule } from '../../auth/auth.module';
   providers: [AccountsReceivableService],
   exports: [AccountsReceivableService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AccountsReceivableModule {}

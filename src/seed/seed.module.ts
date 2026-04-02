@@ -28,4 +28,5 @@ import { ServicesModule } from 'src/bookings/services/services.module';
     AppVersionsModule,
   ],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SeedModule {}

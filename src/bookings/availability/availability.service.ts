@@ -52,7 +52,7 @@ export class AvailabilityService {
       );
     }
 
-    if (!service.staffMembers || service.staffMembers.length === 0) {
+    if (service.staffMembers.length === 0) {
       throw new BadRequestException(
         'El servicio no tiene staff asignado. Asigne al menos un miembro.',
       );
@@ -60,8 +60,8 @@ export class AvailabilityService {
 
     // 1.2 Obtener ajustes del negocio (para zona horaria) con valor por defecto
     const defaultBusinessTz =
-      process.env.BUSINESS_TZ ||
-      process.env.BUSINESS_TIMEZONE ||
+      process.env.BUSINESS_TZ ??
+      process.env.BUSINESS_TIMEZONE ??
       'America/Toronto';
 
     const businessTimeZone = await this.settingsService.findOneOrDefault(
@@ -129,7 +129,7 @@ export class AvailabilityService {
           },
         });
 
-      const schedules = staffMember.schedules ?? [];
+      const schedules = staffMember.schedules;
       if (schedules.length === 0) {
         continue;
       }

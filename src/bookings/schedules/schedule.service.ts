@@ -21,10 +21,11 @@ export class ScheduleService {
       const schedule = this.scheduleRepository.create(createScheduleDto);
 
       return await this.scheduleRepository.save(schedule);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message ||
+        message ??
           'An unexpected error occurred while creating schedule. Please try again later.',
       );
     }

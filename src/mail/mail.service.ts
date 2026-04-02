@@ -38,7 +38,7 @@ export class MailService {
     }
 
     this.senderName =
-      process.env.MAILERSEND_SENDER_NAME ||
+      process.env.MAILERSEND_SENDER_NAME ??
       'Configure Your App Name in .env MAILERSEND_SENDER_NAME file';
 
     this.mailersend = new MailerSend({
@@ -50,16 +50,7 @@ export class MailService {
   }
 
   async sendMail(mailOptions: SendMailOptions): Promise<boolean> {
-    if (!this.mailersend || !this.sentFrom) {
-      this.logger.error(
-        'MailerSend or Sender is not initialized. Check .env configuration.',
-      );
-      return false;
-    }
-
-    const recipients = [
-      new Recipient(mailOptions.to, mailOptions.clientName || mailOptions.to),
-    ];
+    const recipients = [new Recipient(mailOptions.to, mailOptions.clientName)];
 
     const emailParams = new EmailParams()
       .setFrom(this.sentFrom)
@@ -73,9 +64,10 @@ export class MailService {
       await this.mailersend.email.send(emailParams);
       this.logger.log(`Email sent successful to: ${mailOptions.to}`);
       return true;
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Failed to send email to ${mailOptions.to}: ${error.message}`,
+        `Failed to send email to ${mailOptions.to}: ${message}`,
       );
       console.error(error);
       return false;

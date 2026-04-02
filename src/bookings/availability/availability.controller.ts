@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AvailabilityService } from './availability.service';
 import { SearchAvailabilityDto } from './dto/search-availability.dto';
@@ -23,8 +15,6 @@ export class AvailabilityController {
   async checkAvailability(
     @Body() searchAvailabilityDto: SearchAvailabilityDto,
   ) {
-    return await this.availabilityService.searchAvailability(
-      searchAvailabilityDto,
-    );
+    return this.availabilityService.searchAvailability(searchAvailabilityDto);
   }
 }

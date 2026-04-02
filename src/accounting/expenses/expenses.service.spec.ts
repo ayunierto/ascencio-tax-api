@@ -10,6 +10,7 @@ import { SubcategoriesService } from '../subcategories/subcategories.service';
 import { FilesService } from 'src/files/files.service';
 import { Category } from '../categories/entities/category.entity';
 import { User } from 'src/auth/entities/user.entity';
+import { CreateExpenseRequest } from '@ascencio/shared';
 
 const createRepositoryMock = () =>
   ({
@@ -75,21 +76,22 @@ describe('ExpensesService', () => {
       category,
     } as Expense);
 
-    const result = await service.create(
-      {
-        merchant: 'Cafe',
-        total: 10,
-        tax: 1,
-        categoryId: 'cat-1',
-        date: '2024-01-01',
-      } as any,
-      user,
-    );
+    const createExpenseDto: CreateExpenseRequest = {
+      merchant: 'Cafe',
+      total: 10,
+      tax: 1,
+      categoryId: 'cat-1',
+      date: '2024-01-01',
+    };
+
+    const result = await service.create(createExpenseDto, user);
 
     expect(categoriesService.findOne).toHaveBeenCalledWith('cat-1');
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(expenseRepository.create).toHaveBeenCalledWith(
       expect.objectContaining({ category, user }),
     );
+    // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(expenseRepository.save).toHaveBeenCalled();
     expect(logsService.create).toHaveBeenCalled();
     expect(result).toEqual({ merchant: 'Cafe', category });

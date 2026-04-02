@@ -1,6 +1,5 @@
 import { SimpleUser } from '@ascencio/shared/interfaces';
 import { User } from '../entities/user.entity';
-import { DateTime } from 'luxon';
 
 export const UserMapper = {
   toBasicUser(user: User): SimpleUser {

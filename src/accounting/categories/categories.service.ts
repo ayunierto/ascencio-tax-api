@@ -25,9 +25,10 @@ export class CategoriesService {
       });
       await this.categoryRepository.save(newCategory);
       return newCategory;
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message ||
+        message ??
           'An unexpected error occurred while creating category. Please try again later.',
       );
     }

@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
+import { Logger, VersioningType } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { SeedService } from './seed/seed.service';
@@ -40,13 +40,19 @@ async function bootstrap() {
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory);
 
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT ?? 3001;
 
   const seedService = app.get(SeedService);
-  await seedService.runSeed().catch(() => {});
+  await seedService.runSeed().catch((error: unknown) => {
+    logger.warn(
+      `Seed skipped: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  });
 
   await app.listen(port);
-  logger.log(`Server on port ${port} - Environment: ${process.env.STAGE}`);
+  logger.log(
+    `Server on port ${String(port)} - Environment: ${process.env.STAGE ?? 'dev'}`,
+  );
 }
 
-bootstrap();
+void bootstrap();

@@ -59,10 +59,11 @@ export class StaffMembersService {
       });
 
       return await this.staffRepository.save(staff);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message ||
+        message ??
           'An unexpected error occurred while creating staff. Please try again later.',
       );
     }
@@ -96,9 +97,10 @@ export class StaffMembersService {
       if (!staff) throw new NotFoundException('StaffMember not found.');
 
       return staff;
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : undefined;
       throw new InternalServerErrorException(
-        error.message ||
+        message ??
           'An unexpected error occurred while finding staff. Please try again later.',
       );
     }

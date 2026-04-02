@@ -93,4 +93,5 @@ import { PaymentsModule } from './accounting/payments/payments.module';
   controllers: [],
   providers: [],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class AppModule {}

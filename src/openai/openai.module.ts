@@ -9,4 +9,5 @@ import { CategoriesModule } from 'src/accounting/categories/categories.module';
   exports: [OpenaiService],
   imports: [CategoriesModule],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class OpenaiModule {}

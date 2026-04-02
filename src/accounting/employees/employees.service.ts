@@ -38,7 +38,11 @@ export class EmployeesService {
   ): Promise<PaginatedResponse<Employee>> {
     const { limit = 10, offset = 0 } = paginationDto;
 
-    const where: any = { userId, deletedAt: IsNull() };
+    const where: {
+      userId: string;
+      deletedAt: ReturnType<typeof IsNull>;
+      companyId?: string;
+    } = { userId, deletedAt: IsNull() };
     if (companyId) {
       where.companyId = companyId;
     }
@@ -80,7 +84,7 @@ export class EmployeesService {
     const { companyId, ...rest } = input;
     Object.assign(employee, rest);
     if (companyId !== undefined) {
-      employee.companyId = companyId || undefined;
+      employee.companyId = companyId ?? undefined;
     }
     return this.employeeRepo.save(employee);
   }

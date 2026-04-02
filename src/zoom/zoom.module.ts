@@ -7,4 +7,5 @@ import { ZoomController } from './zoom.controller';
   providers: [ZoomService],
   exports: [ZoomService],
 })
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class ZoomModule {}

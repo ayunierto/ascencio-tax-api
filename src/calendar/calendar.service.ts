@@ -14,6 +14,7 @@ import {
   CalendarSourceType,
   CalendarStatus,
 } from './entities/calendar.entity';
+import { StaffMember } from 'src/bookings/staff-members/entities/staff-member.entity';
 
 interface CreateEventOptions {
   staffMemberId?: string;
@@ -34,8 +35,121 @@ export class CalendarService {
   constructor(
     @InjectRepository(CalendarEvent)
     private readonly eventsRepository: Repository<CalendarEvent>,
+    @InjectRepository(StaffMember)
+    private readonly staffRepository: Repository<StaffMember>,
     private readonly googleCalendar: GoogleCalendarIntegrationService,
   ) {}
+
+  async importExternalEventsInRange(params: {
+    startDateTime: string;
+    endDateTime: string;
+    calendarId?: string;
+    defaultTimeZone?: string;
+  }): Promise<{ imported: number; updated: number; skipped: number }> {
+    const {
+      startDateTime,
+      endDateTime,
+      calendarId,
+      defaultTimeZone = 'UTC',
+    } = params;
+
+    const events = await this.googleCalendar.listEventsInRange(
+      startDateTime,
+      endDateTime,
+      calendarId,
+    );
+
+    const staffMembers = await this.staffRepository.find({
+      where: { isActive: true },
+    });
+
+    let imported = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    for (const event of events) {
+      const externalEventId = event.id;
+
+      if (!externalEventId || !event.start?.dateTime || !event.end?.dateTime) {
+        skipped += 1;
+        continue;
+      }
+
+      const existing = await this.eventsRepository.findOne({
+        where: { externalEventId },
+      });
+
+      // No sobrescribir eventos creados por la app.
+      if (existing?.sourceType === 'appointment') {
+        skipped += 1;
+        continue;
+      }
+
+      const staffName = this.extractStaffNameFromDescription(
+        event.description ?? '',
+      );
+      const resolvedStaffId = staffName
+        ? this.resolveStaffMemberIdByName(staffMembers, staffName)
+        : undefined;
+
+      const timeZone =
+        event.start.timeZone ?? event.end.timeZone ?? defaultTimeZone;
+      const start = DateTime.fromISO(event.start.dateTime, { zone: timeZone });
+      const end = DateTime.fromISO(event.end.dateTime, { zone: timeZone });
+
+      if (!start.isValid || !end.isValid || end <= start) {
+        skipped += 1;
+        continue;
+      }
+
+      const sourceId =
+        event.organizer?.email ?? event.creator?.email ?? 'external';
+
+      if (existing) {
+        const mergedExisting = this.eventsRepository.merge(existing, {
+          summary: event.summary ?? existing.summary,
+          description: event.description ?? existing.description,
+          location: event.location ?? existing.location,
+          start: start.toUTC().toJSDate(),
+          end: end.toUTC().toJSDate(),
+          timeZone,
+          staffMemberId: existing.staffMemberId ?? resolvedStaffId,
+          sourceType: 'imported',
+          sourceId,
+          externalCalendarId:
+            calendarId ??
+            existing.externalCalendarId ??
+            this.googleCalendar.getCalendarId(),
+          isBusy: true,
+          status: event.status === 'cancelled' ? 'cancelled' : 'confirmed',
+        });
+        await this.eventsRepository.save(mergedExisting);
+        updated += 1;
+        continue;
+      }
+
+      await this.eventsRepository.save(
+        this.eventsRepository.create({
+          summary: event.summary ?? 'External Event',
+          description: event.description ?? undefined,
+          location: event.location ?? undefined,
+          start: start.toUTC().toJSDate(),
+          end: end.toUTC().toJSDate(),
+          timeZone,
+          staffMemberId: resolvedStaffId,
+          sourceType: 'imported',
+          sourceId,
+          externalEventId,
+          externalCalendarId: calendarId ?? this.googleCalendar.getCalendarId(),
+          isBusy: true,
+          status: event.status === 'cancelled' ? 'cancelled' : 'confirmed',
+        }),
+      );
+      imported += 1;
+    }
+
+    return { imported, updated, skipped };
+  }
 
   async createEvent(
     body: calendar_v3.Schema$Event,
@@ -95,8 +209,7 @@ export class CalendarService {
     this.ensureBody(eventDetails);
     const { startDate, endDate, timeZone } = this.resolveDates(eventDetails);
 
-    const merged: CalendarEvent = {
-      ...existing,
+    const merged = this.eventsRepository.merge(existing, {
       summary: eventDetails.summary ?? existing.summary,
       description: eventDetails.description ?? existing.description,
       location: eventDetails.location ?? existing.location,
@@ -109,7 +222,7 @@ export class CalendarService {
       sourceId: options?.sourceId ?? existing.sourceId,
       isBusy: options?.isBusy ?? existing.isBusy,
       status: options?.status ?? existing.status,
-    };
+    });
 
     await this.eventsRepository.save(merged);
 
@@ -196,7 +309,7 @@ export class CalendarService {
   }
 
   private ensureBody(body: calendar_v3.Schema$Event): void {
-    if (!body?.start?.dateTime || !body?.end?.dateTime) {
+    if (!body.start?.dateTime || !body.end?.dateTime) {
       throw new BadRequestException('Event body, start and end are required');
     }
   }
@@ -206,7 +319,7 @@ export class CalendarService {
     endDate: DateTime;
     timeZone: string;
   } {
-    const timeZone = body.start?.timeZone || body.end?.timeZone || 'UTC';
+    const timeZone = body.start?.timeZone ?? body.end?.timeZone ?? 'UTC';
 
     const startDate = DateTime.fromISO(body.start?.dateTime ?? '', {
       zone: timeZone,
@@ -266,5 +379,53 @@ export class CalendarService {
       where: { externalEventId: eventId },
     });
     return byExternal ?? null;
+  }
+
+  private extractStaffNameFromDescription(description: string): string | null {
+    if (!description) {
+      return null;
+    }
+
+    const patterns = [
+      /staff\s*[:\-]\s*([^\n\r]+)/i,
+      /personal\s*[:\-]\s*([^\n\r]+)/i,
+      /asesor\s*[:\-]\s*([^\n\r]+)/i,
+      /consultor\s*[:\-]\s*([^\n\r]+)/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = description.match(pattern);
+      if (match?.[1]) {
+        return match[1].trim();
+      }
+    }
+
+    return null;
+  }
+
+  private resolveStaffMemberIdByName(
+    staffMembers: StaffMember[],
+    rawName: string,
+  ): string | undefined {
+    const normalizedTarget = this.normalizeName(rawName);
+
+    const matched = staffMembers.find((staff) => {
+      const normalizedFullName = this.normalizeName(
+        `${staff.firstName} ${staff.lastName}`,
+      );
+      return normalizedFullName === normalizedTarget;
+    });
+
+    return matched?.id;
+  }
+
+  private normalizeName(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 }

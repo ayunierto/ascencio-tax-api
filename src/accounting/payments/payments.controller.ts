@@ -3,6 +3,7 @@ import { Auth } from 'src/auth/decorators/auth.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/auth/entities/user.entity';
 import { PaymentsService } from './payments.service';
+import { PaymentMethod } from './entities/payment.entity';
 
 @Controller('payments')
 export class PaymentsController {
@@ -16,7 +17,7 @@ export class PaymentsController {
       accountReceivableId: string;
       amount: number;
       paymentDate: string;
-      paymentMethod: string;
+      paymentMethod: PaymentMethod;
       reference?: string;
       notes?: string;
     },

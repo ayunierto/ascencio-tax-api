@@ -19,6 +19,7 @@ export class ClientsService {
   // CREAR
   // ========================
   async create(user: User, input: CreateClientRequest): Promise<Client> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, ...clientData } = input;
 
     const client = this.clientRepo.create({

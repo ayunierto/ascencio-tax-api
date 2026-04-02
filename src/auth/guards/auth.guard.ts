@@ -12,6 +12,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../entities/user.entity';
 import { Repository } from 'typeorm';
 
+interface RequestWithUser extends Request {
+  user?: User;
+}
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
@@ -21,7 +25,7 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
     const token = this.extractTokenFromHeader(request);
     if (!token) {
       throw new UnauthorizedException(
