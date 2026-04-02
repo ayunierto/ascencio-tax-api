@@ -90,10 +90,13 @@ export class AppointmentsService {
         throw new BadRequestException('Invalid appointment date range');
       }
 
+      const businessStartDateAndTime =
+        startDateAndTime.setZone(businessTimeZone);
+
       // 3. Validar horario y obtener schedule
       const schedule = await this.appointmentHelper.validateAndGetSchedule(
         staffId,
-        startDateAndTime,
+        businessStartDateAndTime,
       );
 
       // 4. Validar horas laborales
@@ -101,14 +104,14 @@ export class AppointmentsService {
         schedule,
         startDateAndTime,
         endDateAndTime,
-        validatedTimeZone,
+        businessTimeZone,
       );
 
       // 5.1 Validar conflictos con eventos externos de calendario
       await this.assertNoCalendarConflicts(
         startDateAndTime,
         endDateAndTime,
-        validatedTimeZone,
+        businessTimeZone,
         staff.id,
       );
 
@@ -305,6 +308,13 @@ export class AppointmentsService {
         timeZone ?? appointment.timeZone,
       );
 
+      const defaultBusinessTz =
+        process.env.BUSINESS_TZ ?? process.env.BUSINESS_TIMEZONE ?? 'UTC';
+      const businessTimeZone = await this.settingsService.findOneOrDefault(
+        'timezone',
+        defaultBusinessTz,
+      );
+
       // 2. Obtener servicio y personal actualizado usando el helper
       const { service, staff } =
         await this.appointmentHelper.getServiceAndStaff(
@@ -322,6 +332,8 @@ export class AppointmentsService {
 
         const startDateAndTime = DateTime.fromISO(start, { zone: 'utc' });
         const endDateAndTime = DateTime.fromISO(end, { zone: 'utc' });
+        const businessStartDateAndTime =
+          startDateAndTime.setZone(businessTimeZone);
 
         const startIsoUtc = startDateAndTime.toISO() ?? '';
         const endIsoUtc = endDateAndTime.toISO() ?? '';
@@ -350,7 +362,7 @@ export class AppointmentsService {
         // Validar horario del personal y obtener schedule
         const schedule = await this.appointmentHelper.validateAndGetSchedule(
           staff.id,
-          startDateAndTime,
+          businessStartDateAndTime,
         );
 
         // Validar horas laborales
@@ -358,13 +370,13 @@ export class AppointmentsService {
           schedule,
           startDateAndTime,
           endDateAndTime,
-          appointmentTimeZone,
+          businessTimeZone,
         );
 
         await this.assertNoCalendarConflicts(
           startDateAndTime,
           endDateAndTime,
-          appointmentTimeZone,
+          businessTimeZone,
           staff.id,
         );
 
@@ -615,7 +627,11 @@ export class AppointmentsService {
       switch (state) {
         case 'pending':
           return await this.appointmentsRepository.find({
-            where: { user: { id: user.id }, start: MoreThan(now) },
+            where: {
+              user: { id: user.id },
+              start: MoreThan(now),
+              status: In(['pending', 'confirmed']),
+            },
             relations: ['staffMember', 'service'],
           });
         case 'past':
@@ -637,8 +653,27 @@ export class AppointmentsService {
     const appointment = await this.appointmentsRepository.findOneBy({ id });
     if (!appointment) throw new BadRequestException('Appointment not found');
     await this.appointmentsRepository.remove(appointment);
-    await this.zoomService.remove(appointment.zoomMeetingId);
-    await this.calendarService.deleteEvent(appointment.calendarEventId);
+
+    if (appointment.zoomMeetingId && appointment.zoomMeetingId !== 'N/A') {
+      try {
+        await this.zoomService.remove(appointment.zoomMeetingId);
+      } catch (error) {
+        this.logger.warn(
+          `Could not remove Zoom meeting ${appointment.zoomMeetingId}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    if (appointment.calendarEventId && appointment.calendarEventId !== 'N/A') {
+      try {
+        await this.calendarService.deleteEvent(appointment.calendarEventId);
+      } catch (error) {
+        this.logger.warn(
+          `Could not delete Calendar event ${appointment.calendarEventId}: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
     return appointment;
   }
 
@@ -722,9 +757,26 @@ export class AppointmentsService {
     // 8. Opcional: Registrar en log/auditoría
     // await this.logsService.logAppointmentCancellation(appointment, userId);
 
-    // 9. Remove calendar event and zoom meeting
-    await this.calendarService.deleteEvent(appointment.calendarEventId);
-    await this.zoomService.remove(appointment.zoomMeetingId);
+    // 9. Remove calendar event and zoom meeting (best effort)
+    if (appointment.calendarEventId && appointment.calendarEventId !== 'N/A') {
+      try {
+        await this.calendarService.deleteEvent(appointment.calendarEventId);
+      } catch (error) {
+        this.logger.warn(
+          `Could not delete Calendar event ${appointment.calendarEventId} during cancellation: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+
+    if (appointment.zoomMeetingId && appointment.zoomMeetingId !== 'N/A') {
+      try {
+        await this.zoomService.remove(appointment.zoomMeetingId);
+      } catch (error) {
+        this.logger.warn(
+          `Could not remove Zoom meeting ${appointment.zoomMeetingId} during cancellation: ${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
 
     return cancelledAppointment;
   }
@@ -791,8 +843,8 @@ export class AppointmentsService {
     timeZone: string,
     staffMemberId: string,
   ): Promise<void> {
-    const startIso = start.setZone(timeZone).toISO();
-    const endIso = end.setZone(timeZone).toISO();
+    const startIso = start.toUTC().toISO();
+    const endIso = end.toUTC().toISO();
 
     if (!startIso || !endIso) {
       throw new BadRequestException('Invalid date range for calendar check');

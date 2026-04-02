@@ -20,6 +20,18 @@ import { Category } from '../categories/entities/category.entity';
 import { Subcategory } from '../subcategories/entities/subcategory.entity';
 import { CreateExpenseRequest, UpdateExpenseRequest } from '@ascencio/shared';
 
+const UNCATEGORIZED_CATEGORY = 'Uncategorized';
+const UNCATEGORIZED_SUBCATEGORY = 'Uncategorized';
+
+const normalizeMoneyValue = (
+  value: number | string | null | undefined,
+): number => {
+  const parsedValue =
+    typeof value === 'number' ? value : Number.parseFloat(value ?? '0');
+
+  return Number.isFinite(parsedValue) ? parsedValue : 0;
+};
+
 @Injectable()
 export class ExpensesService {
   constructor(
@@ -49,8 +61,15 @@ export class ExpensesService {
       const expensesByCategory: ExpensesByCategory = {};
 
       expenses.forEach((expense) => {
-        const categoryName = expense.category.name;
-        const subcategoryName = expense.subcategory.name;
+        const expenseCategory = expense.category as Category | null;
+        const expenseSubcategory = expense.subcategory as Subcategory | null;
+
+        const categoryName =
+          (expenseCategory ? expenseCategory.name.trim() : undefined) ??
+          UNCATEGORIZED_CATEGORY;
+        const subcategoryName =
+          (expenseSubcategory ? expenseSubcategory.name.trim() : undefined) ??
+          UNCATEGORIZED_SUBCATEGORY;
 
         const categoryBucket = (expensesByCategory[categoryName] ??= {
           total: { gross: 0, hst: 0, net: 0 },
@@ -62,8 +81,8 @@ export class ExpensesService {
           net: 0,
         });
 
-        const gross = expense.total;
-        const hst = expense.tax;
+        const gross = normalizeMoneyValue(expense.total);
+        const hst = normalizeMoneyValue(expense.tax);
         const net = gross - hst;
 
         console.log(`[EXPENSES] Processing expense: ${expense.merchant}`, {

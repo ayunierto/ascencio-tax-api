@@ -100,6 +100,11 @@ export class ZoomService {
   }
 
   async remove(id: string) {
+    if (!id || id === 'N/A') {
+      this.logger.warn('Zoom meeting ID is empty or N/A; skipping delete');
+      return;
+    }
+
     try {
       const zoomToken = await this.getZoomToken();
       if (!zoomToken.access_token) {
@@ -121,6 +126,13 @@ export class ZoomService {
 
       return request.data;
     } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        this.logger.warn(
+          `Zoom meeting ${id} not found (404). Continuing cancellation flow.`,
+        );
+        return;
+      }
+
       throw error;
     }
   }

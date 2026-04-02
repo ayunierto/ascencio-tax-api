@@ -116,8 +116,9 @@ export class CompaniesService {
         if (company.logoPublicId) {
           this.filesService.scheduleDelete(company.logoPublicId);
         }
-        company.logoPublicId = undefined;
-        company.logoUrl = undefined;
+        // Use null explicitly so TypeORM persists the column cleanup in DB.
+        (company as any).logoPublicId = null;
+        (company as any).logoUrl = null;
       }
       // Case 3: mediaToken is the same as current logoPublicId (no change needed)
       // This happens when user didn't modify the image

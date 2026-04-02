@@ -28,6 +28,8 @@ interface CategoryData {
 
 type ExpenseCategoryMap = Record<string, CategoryData>;
 
+const EMPTY_TOTALS: CategoryTotals = { gross: 0, hst: 0, net: 0 };
+
 @Injectable()
 export class ReportsService {
   constructor(
@@ -138,17 +140,16 @@ export class ReportsService {
     ) => {
       const categoryData = (
         expensesData.expensesByCategory as ExpenseCategoryMap
-      )[categoryName];
+      )[categoryName] ?? { total: { ...EMPTY_TOTALS } };
       const rows: TableCell[][] = [];
+      const dataSubcategoryNames = Object.keys(categoryData).filter(
+        (key) => key !== 'total',
+      );
 
       // Si la categoría tiene subcategorías en la BD, usarlas
       if (subcategoriesFromDB.length > 0) {
         subcategoriesFromDB.forEach((subcat) => {
-          const subcatData = categoryData[subcat.name] ?? {
-            gross: 0,
-            hst: 0,
-            net: 0,
-          };
+          const subcatData = categoryData[subcat.name] ?? EMPTY_TOTALS;
 
           rows.push([
             { text: subcat.name, margin: [10, 0, 0, 0], bold: false },
@@ -166,18 +167,37 @@ export class ReportsService {
             },
           ]);
         });
+
+        // Incluye subcategorías presentes en gastos pero no definidas en la BD.
+        const dbSubcategoryNames = new Set(
+          subcategoriesFromDB.map((s) => s.name),
+        );
+        dataSubcategoryNames
+          .filter((name) => !dbSubcategoryNames.has(name))
+          .forEach((subcatName) => {
+            const subcatData = categoryData[subcatName] ?? EMPTY_TOTALS;
+            rows.push([
+              { text: subcatName, margin: [10, 0, 0, 0], bold: false },
+              {
+                text: subcatData.gross.toFixed(2),
+                alignment: 'right',
+              },
+              {
+                text: subcatData.hst.toFixed(2),
+                alignment: 'right',
+              },
+              {
+                text: subcatData.net.toFixed(2),
+                alignment: 'right',
+              },
+            ]);
+          });
       } else {
         // Si no tiene subcategorías en la BD, verificar si hay datos de gastos
-        const subcategoryNames = Object.keys(categoryData).filter(
-          (key) => key !== 'total',
-        );
+        const subcategoryNames = dataSubcategoryNames;
 
         subcategoryNames.forEach((subcatName) => {
-          const subcatData = categoryData[subcatName] ?? {
-            gross: 0,
-            hst: 0,
-            net: 0,
-          };
+          const subcatData = categoryData[subcatName] ?? EMPTY_TOTALS;
           rows.push([
             { text: subcatName, margin: [10, 0, 0, 0], bold: false },
             {
@@ -252,6 +272,38 @@ export class ReportsService {
         },
       });
     });
+
+    // Incluye categorías presentes en gastos pero inexistentes en la BD (datos legacy/inconsistentes).
+    const dbCategoryNames = new Set(
+      allCategories.map((category) => category.name),
+    );
+    const categoriesMap = expensesData.expensesByCategory as ExpenseCategoryMap;
+    Object.keys(categoriesMap)
+      .filter((categoryName) => !dbCategoryNames.has(categoryName))
+      .forEach((categoryName) => {
+        const rows = getTableRows(categoryName, []);
+
+        categoryTables.push({
+          margin: [0, 0, 0, 10],
+          table: {
+            widths: ['*', 60, 60, 60],
+            body: [
+              [
+                {
+                  text: categoryName,
+                  bold: true,
+                  colSpan: 4,
+                  fillColor: '#ccc',
+                },
+                { text: '' },
+                { text: '' },
+                { text: '' },
+              ],
+              ...rows,
+            ],
+          },
+        });
+      });
 
     const documentDefinition: TDocumentDefinitions = {
       pageSize: 'A4',
