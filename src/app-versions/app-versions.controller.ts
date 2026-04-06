@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Param, Query, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Query,
+  Put,
+  ParseIntPipe,
+} from '@nestjs/common';
 import { AppVersionsService } from './app-versions.service';
 import { CreateAppVersionDto } from './dto/create-app-version.dto';
 import { UpdateAppVersionDto } from './dto/update-app-version.dto';
@@ -25,7 +34,7 @@ export class AppVersionsController {
 
   @Put(':id')
   @Auth(Role.Admin)
-  update(@Param('id') id: number, @Body() dto: UpdateAppVersionDto) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAppVersionDto) {
     return this.appVersionsService.update(id, dto);
   }
 
@@ -33,5 +42,11 @@ export class AppVersionsController {
   @Auth(Role.Admin)
   findAll() {
     return this.appVersionsService.findAll();
+  }
+
+  @Get('/admin/:id')
+  @Auth(Role.Admin)
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.appVersionsService.findOne(id);
   }
 }

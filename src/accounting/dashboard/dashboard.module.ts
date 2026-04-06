@@ -6,9 +6,11 @@ import { Appointment } from '../../bookings/appointments/entities/appointment.en
 import { StaffMember } from '../../bookings/staff-members/entities/staff-member.entity';
 import { Service } from 'src/bookings/services/entities';
 import { DashboardController } from './dashboard.controller';
+import { AuthModule } from 'src/auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     TypeOrmModule.forFeature([User, Appointment, Service, StaffMember]),
   ],
   controllers: [DashboardController],

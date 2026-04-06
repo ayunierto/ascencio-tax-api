@@ -143,6 +143,58 @@ export class InvoicesService {
     return company;
   }
 
+  private async setCompanyLogoFromTempToken(
+    userId: string,
+    companyId: string,
+    mediaToken: string,
+  ): Promise<void> {
+    if (!mediaToken.startsWith('temp_files/')) {
+      return;
+    }
+
+    const company = await this.companyRepo.findOne({
+      where: { id: companyId, users: { id: userId } },
+      relations: ['users'],
+    });
+
+    if (!company) {
+      throw new ForbiddenException('User does not have access to this company');
+    }
+
+    const promoted = await this.filesService.promoteImage(
+      mediaToken,
+      'companies',
+    );
+
+    if (company.logoPublicId) {
+      this.filesService.scheduleDelete(company.logoPublicId);
+    }
+
+    company.logoPublicId = promoted.publicId;
+    company.logoUrl = promoted.secureUrl;
+    await this.companyRepo.save(company);
+  }
+
+  private extractTempPublicId(imageRef?: string): string | undefined {
+    if (!imageRef) return undefined;
+    if (imageRef.startsWith('temp_files/')) return imageRef;
+    if (!imageRef.includes('/temp_files/')) return undefined;
+
+    const parts = imageRef.split('/upload/');
+    if (parts.length < 2) return undefined;
+
+    const pathWithoutQuery = parts[1].split('?')[0];
+    const rawSegments = pathWithoutQuery.split('/').filter(Boolean);
+    const segments = rawSegments.filter((segment) => !/^v\d+$/.test(segment));
+
+    if (segments.length === 0) return undefined;
+
+    const lastSegment = segments[segments.length - 1].replace(/\.[^.]+$/, '');
+    const publicId = [...segments.slice(0, -1), lastSegment].join('/');
+
+    return publicId.startsWith('temp_files/') ? publicId : undefined;
+  }
+
   /**
    * Generate next invoice number globally.
    * Format: INV-YYYY-XXXX (e.g., INV-2026-0001)
@@ -212,13 +264,26 @@ export class InvoicesService {
     return { subtotal, taxAmount, total, balanceDue };
   }
 
+  private toSafeNumber(value: unknown, fallback = 0): number {
+    const num = Number(value);
+    return Number.isFinite(num) ? num : fallback;
+  }
+
   async create(userId: string, input: CreateInvoiceRequest): Promise<Invoice> {
     console.log('[INVOICE SERVICE] create called:', {
       userId,
       input: JSON.stringify(input, null, 2),
     });
 
-    const { lineItems: lineItemsInput, fromCompanyId, ...invoiceData } = input;
+    const {
+      lineItems: lineItemsInput,
+      fromCompanyId,
+      logoMediaToken,
+      ...invoiceData
+    } = input as CreateInvoiceRequest & { logoMediaToken?: string };
+
+    const tempLogoToken =
+      logoMediaToken ?? this.extractTempPublicId(invoiceData.logoUrl);
 
     console.log('[INVOICE SERVICE] Line items count:', lineItemsInput.length);
 
@@ -238,6 +303,18 @@ export class InvoicesService {
         finalCompanyId,
       );
       await this.validateUserCompanyAccess(userId, finalCompanyId);
+    }
+
+    if (tempLogoToken?.startsWith('temp_files/')) {
+      invoiceData.logoUrl = undefined;
+    }
+
+    if (finalCompanyId && tempLogoToken?.startsWith('temp_files/')) {
+      await this.setCompanyLogoFromTempToken(
+        userId,
+        finalCompanyId,
+        tempLogoToken,
+      );
     }
 
     // If no client ID provided but manual data exists, create or get client
@@ -425,7 +502,23 @@ export class InvoicesService {
       );
     }
 
-    const { lineItems: lineItemsInput, ...updateData } = input;
+    const {
+      lineItems: lineItemsInput,
+      logoMediaToken,
+      ...updateData
+    } = input as UpdateInvoiceRequest & { logoMediaToken?: string };
+
+    const tempLogoToken =
+      logoMediaToken ?? this.extractTempPublicId(updateData.logoUrl);
+
+    if (tempLogoToken?.startsWith('temp_files/')) {
+      updateData.logoUrl = undefined;
+      await this.setCompanyLogoFromTempToken(
+        userId,
+        invoice.fromCompanyId,
+        tempLogoToken,
+      );
+    }
 
     // If line items are provided, update them
     if (lineItemsInput) {
@@ -505,7 +598,20 @@ export class InvoicesService {
 
   async remove(userId: string, id: string): Promise<Invoice> {
     const invoice = await this.findOne(userId, id);
-    await this.invoiceRepo.softRemove(invoice);
+
+    if (invoice.status !== 'draft') {
+      throw new BadRequestException('Only draft invoices can be deleted.');
+    }
+
+    const deleteResult = await this.invoiceRepo.softDelete({
+      id: invoice.id,
+      userId,
+    });
+
+    if (!deleteResult.affected) {
+      throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
+    }
+
     return invoice;
   }
 
@@ -533,12 +639,16 @@ export class InvoicesService {
     });
 
     const invoice = await this.findOne(userId, id);
+    const invoiceTotal = this.toSafeNumber(invoice.total);
+    const invoiceAmountPaid = this.toSafeNumber(invoice.amountPaid);
+    const invoiceBalanceDue = this.toSafeNumber(invoice.balanceDue);
+
     console.log('[INVOICE SERVICE] Invoice found:', {
       id: invoice.id,
       status: invoice.status,
-      total: invoice.total,
-      amountPaid: invoice.amountPaid,
-      balanceDue: invoice.balanceDue,
+      total: invoiceTotal,
+      amountPaid: invoiceAmountPaid,
+      balanceDue: invoiceBalanceDue,
     });
 
     // Can only record payments on issued invoices
@@ -553,17 +663,17 @@ export class InvoicesService {
       throw new BadRequestException('Payment amount must be greater than 0');
     }
 
-    const newAmountPaid = invoice.amountPaid + amount;
-    const newBalance = invoice.total - newAmountPaid;
+    const newAmountPaid = invoiceAmountPaid + amount;
+    const newBalance = invoiceTotal - newAmountPaid;
 
     console.log('[INVOICE SERVICE] Calculated values:', {
       newAmountPaid,
       newBalance,
     });
 
-    if (newAmountPaid > invoice.total) {
+    if (newAmountPaid > invoiceTotal) {
       throw new BadRequestException(
-        `Payment amount ($${String(amount)}) exceeds remaining balance ($${String(invoice.balanceDue)})`,
+        `Payment amount ($${String(amount)}) exceeds remaining balance ($${String(invoiceBalanceDue)})`,
       );
     }
 
@@ -641,8 +751,8 @@ export class InvoicesService {
     const invoice = await this.findOne(userId, id);
     console.log('[PDF] Invoice found:', invoice.invoiceNumber);
 
-    // Get logo URL - prioritize invoice logoUrl, then company logoUrl
-    const logoUrl = invoice.logoUrl ?? invoice.fromCompany.logoUrl ?? null;
+    // Company logo is the primary source; invoice logoUrl remains legacy fallback.
+    const logoUrl = invoice.fromCompany.logoUrl ?? invoice.logoUrl ?? null;
     console.log('[PDF] Logo URL:', logoUrl);
 
     // Convert logo to base64 if available
@@ -674,7 +784,8 @@ export class InvoicesService {
     logoBase64?: string | null,
   ): TDocumentDefinitions {
     const primaryColor = '#002e5d';
-    const formatCurrency = (amount: number) => `CA$${amount.toFixed(2)}`;
+    const formatCurrency = (amount: unknown) =>
+      `CA$${this.toSafeNumber(amount).toFixed(2)}`;
     const formatDate = (dateStr: string) => {
       const date = new Date(dateStr);
       return date.toLocaleDateString('en-CA', {
@@ -694,7 +805,7 @@ export class InvoicesService {
     if (logoBase64) {
       companyInfoStack.push({
         image: 'logo',
-        width: 120,
+        width: 88,
         margin: [0, 0, 0, 10] as [number, number, number, number],
       });
     }

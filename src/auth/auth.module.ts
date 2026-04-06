@@ -29,9 +29,9 @@ const GoogleStrategyProvider = {
   imports: [
     PassportModule.register({ session: false }),
     JwtModule.registerAsync({
+      global: true,
       useFactory: () => {
         return {
-          global: true,
           secret: process.env.JWT_SECRET,
           signOptions: {
             expiresIn: process.env.JWT_EXPIRY,

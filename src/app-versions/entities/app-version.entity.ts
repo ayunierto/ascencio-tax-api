@@ -9,6 +9,7 @@ import {
 export enum AppPlatform {
   IOS = 'ios',
   ANDROID = 'android',
+  WEB = 'web',
   ALL = 'all',
 }
 
