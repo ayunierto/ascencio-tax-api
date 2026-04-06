@@ -269,6 +269,27 @@ export class InvoicesService {
     return Number.isFinite(num) ? num : fallback;
   }
 
+  private validateLineItemsTotalsGreaterThanZero(
+    lineItems: { quantity: number; price: number }[],
+  ): void {
+    const hasInvalidPrice = lineItems.some((item) => item.price <= 0);
+    if (hasInvalidPrice) {
+      throw new BadRequestException(
+        'invoiceLineItemPriceMustBeGreaterThanZero',
+      );
+    }
+
+    const hasInvalidItem = lineItems.some(
+      (item) => item.quantity * item.price <= 0,
+    );
+
+    if (hasInvalidItem) {
+      throw new BadRequestException(
+        'invoiceLineItemTotalMustBeGreaterThanZero',
+      );
+    }
+  }
+
   async create(userId: string, input: CreateInvoiceRequest): Promise<Invoice> {
     console.log('[INVOICE SERVICE] create called:', {
       userId,
@@ -279,13 +300,21 @@ export class InvoicesService {
       lineItems: lineItemsInput,
       fromCompanyId,
       logoMediaToken,
+      billToFullName,
       ...invoiceData
     } = input as CreateInvoiceRequest & { logoMediaToken?: string };
 
+    const normalizedInvoiceData = {
+      ...invoiceData,
+      billToName: billToFullName,
+    };
+
     const tempLogoToken =
-      logoMediaToken ?? this.extractTempPublicId(invoiceData.logoUrl);
+      logoMediaToken ?? this.extractTempPublicId(normalizedInvoiceData.logoUrl);
 
     console.log('[INVOICE SERVICE] Line items count:', lineItemsInput.length);
+
+    this.validateLineItemsTotalsGreaterThanZero(lineItemsInput);
 
     // If no company provided, get or create "Sole Proprietor"
     let finalCompanyId = fromCompanyId;
@@ -321,13 +350,13 @@ export class InvoicesService {
     let finalClientId = invoiceData.billToClientId;
     if (
       !finalClientId &&
-      invoiceData.billToFullName &&
+      billToFullName &&
       invoiceData.billToEmail &&
       invoiceData.billToPhone
     ) {
       finalClientId = await this.getOrCreateClientFromManualData(
         userId,
-        invoiceData.billToFullName,
+        billToFullName,
         invoiceData.billToEmail,
         invoiceData.billToPhone,
       );
@@ -335,6 +364,11 @@ export class InvoicesService {
 
     // Calculate totals
     const totals = this.calculateTotals(lineItemsInput, input.taxRate);
+
+    if (totals.total <= 0) {
+      throw new BadRequestException('invoiceTotalMustBeGreaterThanZero');
+    }
+
     console.log('[INVOICE SERVICE] Calculated totals:', totals);
 
     // Retry logic to handle race conditions with invoice number generation
@@ -354,7 +388,7 @@ export class InvoicesService {
 
         // Create invoice in draft state
         const invoice = this.invoiceRepo.create({
-          ...invoiceData,
+          ...normalizedInvoiceData,
           billToClientId: finalClientId,
           fromCompanyId: finalCompanyId,
           userId,
@@ -505,19 +539,52 @@ export class InvoicesService {
     const {
       lineItems: lineItemsInput,
       logoMediaToken,
+      billToFullName,
       ...updateData
     } = input as UpdateInvoiceRequest & { logoMediaToken?: string };
 
+    const normalizedUpdateData = {
+      ...updateData,
+      billToName: billToFullName,
+    };
+
+    // If manual bill-to data is present, force inline mode by clearing client relation.
+    if (billToFullName !== undefined) {
+      normalizedUpdateData.billToClientId = null as unknown as string;
+    }
+
     const tempLogoToken =
-      logoMediaToken ?? this.extractTempPublicId(updateData.logoUrl);
+      logoMediaToken ?? this.extractTempPublicId(normalizedUpdateData.logoUrl);
 
     if (tempLogoToken?.startsWith('temp_files/')) {
-      updateData.logoUrl = undefined;
+      normalizedUpdateData.logoUrl = undefined;
       await this.setCompanyLogoFromTempToken(
         userId,
         invoice.fromCompanyId,
         tempLogoToken,
       );
+    }
+
+    const mappedLineItemsForTotals = (lineItemsInput ?? invoice.lineItems).map(
+      (item) => ({
+        quantity: this.toSafeNumber(item.quantity),
+        price: this.toSafeNumber(item.price),
+      }),
+    );
+
+    this.validateLineItemsTotalsGreaterThanZero(mappedLineItemsForTotals);
+
+    const effectiveTaxRate = this.toSafeNumber(
+      normalizedUpdateData.taxRate ?? invoice.taxRate,
+    );
+    const expectedTotals = this.calculateTotals(
+      mappedLineItemsForTotals,
+      effectiveTaxRate,
+      this.toSafeNumber(invoice.amountPaid),
+    );
+
+    if (expectedTotals.total <= 0) {
+      throw new BadRequestException('invoiceTotalMustBeGreaterThanZero');
     }
 
     // If line items are provided, update them
@@ -537,19 +604,22 @@ export class InvoicesService {
       await this.lineItemRepo.save(lineItems);
       invoice.lineItems = lineItems;
 
-      // Recalculate totals
-      const totals = this.calculateTotals(
-        lineItemsInput,
-        updateData.taxRate ?? invoice.taxRate,
-        invoice.amountPaid,
-      );
-      Object.assign(invoice, totals);
+      Object.assign(invoice, expectedTotals);
     }
 
-    // Update invoice fields
-    Object.assign(invoice, updateData);
+    if (normalizedUpdateData.taxRate !== undefined) {
+      Object.assign(invoice, expectedTotals);
+    }
 
-    return this.invoiceRepo.save(invoice);
+    // Persist with update() to avoid TypeORM side effects when entity has loaded relations.
+    const updatePayload: Partial<Invoice> = {
+      ...normalizedUpdateData,
+      ...expectedTotals,
+    };
+
+    await this.invoiceRepo.update(id, updatePayload);
+
+    return this.findOne(userId, id);
   }
 
   /**
@@ -855,10 +925,49 @@ export class InvoicesService {
       margin: [0, 0, 0, 20] as [number, number, number, number],
     });
 
-    // Dates and Bill To (using billToClient relation)
+    // Dates and Bill To
     const billToStack: Content[] = [{ text: 'BILL TO', style: 'sectionLabel' }];
 
-    if (invoice.billToClient) {
+    if (invoice.billToName) {
+      billToStack.push({
+        text: invoice.billToName,
+        style: 'billToName',
+      });
+
+      if (invoice.billToAddress) {
+        billToStack.push({
+          text: invoice.billToAddress,
+          style: 'billToDetails',
+        });
+      }
+
+      if (invoice.billToCity || invoice.billToProvince) {
+        const location = [
+          invoice.billToCity,
+          invoice.billToProvince,
+          invoice.billToPostalCode,
+        ]
+          .filter(Boolean)
+          .join(', ');
+        if (location) {
+          billToStack.push({ text: location, style: 'billToDetails' });
+        }
+      }
+
+      if (invoice.billToEmail) {
+        billToStack.push({
+          text: invoice.billToEmail,
+          style: 'billToDetails',
+        });
+      }
+
+      if (invoice.billToPhone) {
+        billToStack.push({
+          text: invoice.billToPhone,
+          style: 'billToDetails',
+        });
+      }
+    } else if (invoice.billToClient) {
       billToStack.push({
         text: invoice.billToClient.fullName,
         style: 'billToName',
