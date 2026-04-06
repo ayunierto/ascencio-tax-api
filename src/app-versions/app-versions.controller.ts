@@ -34,7 +34,10 @@ export class AppVersionsController {
 
   @Put(':id')
   @Auth(Role.Admin)
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateAppVersionDto) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateAppVersionDto,
+  ) {
     return this.appVersionsService.update(id, dto);
   }
 

@@ -1,4 +1,8 @@
-import { INestApplication, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  INestApplication,
+  CanActivate,
+  ExecutionContext,
+} from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import request from 'supertest';
@@ -105,7 +109,9 @@ class InMemoryAppVersionRepository {
     const entries = [...this.items];
 
     if (options?.order?.updatedAt) {
-      entries.sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime());
+      entries.sort(
+        (left, right) => right.updatedAt.getTime() - left.updatedAt.getTime(),
+      );
     }
 
     return entries;
