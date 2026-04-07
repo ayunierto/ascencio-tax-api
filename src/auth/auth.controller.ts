@@ -224,23 +224,15 @@ export class AuthController {
       }
 
       // Handle web redirect
-      const cookieDomain = process.env.AUTH_COOKIE_DOMAIN;
-      res.cookie('access_token', result.access_token, {
-        httpOnly: true,
-        secure: process.env.STAGE !== 'dev',
-        sameSite: 'lax',
-        ...(cookieDomain ? { domain: cookieDomain } : {}),
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-        path: '/',
-      });
-
       const webAppUrl = process.env.WEB_APP_URL ?? 'http://localhost:4000';
       const userLocale = (result.user.locale ?? 'en').toLowerCase();
       const langCandidate = userLocale.split(/[-_]/)[0];
       const lang = ['en', 'es'].includes(langCandidate) ? langCandidate : 'en';
-      const successPath = `/${lang}/admin`;
+      const successPath = '/api/auth/google/callback';
 
       const redirectUrl = new URL(successPath, webAppUrl);
+      redirectUrl.searchParams.set('access_token', result.access_token);
+      redirectUrl.searchParams.set('lang', lang);
       res.redirect(redirectUrl.toString());
       return;
     } catch (error) {
