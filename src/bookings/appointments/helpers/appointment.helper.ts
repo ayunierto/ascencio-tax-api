@@ -38,22 +38,22 @@ export class AppointmentHelper {
     private readonly servicesService: ServicesService,
   ) {}
 
-  async validateAndGetSchedule(staffId: string, startDate: DateTime) {
+  async validateAndGetSchedules(staffId: string, startDate: DateTime) {
     const dayOfWeek = startDate.weekday % 7;
-    const schedule = await this.scheduleRepository.findOne({
+    const schedules = await this.scheduleRepository.find({
       where: {
         staffMembers: { id: staffId },
         dayOfWeek,
       },
     });
 
-    if (!schedule) {
+    if (schedules.length === 0) {
       throw new BadRequestException(
         'The staff has no schedule for the selected day. Please verify information.',
       );
     }
 
-    return schedule;
+    return schedules;
   }
 
   async getServiceAndStaff(

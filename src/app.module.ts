@@ -34,6 +34,8 @@ import { InvoicesModule } from './accounting/invoices/invoices.module';
 import { ClientsModule } from './accounting/clients/clients.module';
 import { AccountsReceivableModule } from './accounting/accounts-receivable/accounts-receivable.module';
 import { PaymentsModule } from './accounting/payments/payments.module';
+import { GeolocationModule } from './geolocation/geolocation.module';
+import { MobileConfigModule } from './mobile-config/mobile-config.module';
 
 @Module({
   imports: [
@@ -89,6 +91,8 @@ import { PaymentsModule } from './accounting/payments/payments.module';
     InvoicesModule,
     AccountsReceivableModule,
     PaymentsModule,
+    GeolocationModule,
+    MobileConfigModule,
   ],
   controllers: [],
   providers: [],

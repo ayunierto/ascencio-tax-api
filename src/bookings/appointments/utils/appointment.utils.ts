@@ -61,6 +61,41 @@ export const validateWorkingHours = (
   }
 };
 
+export const isWithinWorkingHours = (
+  schedule: Schedule,
+  startDateAndTime: DateTime,
+  endDateAndTime: DateTime,
+  timeZone: string,
+): boolean => {
+  const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+  const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+
+  const startOfSchedule = startDateAndTime
+    .set({
+      hour: startHour,
+      minute: startMinute,
+      second: 0,
+      millisecond: 0,
+    })
+    .setZone(timeZone, { keepLocalTime: true });
+
+  const endOfSchedule = startDateAndTime
+    .set({
+      hour: endHour,
+      minute: endMinute,
+      second: 0,
+      millisecond: 0,
+    })
+    .setZone(timeZone, { keepLocalTime: true });
+
+  const normalizedStartTime = startDateAndTime.setZone(timeZone);
+  const normalizedEndTime = endDateAndTime.setZone(timeZone);
+
+  return (
+    normalizedStartTime >= startOfSchedule && normalizedEndTime <= endOfSchedule
+  );
+};
+
 export const formatAppointmentDescription = (
   zoomMeetingLink: string,
   staffFirstName: string,

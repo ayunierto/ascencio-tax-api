@@ -21,6 +21,7 @@ import { NotificationService } from 'src/notification/notification.service';
 import { SystemSettingsService } from 'src/system-settings/system-settings.service';
 import {
   formatAppointmentDescription,
+  isWithinWorkingHours,
   getZoomMeetingConfig,
   validateWorkingHours,
   validateDatesForUpdate,
@@ -93,19 +94,31 @@ export class AppointmentsService {
       const businessStartDateAndTime =
         startDateAndTime.setZone(businessTimeZone);
 
-      // 3. Validar horario y obtener schedule
-      const schedule = await this.appointmentHelper.validateAndGetSchedule(
+      // 3. Validar horario y obtener schedules del día
+      const schedules = await this.appointmentHelper.validateAndGetSchedules(
         staffId,
         businessStartDateAndTime,
       );
 
-      // 4. Validar horas laborales
-      validateWorkingHours(
-        schedule,
-        startDateAndTime,
-        endDateAndTime,
-        businessTimeZone,
+      // 4. Validar horas laborales contra cualquier horario del día
+      const matchingSchedule = schedules.find((schedule) =>
+        isWithinWorkingHours(
+          schedule,
+          startDateAndTime,
+          endDateAndTime,
+          businessTimeZone,
+        ),
       );
+
+      if (!matchingSchedule) {
+        // Reutilizar el error existente para mantener mensajes consistentes.
+        validateWorkingHours(
+          schedules[0],
+          startDateAndTime,
+          endDateAndTime,
+          businessTimeZone,
+        );
+      }
 
       // 5.1 Validar conflictos con eventos externos de calendario
       await this.assertNoCalendarConflicts(
@@ -359,19 +372,31 @@ export class AppointmentsService {
           DateTime.fromJSDate(appointment.end),
         );
 
-        // Validar horario del personal y obtener schedule
-        const schedule = await this.appointmentHelper.validateAndGetSchedule(
+        // Validar horario del personal y obtener schedules del día
+        const schedules = await this.appointmentHelper.validateAndGetSchedules(
           staff.id,
           businessStartDateAndTime,
         );
 
-        // Validar horas laborales
-        validateWorkingHours(
-          schedule,
-          startDateAndTime,
-          endDateAndTime,
-          businessTimeZone,
+        // Validar horas laborales contra cualquier horario del día
+        const matchingSchedule = schedules.find((schedule) =>
+          isWithinWorkingHours(
+            schedule,
+            startDateAndTime,
+            endDateAndTime,
+            businessTimeZone,
+          ),
         );
+
+        if (!matchingSchedule) {
+          // Reutilizar el error existente para mantener mensajes consistentes.
+          validateWorkingHours(
+            schedules[0],
+            startDateAndTime,
+            endDateAndTime,
+            businessTimeZone,
+          );
+        }
 
         await this.assertNoCalendarConflicts(
           startDateAndTime,
