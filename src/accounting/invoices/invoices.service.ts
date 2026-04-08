@@ -195,6 +195,136 @@ export class InvoicesService {
     return publicId.startsWith('temp_files/') ? publicId : undefined;
   }
 
+  private async getClientSnapshotForInvoice(
+    userId: string,
+    clientId: string,
+  ): Promise<{
+    billToName: string;
+    billToEmail?: string;
+    billToPhone?: string;
+    billToAddress?: string;
+    billToCity?: string;
+    billToProvince?: string;
+    billToPostalCode?: string;
+    billToCountry?: string;
+  }> {
+    const client = await this.clientRepo.findOne({
+      where: { id: clientId, users: { id: userId } },
+      relations: ['users'],
+    });
+
+    if (!client) {
+      throw new BadRequestException('Selected client not found');
+    }
+
+    return {
+      billToName: client.fullName,
+      billToEmail: client.email,
+      billToPhone: client.phone,
+      billToAddress: client.address ?? undefined,
+      billToCity: client.city ?? undefined,
+      billToProvince: client.province ?? undefined,
+      billToPostalCode: client.postalCode ?? undefined,
+      billToCountry: client.country ?? undefined,
+    };
+  }
+
+  private buildBillToSnapshotFromClient(client: Client): {
+    billToName: string;
+    billToEmail?: string;
+    billToPhone?: string;
+    billToAddress?: string;
+    billToCity?: string;
+    billToProvince?: string;
+    billToPostalCode?: string;
+    billToCountry?: string;
+  } {
+    return {
+      billToName: client.fullName,
+      billToEmail: client.email,
+      billToPhone: client.phone,
+      billToAddress: client.address ?? undefined,
+      billToCity: client.city ?? undefined,
+      billToProvince: client.province ?? undefined,
+      billToPostalCode: client.postalCode ?? undefined,
+      billToCountry: client.country ?? undefined,
+    };
+  }
+
+  private async ensureInvoiceBillToSnapshot(
+    userId: string,
+    invoice: Invoice,
+  ): Promise<Invoice> {
+    if (invoice.billToName?.trim() || !invoice.billToClientId) {
+      return invoice;
+    }
+
+    // First try loaded relation (active client), then soft-deleted lookup.
+    const sourceClient =
+      invoice.billToClient ??
+      (await this.clientRepo.findOne({
+        where: { id: invoice.billToClientId, users: { id: userId } },
+        relations: ['users'],
+        withDeleted: true,
+      }));
+
+    if (!sourceClient) {
+      return invoice;
+    }
+
+    const snapshot = this.buildBillToSnapshotFromClient(sourceClient);
+    await this.invoiceRepo.update(invoice.id, snapshot);
+    Object.assign(invoice, snapshot);
+
+    return invoice;
+  }
+
+  private async ensureInvoicesBillToSnapshots(
+    userId: string,
+    invoices: Invoice[],
+  ): Promise<Invoice[]> {
+    const invoicesNeedingSnapshot = invoices.filter(
+      (invoice) => !invoice.billToName?.trim() && !!invoice.billToClientId,
+    );
+
+    if (invoicesNeedingSnapshot.length === 0) {
+      return invoices;
+    }
+
+    const missingClientIds = invoicesNeedingSnapshot
+      .filter((invoice) => !invoice.billToClient)
+      .map((invoice) => invoice.billToClientId)
+      .filter((id): id is string => typeof id === 'string' && id.length > 0);
+
+    const fallbackClients =
+      missingClientIds.length > 0
+        ? await this.clientRepo.find({
+            where: { id: In(missingClientIds), users: { id: userId } },
+            relations: ['users'],
+            withDeleted: true,
+          })
+        : [];
+
+    const clientById = new Map(
+      fallbackClients.map((client) => [client.id, client]),
+    );
+
+    for (const invoice of invoicesNeedingSnapshot) {
+      const linkedClientId = invoice.billToClientId;
+      if (!linkedClientId) continue;
+
+      const sourceClient =
+        invoice.billToClient ?? clientById.get(linkedClientId);
+      if (!sourceClient) continue;
+
+      const snapshot = this.buildBillToSnapshotFromClient(sourceClient);
+      await this.invoiceRepo.update(invoice.id, snapshot);
+      Object.assign(invoice, snapshot);
+    }
+
+    return invoices;
+  }
+
   /**
    * Generate next invoice number globally.
    * Format: INV-YYYY-XXXX (e.g., INV-2026-0001)
@@ -301,6 +431,7 @@ export class InvoicesService {
       fromCompanyId,
       logoMediaToken,
       billToFullName,
+      billToClientId,
       ...invoiceData
     } = input as CreateInvoiceRequest & { logoMediaToken?: string };
 
@@ -347,7 +478,35 @@ export class InvoicesService {
     }
 
     // If no client ID provided but manual data exists, create or get client
-    let finalClientId = invoiceData.billToClientId;
+    let finalClientId = billToClientId;
+
+    let billToSnapshot: {
+      billToName?: string;
+      billToEmail?: string;
+      billToPhone?: string;
+      billToAddress?: string;
+      billToCity?: string;
+      billToProvince?: string;
+      billToPostalCode?: string;
+      billToCountry?: string;
+    } = {
+      billToName: normalizedInvoiceData.billToName,
+      billToEmail: normalizedInvoiceData.billToEmail,
+      billToPhone: normalizedInvoiceData.billToPhone,
+      billToAddress: normalizedInvoiceData.billToAddress,
+      billToCity: normalizedInvoiceData.billToCity,
+      billToProvince: normalizedInvoiceData.billToProvince,
+      billToPostalCode: normalizedInvoiceData.billToPostalCode,
+      billToCountry: normalizedInvoiceData.billToCountry,
+    };
+
+    if (billToClientId) {
+      billToSnapshot = await this.getClientSnapshotForInvoice(
+        userId,
+        billToClientId,
+      );
+    }
+
     if (
       !finalClientId &&
       billToFullName &&
@@ -389,6 +548,7 @@ export class InvoicesService {
         // Create invoice in draft state
         const invoice = this.invoiceRepo.create({
           ...normalizedInvoiceData,
+          ...billToSnapshot,
           billToClientId: finalClientId,
           fromCompanyId: finalCompanyId,
           userId,
@@ -499,10 +659,15 @@ export class InvoicesService {
       order: { createdAt: 'DESC' },
     });
 
+    const hydratedInvoices = await this.ensureInvoicesBillToSnapshots(
+      userId,
+      invoices,
+    );
+
     return {
       total,
       pages: Math.ceil(total / limit),
-      items: invoices,
+      items: hydratedInvoices,
     };
   }
 
@@ -515,6 +680,8 @@ export class InvoicesService {
     if (!invoice) {
       throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
     }
+
+    await this.ensureInvoiceBillToSnapshot(userId, invoice);
 
     // No need to validate company access since we already filter by userId
     // The invoice belongs to this user, so they have access
@@ -551,6 +718,15 @@ export class InvoicesService {
     // If manual bill-to data is present, force inline mode by clearing client relation.
     if (billToFullName !== undefined) {
       normalizedUpdateData.billToClientId = null as unknown as string;
+    }
+
+    if (normalizedUpdateData.billToClientId) {
+      const clientSnapshot = await this.getClientSnapshotForInvoice(
+        userId,
+        normalizedUpdateData.billToClientId,
+      );
+
+      Object.assign(normalizedUpdateData, clientSnapshot);
     }
 
     const tempLogoToken =
@@ -644,9 +820,20 @@ export class InvoicesService {
       throw new BadRequestException('Cannot issue invoice without line items.');
     }
 
+    // Freeze current client data into invoice snapshot at issuance time.
+    if (invoice.billToClientId) {
+      const clientSnapshot = await this.getClientSnapshotForInvoice(
+        userId,
+        invoice.billToClientId,
+      );
+      Object.assign(invoice, clientSnapshot);
+    }
+
     // Validate invoice has a client
-    if (!invoice.billToClientId) {
-      throw new BadRequestException('Cannot issue invoice without a client.');
+    if (!invoice.billToName) {
+      throw new BadRequestException(
+        'Cannot issue invoice without billing information.',
+      );
     }
 
     // Set issued status and timestamp
@@ -818,7 +1005,17 @@ export class InvoicesService {
       userId,
     );
 
-    const invoice = await this.findOne(userId, id);
+    const invoice = await this.invoiceRepo.findOne({
+      where: { id, userId },
+      relations: ['fromCompany', 'lineItems'],
+    });
+
+    if (!invoice) {
+      throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
+    }
+
+    await this.ensureInvoiceBillToSnapshot(userId, invoice);
+
     console.log('[PDF] Invoice found:', invoice.invoiceNumber);
 
     // Company logo is the primary source; invoice logoUrl remains legacy fallback.
@@ -967,54 +1164,11 @@ export class InvoicesService {
           style: 'billToDetails',
         });
       }
-    } else if (invoice.billToClient) {
+    } else {
       billToStack.push({
-        text: invoice.billToClient.fullName,
+        text: 'Billing information unavailable',
         style: 'billToName',
       });
-
-      if (invoice.billToClient.address) {
-        billToStack.push({
-          text: invoice.billToClient.address,
-          style: 'billToDetails',
-        });
-      }
-
-      if (invoice.billToClient.city || invoice.billToClient.province) {
-        const location = [
-          invoice.billToClient.city,
-          invoice.billToClient.province,
-          invoice.billToClient.postalCode,
-        ]
-          .filter(Boolean)
-          .join(', ');
-        if (location) {
-          billToStack.push({ text: location, style: 'billToDetails' });
-        }
-      }
-
-      if (invoice.billToClient.email) {
-        billToStack.push({
-          text: invoice.billToClient.email,
-          style: 'billToDetails',
-        });
-      }
-
-      if (invoice.billToClient.phone) {
-        billToStack.push({
-          text: invoice.billToClient.phone,
-          style: 'billToDetails',
-        });
-      }
-
-      if (invoice.billToClient.businessNumber) {
-        billToStack.push({
-          text: `BN: ${invoice.billToClient.businessNumber}`,
-          style: 'billToDetails',
-        });
-      }
-    } else {
-      billToStack.push({ text: 'Client not found', style: 'billToName' });
     }
 
     headerContent.push({
