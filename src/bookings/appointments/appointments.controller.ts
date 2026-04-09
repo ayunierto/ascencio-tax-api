@@ -10,57 +10,45 @@ import {
   ParseUUIDPipe,
   HttpCode,
   HttpStatus,
+  Res,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AppointmentsService } from './appointments.service';
-import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { UpdateAppointmentDto } from './dto/update-appointment.dto';
+import {
+  CancelAppointmentRequest,
+  cancelAppointmentSchema,
+  CreateAppointmentRequest,
+  createAppointmentSchema,
+  UpdateAppointmentRequest,
+  updateAppointmentSchema,
+} from '@ascencio/shared';
 import { Auth } from 'src/auth/decorators/auth.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { User } from 'src/auth/entities/user.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 
-@ApiTags('Bookings - Appointments')
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Post()
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create a new appointment' })
-  @ApiResponse({ status: 201, description: 'Appointment created successfully' })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   create(
-    @Body() createAppointmentDto: CreateAppointmentDto,
+    @Body(new ZodValidationPipe(createAppointmentSchema))
+    createAppointmentDto: CreateAppointmentRequest,
     @GetUser() user: User,
   ) {
     return this.appointmentsService.create(createAppointmentDto, user);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all appointments' })
-  @ApiResponse({ status: 200, description: 'Return all appointments' })
   findAll(@Query() paginationDto: PaginationDto) {
     return this.appointmentsService.findAll(paginationDto);
   }
 
   @Get('current-user')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get appointments for current user' })
-  @ApiQuery({ name: 'state', enum: ['pending', 'past'], required: false })
-  @ApiResponse({ status: 200, description: 'Return user appointments' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   findCurrentUser(
     @GetUser() user: User,
     @Query('state') state: 'pending' | 'past' = 'pending',
@@ -69,38 +57,22 @@ export class AppointmentsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get an appointment by ID' })
-  @ApiParam({ name: 'id', description: 'Appointment ID' })
-  @ApiResponse({ status: 200, description: 'Return the appointment' })
-  @ApiResponse({ status: 404, description: 'Appointment not found' })
   findOne(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.appointmentsService.findOne(id);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete an appointment' })
-  @ApiParam({ name: 'id', description: 'Appointment ID' })
-  @ApiResponse({ status: 200, description: 'Appointment deleted successfully' })
-  @ApiResponse({ status: 404, description: 'Appointment not found' })
   remove(@Param('id') id: string) {
     return this.appointmentsService.remove(id);
   }
 
   @Patch(':id/cancel')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Cancel an appointment' })
-  @ApiParam({ name: 'id', description: 'Appointment ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Appointment cancelled successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Appointment not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @HttpCode(HttpStatus.OK)
   async cancelAppointment(
     @Param('id') id: string,
-    @Body() cancelDto: CancelAppointmentDto,
+    @Body(new ZodValidationPipe(cancelAppointmentSchema))
+    cancelDto: CancelAppointmentRequest,
     @GetUser() user: User,
   ) {
     const userId = user.id; // Asumiendo que el guard añade el usuario a la request
@@ -115,17 +87,38 @@ export class AppointmentsController {
 
   @Patch(':id')
   @Auth()
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Update an appointment' })
-  @ApiParam({ name: 'id', description: 'Appointment ID' })
-  @ApiResponse({ status: 200, description: 'Appointment updated successfully' })
-  @ApiResponse({ status: 404, description: 'Appointment not found' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
   update(
     @Param('id') id: string,
-    @Body() updateAppointmentDto: UpdateAppointmentDto,
+    @Body(new ZodValidationPipe(updateAppointmentSchema))
+    updateAppointmentDto: UpdateAppointmentRequest,
     @GetUser() user: User,
   ) {
     return this.appointmentsService.update(id, updateAppointmentDto, user);
+  }
+
+  @Get(':id/add-to-calendar')
+  @Auth()
+  async addToCalendar(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Query('format') format: 'ics' | 'link' | 'json' = 'json',
+    @Res() res: Response,
+  ) {
+    const data = await this.appointmentsService.buildAddToCalendarData(id);
+
+    if (format === 'ics') {
+      res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="appointment-${id}.ics"`,
+      );
+      return res.send(data.ics);
+    }
+
+    if (format === 'link') {
+      res.redirect(data.googleCalendarUrl);
+      return;
+    }
+
+    return res.json(data);
   }
 }

@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { calendar_v3 } from 'googleapis';
 import { DateTime, Interval } from 'luxon';
-import { Repository, LessThan, MoreThan } from 'typeorm';
+import { Repository, LessThan, MoreThan, IsNull } from 'typeorm';
 import { GoogleCalendarIntegrationService } from 'src/integrations/google-calendar/google-calendar.service';
 import {
   CalendarEvent,
@@ -15,6 +15,7 @@ import {
   CalendarStatus,
 } from './entities/calendar.entity';
 import { StaffMember } from 'src/bookings/staff-members/entities/staff-member.entity';
+import { CommonMessages, ValidationMessages } from '@ascencio/shared';
 
 interface CreateEventOptions {
   staffMemberId?: string;
@@ -59,6 +60,26 @@ export class CalendarService {
       calendarId,
     );
 
+    return this.upsertExternalEvents(events, {
+      calendarId,
+      defaultTimeZone,
+    });
+  }
+
+  async upsertExternalEvents(
+    events: calendar_v3.Schema$Event[],
+    params: {
+      calendarId?: string;
+      defaultTimeZone?: string;
+      fallbackStaffMemberId?: string;
+    },
+  ): Promise<{ imported: number; updated: number; skipped: number }> {
+    const {
+      calendarId,
+      defaultTimeZone = 'UTC',
+      fallbackStaffMemberId,
+    } = params;
+
     const staffMembers = await this.staffRepository.find({
       where: { isActive: true },
     });
@@ -88,9 +109,10 @@ export class CalendarService {
       const staffName = this.extractStaffNameFromDescription(
         event.description ?? '',
       );
-      const resolvedStaffId = staffName
+      const resolvedStaffIdByName = staffName
         ? this.resolveStaffMemberIdByName(staffMembers, staffName)
         : undefined;
+      const resolvedStaffId = resolvedStaffIdByName ?? fallbackStaffMemberId;
 
       const timeZone =
         event.start.timeZone ?? event.end.timeZone ?? defaultTimeZone;
@@ -203,7 +225,7 @@ export class CalendarService {
   ): Promise<void> {
     const existing = await this.findEvent(eventId);
     if (!existing) {
-      throw new NotFoundException(`Event ${eventId} not found`);
+      throw new NotFoundException(CommonMessages.RESOURCE_NOT_FOUND);
     }
 
     this.ensureBody(eventDetails);
@@ -276,27 +298,39 @@ export class CalendarService {
     staffMemberId?: string,
   ): Promise<Interval[]> {
     if (!startDateTime || !endDateTime) {
-      throw new BadRequestException(
-        'startDateTime and endDateTime are required',
-      );
+      throw new BadRequestException(ValidationMessages.REQUIRED);
     }
 
     const start = DateTime.fromISO(startDateTime, { zone: 'utc' });
     const end = DateTime.fromISO(endDateTime, { zone: 'utc' });
 
     if (!start.isValid || !end.isValid) {
-      throw new BadRequestException('Invalid date range');
+      throw new BadRequestException(ValidationMessages.ISO_DATETIME);
     }
 
-    const events = await this.eventsRepository.find({
-      where: {
-        status: 'confirmed',
-        isBusy: true,
-        ...(staffMemberId ? { staffMemberId } : {}),
-        start: LessThan(end.toJSDate()),
-        end: MoreThan(start.toJSDate()),
-      },
-    });
+    const dateFilter = {
+      start: LessThan(end.toJSDate()),
+      end: MoreThan(start.toJSDate()),
+    };
+
+    const whereClause = staffMemberId
+      ? [
+          {
+            status: 'confirmed' as const,
+            isBusy: true,
+            staffMemberId,
+            ...dateFilter,
+          },
+          {
+            status: 'confirmed' as const,
+            isBusy: true,
+            staffMemberId: IsNull(),
+            ...dateFilter,
+          },
+        ]
+      : { status: 'confirmed' as const, isBusy: true, ...dateFilter };
+
+    const events = await this.eventsRepository.find({ where: whereClause });
 
     return events.map((event) =>
       Interval.fromDateTimes(
@@ -310,7 +344,7 @@ export class CalendarService {
 
   private ensureBody(body: calendar_v3.Schema$Event): void {
     if (!body.start?.dateTime || !body.end?.dateTime) {
-      throw new BadRequestException('Event body, start and end are required');
+      throw new BadRequestException(ValidationMessages.REQUIRED);
     }
   }
 
@@ -329,7 +363,7 @@ export class CalendarService {
     });
 
     if (!startDate.isValid || !endDate.isValid || endDate <= startDate) {
-      throw new BadRequestException('Invalid start/end date range');
+      throw new BadRequestException(ValidationMessages.ISO_DATETIME);
     }
 
     return { startDate, endDate, timeZone };

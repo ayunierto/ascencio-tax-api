@@ -1,0 +1,2604 @@
+[
+  {
+    "startTimeUTC": "2026-04-09T13:30:00.000Z",
+    "endTimeUTC": "2026-04-09T14:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T13:45:00.000Z",
+    "endTimeUTC": "2026-04-09T14:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T14:00:00.000Z",
+    "endTimeUTC": "2026-04-09T15:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T14:15:00.000Z",
+    "endTimeUTC": "2026-04-09T15:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T14:30:00.000Z",
+    "endTimeUTC": "2026-04-09T15:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T14:45:00.000Z",
+    "endTimeUTC": "2026-04-09T15:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T15:00:00.000Z",
+    "endTimeUTC": "2026-04-09T16:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T15:15:00.000Z",
+    "endTimeUTC": "2026-04-09T16:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T15:30:00.000Z",
+    "endTimeUTC": "2026-04-09T16:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T15:45:00.000Z",
+    "endTimeUTC": "2026-04-09T16:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T16:00:00.000Z",
+    "endTimeUTC": "2026-04-09T17:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T16:15:00.000Z",
+    "endTimeUTC": "2026-04-09T17:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T16:30:00.000Z",
+    "endTimeUTC": "2026-04-09T17:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T16:45:00.000Z",
+    "endTimeUTC": "2026-04-09T17:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T17:00:00.000Z",
+    "endTimeUTC": "2026-04-09T18:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T17:15:00.000Z",
+    "endTimeUTC": "2026-04-09T18:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T17:30:00.000Z",
+    "endTimeUTC": "2026-04-09T18:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T17:45:00.000Z",
+    "endTimeUTC": "2026-04-09T18:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T18:00:00.000Z",
+    "endTimeUTC": "2026-04-09T19:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T18:15:00.000Z",
+    "endTimeUTC": "2026-04-09T19:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T18:30:00.000Z",
+    "endTimeUTC": "2026-04-09T19:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T18:45:00.000Z",
+    "endTimeUTC": "2026-04-09T19:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T19:00:00.000Z",
+    "endTimeUTC": "2026-04-09T20:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T19:15:00.000Z",
+    "endTimeUTC": "2026-04-09T20:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T19:30:00.000Z",
+    "endTimeUTC": "2026-04-09T20:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T19:45:00.000Z",
+    "endTimeUTC": "2026-04-09T20:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T20:00:00.000Z",
+    "endTimeUTC": "2026-04-09T21:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T20:15:00.000Z",
+    "endTimeUTC": "2026-04-09T21:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T20:30:00.000Z",
+    "endTimeUTC": "2026-04-09T21:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T20:45:00.000Z",
+    "endTimeUTC": "2026-04-09T21:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T21:00:00.000Z",
+    "endTimeUTC": "2026-04-09T22:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T21:15:00.000Z",
+    "endTimeUTC": "2026-04-09T22:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T21:30:00.000Z",
+    "endTimeUTC": "2026-04-09T22:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T21:45:00.000Z",
+    "endTimeUTC": "2026-04-09T22:45:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T22:00:00.000Z",
+    "endTimeUTC": "2026-04-09T23:00:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T22:15:00.000Z",
+    "endTimeUTC": "2026-04-09T23:15:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "startTimeUTC": "2026-04-09T22:30:00.000Z",
+    "endTimeUTC": "2026-04-09T23:30:00.000Z",
+    "availableStaff": [
+      {
+        "id": "fc2100e5-edab-4ba6-bef2-cf27a95cc492",
+        "firstName": "Yulier",
+        "lastName": "Rondon",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.746Z",
+        "updatedAt": "2026-04-01T02:03:07.746Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      },
+      {
+        "id": "3a61c8e7-53d1-4c7b-867d-650f6cc6b600",
+        "firstName": "Lucia",
+        "lastName": "Ascencio",
+        "isActive": true,
+        "createdAt": "2026-04-01T02:03:07.750Z",
+        "updatedAt": "2026-04-01T02:03:07.750Z",
+        "deletedAt": null,
+        "services": [
+          {
+            "id": "6de92392-b1eb-45b6-9893-16283d99a341",
+            "name": "Social insurance number for non-resident",
+            "description": "Our service assists non-residents in obtaining a Social Insurance Number (SIN) in Canada. We guide you through the application process, ensuring all necessary documentation is correctly prepared and submitted, which is essential for working and accessing government programs and benefits in Canada.",
+            "address": "1219 St Clair Ave W suite 15, Toronto, ON, Canada",
+            "durationMinutes": 60,
+            "isAvailableOnline": true,
+            "imageUrl": "https://static.wixstatic.com/media/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg/v1/fill/w_266,h_172,fp_0.50_0.50,lg_1,q_80,enc_auto/aa0f39_bc524b4aad49445aaadc48d1a7d8ea33~mv2.jpg",
+            "isActive": true,
+            "createdAt": "2026-04-01T07:03:07.769Z",
+            "updatedAt": "2026-04-01T07:03:07.769Z",
+            "deletedAt": null
+          }
+        ],
+        "schedules": [
+          {
+            "id": "66a8acd9-dcbc-4612-80c1-d7ce6eccf52a",
+            "dayOfWeek": 4,
+            "startTime": "09:30",
+            "endTime": "19:30",
+            "createdAt": "2026-04-01T07:03:07.741Z",
+            "updatedAt": "2026-04-01T07:03:07.741Z"
+          }
+        ]
+      }
+    ]
+  }
+]

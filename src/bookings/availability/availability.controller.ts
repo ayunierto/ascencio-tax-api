@@ -1,19 +1,19 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Post, Body, UsePipes } from '@nestjs/common';
 import { AvailabilityService } from './availability.service';
-import { SearchAvailabilityDto } from './dto/search-availability.dto';
+import {
+  SearchAvailabilityRequest,
+  searchAvailabilitySchema,
+} from '@ascencio/shared';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation.pipe';
 
-@ApiTags('Bookings - Availability')
 @Controller('availability')
 export class AvailabilityController {
   constructor(private readonly availabilityService: AvailabilityService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Check availability for a service' })
-  @ApiResponse({ status: 200, description: 'Return available slots' })
-  @ApiResponse({ status: 400, description: 'Bad Request' })
+  @UsePipes(new ZodValidationPipe(searchAvailabilitySchema))
   async checkAvailability(
-    @Body() searchAvailabilityDto: SearchAvailabilityDto,
+    @Body() searchAvailabilityDto: SearchAvailabilityRequest,
   ) {
     return this.availabilityService.searchAvailability(searchAvailabilityDto);
   }

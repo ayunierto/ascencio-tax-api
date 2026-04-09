@@ -53,22 +53,14 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Use zod validation pipe later
-  // app.useGlobalPipes(
-  //   new ValidationPipe({
-  //     whitelist: true,
-  //     forbidNonWhitelisted: true,
-  //   }),
-  // );
-
   const config = new DocumentBuilder()
     .setTitle('Ascencio Tax API')
     .setDescription('Ascencio Tax API')
     .setVersion('1.0')
     .addTag('ascencio-tax')
     .build();
-  const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, documentFactory);
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api/docs', app, document);
 
   const port = process.env.PORT ?? 3001;
 
@@ -80,7 +72,7 @@ async function bootstrap() {
   });
 
   await app.listen(port);
-  logger.log(
+  logger.debug(
     `Server on port ${String(port)} - Environment: ${process.env.STAGE ?? 'dev'}`,
   );
 }

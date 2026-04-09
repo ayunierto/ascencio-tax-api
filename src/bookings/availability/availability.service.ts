@@ -3,13 +3,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Interval } from 'luxon';
 import { Appointment } from 'src/bookings/appointments/entities/appointment.entity';
 import { CalendarService } from 'src/calendar/calendar.service';
-import { Between, Repository } from 'typeorm';
-import { SearchAvailabilityDto } from './dto/search-availability.dto';
+import { Between, In, Repository } from 'typeorm';
 import { AvailableSlot } from './interfaces/available-slot';
 import { SystemSettingsService } from 'src/system-settings/system-settings.service';
 import { ServicesService } from '../services/services.service';
 import { StaffMember } from '../staff-members/entities/staff-member.entity';
 import { Schedule } from '../schedules/entities/schedule.entity';
+import {
+  SearchAvailabilityRequest,
+  ValidationMessages,
+} from '@ascencio/shared';
 
 @Injectable()
 export class AvailabilityService {
@@ -32,7 +35,7 @@ export class AvailabilityService {
    * @returns Promesa que resuelve a una lista de AvailableSlot.
    */
   async searchAvailability(
-    searchAvailabilityDto: SearchAvailabilityDto,
+    searchAvailabilityDto: SearchAvailabilityRequest,
   ): Promise<AvailableSlot[]> {
     const {
       serviceId,
@@ -47,15 +50,11 @@ export class AvailabilityService {
     const service = await this.servicesService.findOne(serviceId);
     const duration = service.durationMinutes;
     if (!duration || duration <= 0) {
-      throw new BadRequestException(
-        'Service durationMinutes must be configured',
-      );
+      throw new BadRequestException(ValidationMessages.REQUIRED);
     }
 
     if (service.staffMembers.length === 0) {
-      throw new BadRequestException(
-        'El servicio no tiene staff asignado. Asigne al menos un miembro.',
-      );
+      throw new BadRequestException(ValidationMessages.REQUIRED);
     }
 
     // 1.2 Obtener ajustes del negocio (para zona horaria) con valor por defecto
@@ -69,11 +68,24 @@ export class AvailabilityService {
       defaultBusinessTz,
     );
 
+    const defaultSlotStep = process.env.SLOT_STEP_MINUTES_DEFAULT ?? '15';
+    const configuredSlotStep = parseInt(
+      await this.settingsService.findOneOrDefault(
+        'slot_step_minutes',
+        defaultSlotStep,
+      ),
+      10,
+    );
+    // Avoid overlapping slots by default: step cannot be shorter than service duration.
+    const slotStep = Number.isFinite(configuredSlotStep)
+      ? Math.max(configuredSlotStep, duration)
+      : duration;
+
     const targetDate = DateTime.fromISO(date, {
       zone: userTimeZone,
     });
     if (!targetDate.isValid) {
-      throw new Error('Formato de fecha inválido.');
+      throw new BadRequestException(ValidationMessages.DATE);
     }
 
     const now = DateTime.now().setZone(businessTimeZone);
@@ -120,11 +132,12 @@ export class AvailabilityService {
       // c) Citas Confirmadas para el día
       const dateStart = businessDate.startOf('day').toJSDate();
       const dateEnd = businessDate.endOf('day').toJSDate();
+      // Bug fix: incluir citas 'pending' para evitar race condition de doble reserva
       const appointments: Appointment[] =
         await this.appointmentsRepository.find({
           where: {
             staffMember: { id: staffMember.id },
-            status: 'confirmed',
+            status: In(['pending', 'confirmed']),
             start: Between(dateStart, dateEnd),
           },
         });
@@ -144,6 +157,8 @@ export class AvailabilityService {
         businessTimeZone,
       );
 
+      // Bug fix: si la comprobación de calendario falla, tratar como completamente ocupado
+      // para no mostrar slots que podrían solapar eventos reales.
       try {
         const calendarEvents = await this.calendarService.checkEventsInRange(
           dateStart.toISOString(),
@@ -157,7 +172,10 @@ export class AvailabilityService {
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        this.logger.warn(`Calendar lookup failed: ${message}`);
+        this.logger.warn(
+          `Calendar lookup failed for staff ${staffMember.id}: ${message}. Skipping staff to avoid false availability.`,
+        );
+        continue;
       }
 
       // Filtrar intervalos que ya han pasado
@@ -169,9 +187,10 @@ export class AvailabilityService {
       this.generateAndConsolidateSlots(
         availableIntervals,
         duration,
+        slotStep,
         staffMember,
         consolidatedSlots,
-        now, // Pasar now para filtrar slots individuales
+        now,
       );
     }
 
@@ -182,9 +201,7 @@ export class AvailabilityService {
         .toISO();
 
       if (!slotEnd) {
-        throw new BadRequestException(
-          'No fue posible calcular el final del intervalo solicitado.',
-        );
+        throw new BadRequestException(ValidationMessages.INVALID_FORMAT);
       }
 
       return {
@@ -193,32 +210,6 @@ export class AvailabilityService {
         availableStaff,
       };
     }).sort((a, b) => a.startTimeUTC.localeCompare(b.startTimeUTC));
-  }
-
-  private async checkForAppointments(
-    staffId: string,
-    startDate: Date,
-    endDate: Date,
-  ) {
-    const appointments =
-      (await this.appointmentsRepository.count({
-        where: {
-          staffMember: { id: staffId },
-          start: Between(startDate, endDate),
-        },
-      })) > 0;
-
-    return appointments; // True if there's at least one appointment
-  }
-
-  private async checkForEvents(startTime: Date, endTime: Date) {
-    const events = await this.calendarService.checkEventsInRange(
-      startTime.toUTCString(),
-      endTime.toUTCString(),
-      'UTC',
-    );
-
-    return events.length > 0; // True if there's at least one event
   }
 
   /**
@@ -317,13 +308,18 @@ export class AvailabilityService {
 
   /**
    * Itera sobre los intervalos libres y genera slots del tamaño del servicio, consolidándolos.
-   * @param staff El StaffMember que está disponible en este intervalo.
-   * @param consolidatedSlots El mapa global de slots disponibles.
-   * @param now La hora actual para filtrar slots que ya pasaron.
+   * El paso de avance (slotStep) es independiente de la duración del servicio para permitir
+   * inicios escalonados (ej. servicio de 60 min con step 15 → slots a 09:00, 09:15, 09:30...).
+   * @param duration Duración del servicio en minutos.
+   * @param slotStep Paso de avance entre slots en minutos (configurable vía system_settings).
+   * @param staff El StaffMember disponible en este intervalo.
+   * @param consolidatedSlots Mapa global de slots disponibles keyed por start UTC.
+   * @param now La hora actual para filtrar slots pasados.
    */
   private generateAndConsolidateSlots(
     intervals: Interval[],
     duration: number,
+    slotStep: number,
     staff: StaffMember,
     consolidatedSlots: Map<string, StaffMember[]>,
     now: DateTime,
@@ -333,14 +329,14 @@ export class AvailabilityService {
 
       let currentStart = interval.start;
 
+      // La condición verifica que el servicio completo cabe dentro del intervalo.
+      // El avance usa slotStep para ofrecer más granularidad de horarios.
       while (currentStart.plus({ minutes: duration }) <= interval.end) {
-        // Filtrar slots que ya han pasado (comparar inicio del slot con el momento actual)
         if (currentStart <= now) {
-          currentStart = currentStart.plus({ minutes: duration });
+          currentStart = currentStart.plus({ minutes: slotStep });
           continue;
         }
 
-        // 1. Convertir la hora de inicio (que está en BUSINESS_TIMEZONE) a UTC.
         const startTimeUTC = currentStart.toUTC().toISO();
         if (!startTimeUTC) {
           this.logger.warn(
@@ -349,17 +345,17 @@ export class AvailabilityService {
           break;
         }
 
-        // 2. Usar el ISO string UTC como clave para el mapa.
         const existingStaff = consolidatedSlots.get(startTimeUTC);
         if (existingStaff !== undefined) {
-          existingStaff.push(staff);
+          // Bug fix: evitar duplicar el mismo staff si tiene schedules solapados
+          if (!existingStaff.some((s) => s.id === staff.id)) {
+            existingStaff.push(staff);
+          }
         } else {
-          // Si es un slot nuevo, crear la entrada con el staff inicial
           consolidatedSlots.set(startTimeUTC, [staff]);
         }
 
-        // 3. Avanzar al siguiente slot
-        currentStart = currentStart.plus({ minutes: duration });
+        currentStart = currentStart.plus({ minutes: slotStep });
       }
     });
   }

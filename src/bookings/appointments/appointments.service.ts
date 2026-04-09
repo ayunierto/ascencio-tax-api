@@ -7,8 +7,6 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { CreateAppointmentDto } from './dto/create-appointment.dto';
-import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { User } from '../../auth/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThan, MoreThan, Not, Repository } from 'typeorm';
@@ -29,9 +27,15 @@ import {
 } from './utils/appointment.utils';
 import { AppointmentHelper } from './helpers/appointment.helper';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
-import { CancelAppointmentDto } from './dto/cancel-appointment.dto';
 import { ServicesService } from '../services/services.service';
 import { StaffMembersService } from '../staff-members/staff-members.service';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import {
+  BookingsMessages,
+  CancelAppointmentRequest,
+  CreateAppointmentRequest,
+  UpdateAppointmentRequest,
+} from '@ascencio/shared';
 
 @Injectable()
 export class AppointmentsService {
@@ -58,10 +62,19 @@ export class AppointmentsService {
     );
   }
 
-  async create(createAppointmentDto: CreateAppointmentDto, user: User) {
+  async create(
+    createAppointmentDto: CreateAppointmentRequest,
+    user: User,
+  ): Promise<Appointment> {
     try {
-      const { staffId, serviceId, start, end, timeZone, ...rest } =
-        createAppointmentDto;
+      const {
+        staffId,
+        serviceId,
+        startTimeUTC,
+        endTimeUTC,
+        timeZone,
+        ...rest
+      } = createAppointmentDto;
 
       // Obtener timezone de negocio con fallback profesional
       const defaultBusinessTz =
@@ -79,8 +92,12 @@ export class AppointmentsService {
         await this.appointmentHelper.getServiceAndStaff(serviceId, staffId);
 
       // 2. Set appointment start and end date and time
-      const startDateAndTime = DateTime.fromISO(start, { zone: 'utc' });
-      const endDateAndTime = DateTime.fromISO(end, { zone: 'utc' });
+      const startDateAndTime = DateTime.fromISO(startTimeUTC, {
+        zone: 'utc',
+      });
+      const endDateAndTime = DateTime.fromISO(endTimeUTC, {
+        zone: 'utc',
+      });
 
       // Validar fechas
       validateDatesForUpdate(startDateAndTime, endDateAndTime, null, null);
@@ -263,6 +280,20 @@ export class AppointmentsService {
     }
   }
 
+  @Cron(CronExpression.EVERY_HOUR)
+  async markPastAppointmentsCompleted(): Promise<void> {
+    const now = new Date();
+    const result = await this.appointmentsRepository.update(
+      { status: In(['pending', 'confirmed']), end: LessThan(now) },
+      { status: 'completed' },
+    );
+    if (result.affected && result.affected > 0) {
+      this.logger.log(
+        `Marked ${String(result.affected)} past appointment(s) as completed`,
+      );
+    }
+  }
+
   async findAll(paginationDto: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto;
 
@@ -301,7 +332,7 @@ export class AppointmentsService {
 
   async update(
     id: string,
-    updateAppointmentDto: UpdateAppointmentDto,
+    updateAppointmentDto: UpdateAppointmentRequest,
     user: User,
   ) {
     try {
@@ -315,8 +346,15 @@ export class AppointmentsService {
         throw new BadRequestException('Appointment not found');
       }
 
-      const { staffId, serviceId, start, end, timeZone, ...rest } =
-        updateAppointmentDto;
+      const {
+        staffId,
+        serviceId,
+        startTimeUTC,
+        endTimeUTC,
+        timeZone,
+        ...rest
+      } = updateAppointmentDto;
+
       const appointmentTimeZone = validateTimeZone(
         timeZone ?? appointment.timeZone,
       );
@@ -338,13 +376,17 @@ export class AppointmentsService {
         );
 
       // 3. Si se actualizan las fechas, validar disponibilidad
-      if (start && end) {
+      if (startTimeUTC && endTimeUTC) {
         this.logger.log(
-          `Received start: ${start}, end: ${end}, timeZone: ${timeZone ?? appointment.timeZone}`,
+          `Received start: ${startTimeUTC}, end: ${endTimeUTC}, timeZone: ${timeZone ?? appointment.timeZone}`,
         );
 
-        const startDateAndTime = DateTime.fromISO(start, { zone: 'utc' });
-        const endDateAndTime = DateTime.fromISO(end, { zone: 'utc' });
+        const startDateAndTime = DateTime.fromISO(startTimeUTC, {
+          zone: 'utc',
+        });
+        const endDateAndTime = DateTime.fromISO(endTimeUTC, {
+          zone: 'utc',
+        });
         const businessStartDateAndTime =
           startDateAndTime.setZone(businessTimeZone);
 
@@ -705,7 +747,7 @@ export class AppointmentsService {
   async cancelAppointment(
     appointmentId: string,
     userId: string,
-    cancelDto: CancelAppointmentDto,
+    cancelDto: CancelAppointmentRequest,
   ): Promise<Appointment> {
     // 1. Buscar la cita
     const appointment = await this.appointmentsRepository.findOne({
@@ -883,9 +925,72 @@ export class AppointmentsService {
     );
 
     if (conflicts.length > 0) {
-      throw new ConflictException(
-        'The selected time slot has conflicts in the staff calendar.',
-      );
+      throw new ConflictException(BookingsMessages.SLOT_OVERLAP);
     }
+  }
+
+  async buildAddToCalendarData(appointmentId: string): Promise<{
+    ics: string;
+    googleCalendarUrl: string;
+    title: string;
+    start: string;
+    end: string;
+  }> {
+    const appointment = await this.appointmentsRepository.findOne({
+      where: { id: appointmentId },
+      relations: { staffMember: true, service: true, user: true },
+    });
+    if (!appointment) {
+      throw new NotFoundException(`Appointment ${appointmentId} not found`);
+    }
+
+    const start = DateTime.fromJSDate(appointment.start, { zone: 'UTC' });
+    const end = DateTime.fromJSDate(appointment.end, { zone: 'UTC' });
+
+    const formatIcsDate = (dt: DateTime) => dt.toFormat("yyyyMMdd'T'HHmmss'Z'");
+
+    const title = `${appointment.service.name} — Ascencio Tax`;
+    const description =
+      appointment.service.description.length > 0
+        ? appointment.service.description
+        : `Appointment with ${appointment.staffMember.firstName} ${appointment.staffMember.lastName}`;
+    const location = appointment.zoomMeetingId
+      ? `Virtual — Zoom meeting ID: ${appointment.zoomMeetingId}`
+      : 'Ascencio Tax Inc.';
+
+    const ics = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Ascencio Tax Inc//Appointment//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      `UID:appointment-${appointmentId}@ascenciotax.com`,
+      `DTSTAMP:${formatIcsDate(DateTime.utc())}`,
+      `DTSTART:${formatIcsDate(start)}`,
+      `DTEND:${formatIcsDate(end)}`,
+      `SUMMARY:${title}`,
+      `DESCRIPTION:${description.replace(/\n/g, '\\n')}`,
+      `LOCATION:${location}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+    ].join('\r\n');
+
+    const params = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: title,
+      dates: `${formatIcsDate(start)}/${formatIcsDate(end)}`,
+      details: description,
+      location,
+    });
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?${params.toString()}`;
+
+    return {
+      ics,
+      googleCalendarUrl,
+      title,
+      start: start.toISO() ?? '',
+      end: end.toISO() ?? '',
+    };
   }
 }

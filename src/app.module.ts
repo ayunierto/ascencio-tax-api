@@ -36,9 +36,11 @@ import { AccountsReceivableModule } from './accounting/accounts-receivable/accou
 import { PaymentsModule } from './accounting/payments/payments.module';
 import { GeolocationModule } from './geolocation/geolocation.module';
 import { MobileConfigModule } from './mobile-config/mobile-config.module';
+import { ScheduleModule as NestScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
+    NestScheduleModule.forRoot(),
     ConfigModule.forRoot({
       isGlobal: true,
     }),

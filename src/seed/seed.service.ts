@@ -49,6 +49,12 @@ export class SeedService {
       });
 
       await this.settingsService.create({
+        key: 'slot_step_minutes',
+        value: '15',
+        type: 'number',
+      });
+
+      await this.settingsService.create({
         key: 'executedSeed',
         value: 'true',
         type: 'boolean',
