@@ -62,7 +62,10 @@ export class CalendarController {
       return process.env.GOOGLE_CALENDAR_CALLBACK_URL;
     }
 
-    const forwardedProto = req.header('x-forwarded-proto')?.split(',')[0]?.trim();
+    const forwardedProto = req
+      .header('x-forwarded-proto')
+      ?.split(',')[0]
+      ?.trim();
     const forwardedHost = req.header('x-forwarded-host')?.split(',')[0]?.trim();
     const protocol = forwardedProto ?? req.protocol ?? 'http';
     const host = forwardedHost ?? req.get('host');
@@ -147,11 +150,14 @@ export class CalendarController {
   ) {
     const { redirectUrl } = query;
     const callbackUrl = this.resolveOAuthCallbackUrl(req);
-    const url = this.oauthService.generateAuthUrl({
-      actorType: 'company',
-      actorId: 'company',
-      redirectUrl,
-    }, callbackUrl);
+    const url = this.oauthService.generateAuthUrl(
+      {
+        actorType: 'company',
+        actorId: 'company',
+        redirectUrl,
+      },
+      callbackUrl,
+    );
     return { url };
   }
 
@@ -172,11 +178,14 @@ export class CalendarController {
     const { staffMemberId, redirectUrl } = query;
     const actorId = staffMemberId;
     const callbackUrl = this.resolveOAuthCallbackUrl(req);
-    const url = this.oauthService.generateAuthUrl({
-      actorType: 'staff',
-      actorId,
-      redirectUrl,
-    }, callbackUrl);
+    const url = this.oauthService.generateAuthUrl(
+      {
+        actorType: 'staff',
+        actorId,
+        redirectUrl,
+      },
+      callbackUrl,
+    );
     return { url };
   }
 
@@ -195,11 +204,14 @@ export class CalendarController {
   ) {
     const { redirectUrl } = query;
     const callbackUrl = this.resolveOAuthCallbackUrl(req);
-    const url = this.oauthService.generateAuthUrl({
-      actorType: 'client',
-      actorId: user.id,
-      redirectUrl,
-    }, callbackUrl);
+    const url = this.oauthService.generateAuthUrl(
+      {
+        actorType: 'client',
+        actorId: user.id,
+        redirectUrl,
+      },
+      callbackUrl,
+    );
     return { url };
   }
 

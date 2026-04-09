@@ -88,7 +88,10 @@ export class CalendarOauthService {
     });
   }
 
-  async exchangeCodeForTokens(code: string, callbackUrl?: string): Promise<{
+  async exchangeCodeForTokens(
+    code: string,
+    callbackUrl?: string,
+  ): Promise<{
     accessToken: string;
     refreshToken?: string;
     expiry: Date;
