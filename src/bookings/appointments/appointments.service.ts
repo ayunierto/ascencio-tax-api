@@ -7,6 +7,7 @@ import {
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import { calendar_v3 } from 'googleapis';
 import { User } from '../../auth/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThan, MoreThan, Not, Repository } from 'typeorm';
@@ -17,6 +18,7 @@ import { ZoomService } from 'src/zoom/zoom.service';
 import { DateTime, Interval } from 'luxon';
 import { NotificationService } from 'src/notification/notification.service';
 import { SystemSettingsService } from 'src/system-settings/system-settings.service';
+import { CalendarConnectionService } from 'src/calendar/calendar-connection.service';
 import {
   formatAppointmentDescription,
   isWithinWorkingHours,
@@ -33,6 +35,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import {
   BookingsMessages,
   CancelAppointmentRequest,
+  CommonMessages,
   CreateAppointmentRequest,
   UpdateAppointmentRequest,
 } from '@ascencio/shared';
@@ -50,6 +53,7 @@ export class AppointmentsService {
     private readonly scheduleRepository: Repository<Schedule>,
     private readonly zoomService: ZoomService,
     private readonly calendarService: CalendarService,
+    private readonly calendarConnectionService: CalendarConnectionService,
     private readonly notificationService: NotificationService,
     private readonly servicesService: ServicesService,
     private readonly staffService: StaffMembersService,
@@ -160,6 +164,12 @@ export class AppointmentsService {
         );
       }
 
+      await this.assertNoUserAppointmentConflicts(
+        user.id,
+        startDateAndTime,
+        endDateAndTime,
+      );
+
       // 6. Crear reunión de Zoom
       const meeting = this.normalizeZoomMeeting(
         await this.zoomService.createZoomMeeting(
@@ -200,6 +210,8 @@ export class AppointmentsService {
       const eventId = await this.calendarService.createEvent(
         calendarEventBody,
         {
+          actorType: 'company',
+          actorId: 'company',
           staffMemberId: staff.id,
           serviceId: service.id,
           sourceType: 'appointment',
@@ -264,9 +276,12 @@ export class AppointmentsService {
 
       if (typeof eventId === 'string' && eventId !== 'N/A') {
         await this.calendarService.updateEvent(eventId, calendarEventBody, {
+          actorType: 'company',
+          actorId: 'company',
           sourceId: newAppointment.id,
           staffMemberId: staff.id,
           serviceId: service.id,
+          sync: false,
         });
       }
 
@@ -464,6 +479,13 @@ export class AppointmentsService {
           );
         }
 
+        await this.assertNoUserAppointmentConflicts(
+          appointment.user.id,
+          startDateAndTime,
+          endDateAndTime,
+          id,
+        );
+
         // 4. Actualizar servicios externos (Zoom y Calendar)
         await this.appointmentHelper.updateExternalServices(
           this.zoomService,
@@ -525,6 +547,8 @@ export class AppointmentsService {
           const newEventId = await this.calendarService.createEvent(
             fallbackEventBody,
             {
+              actorType: 'company',
+              actorId: 'company',
               staffMemberId: staff.id,
               serviceId: service.id,
               sourceType: 'appointment',
@@ -639,6 +663,8 @@ export class AppointmentsService {
           const newEventId = await this.calendarService.createEvent(
             fallbackEventBody,
             {
+              actorType: 'company',
+              actorId: 'company',
               staffMemberId: staff.id,
               serviceId: service.id,
               sourceType: 'appointment',
@@ -929,6 +955,32 @@ export class AppointmentsService {
     }
   }
 
+  private async assertNoUserAppointmentConflicts(
+    userId: string,
+    start: DateTime,
+    end: DateTime,
+    excludeAppointmentId?: string,
+  ): Promise<void> {
+    const whereClause = {
+      user: { id: userId },
+      status: In(['pending', 'confirmed']),
+      start: LessThan(end.toJSDate()),
+      end: MoreThan(start.toJSDate()),
+      ...(excludeAppointmentId ? { id: Not(excludeAppointmentId) } : {}),
+    };
+
+    const userOverlappingAppointment =
+      await this.appointmentsRepository.findOne({
+        where: whereClause,
+      });
+
+    if (userOverlappingAppointment) {
+      throw new ConflictException(
+        'You already have another appointment during this time slot.',
+      );
+    }
+  }
+
   async buildAddToCalendarData(appointmentId: string): Promise<{
     ics: string;
     googleCalendarUrl: string;
@@ -936,27 +988,12 @@ export class AppointmentsService {
     start: string;
     end: string;
   }> {
-    const appointment = await this.appointmentsRepository.findOne({
-      where: { id: appointmentId },
-      relations: { staffMember: true, service: true, user: true },
-    });
-    if (!appointment) {
-      throw new NotFoundException(`Appointment ${appointmentId} not found`);
-    }
+    const appointment = await this.findAppointmentWithRelations(appointmentId);
+    const { title, description, location, start, end } =
+      this.buildCalendarEventPresentation(appointment);
 
-    const start = DateTime.fromJSDate(appointment.start, { zone: 'UTC' });
-    const end = DateTime.fromJSDate(appointment.end, { zone: 'UTC' });
-
-    const formatIcsDate = (dt: DateTime) => dt.toFormat("yyyyMMdd'T'HHmmss'Z'");
-
-    const title = `${appointment.service.name} — Ascencio Tax`;
-    const description =
-      appointment.service.description.length > 0
-        ? appointment.service.description
-        : `Appointment with ${appointment.staffMember.firstName} ${appointment.staffMember.lastName}`;
-    const location = appointment.zoomMeetingId
-      ? `Virtual — Zoom meeting ID: ${appointment.zoomMeetingId}`
-      : 'Ascencio Tax Inc.';
+    const formatIcsDate = (dt: DateTime) =>
+      dt.toUTC().toFormat("yyyyMMdd'T'HHmmss'Z'");
 
     const ics = [
       'BEGIN:VCALENDAR',
@@ -991,6 +1028,116 @@ export class AppointmentsService {
       title,
       start: start.toISO() ?? '',
       end: end.toISO() ?? '',
+    };
+  }
+
+  async addAppointmentToClientCalendar(
+    appointmentId: string,
+    userId: string,
+  ): Promise<{ added: true; externalEventId: string }> {
+    const appointment = await this.findAppointmentWithRelations(appointmentId);
+
+    if (appointment.user.id !== userId) {
+      throw new ForbiddenException(CommonMessages.ACCESS_DENIED);
+    }
+
+    const connection = await this.calendarConnectionService.getConnection(
+      'client',
+      userId,
+    );
+
+    if (!connection?.isActive || !connection.calendarId) {
+      throw new BadRequestException('Client calendar is not connected');
+    }
+
+    const adapter = await this.calendarConnectionService.getAdapter(
+      'client',
+      userId,
+    );
+    const eventBody = this.buildClientCalendarEventBody(appointment);
+    const externalEventId = await adapter.createEvent(
+      eventBody,
+      connection.calendarId,
+    );
+
+    if (!externalEventId) {
+      throw new InternalServerErrorException(
+        'Failed to create event in client calendar',
+      );
+    }
+
+    return {
+      added: true,
+      externalEventId,
+    };
+  }
+
+  private async findAppointmentWithRelations(
+    appointmentId: string,
+  ): Promise<Appointment> {
+    const appointment = await this.appointmentsRepository.findOne({
+      where: { id: appointmentId },
+      relations: { staffMember: true, service: true, user: true },
+    });
+
+    if (!appointment) {
+      throw new NotFoundException(`Appointment ${appointmentId} not found`);
+    }
+
+    return appointment;
+  }
+
+  private buildCalendarEventPresentation(appointment: Appointment): {
+    title: string;
+    description: string;
+    location: string;
+    start: DateTime;
+    end: DateTime;
+  } {
+    const start = DateTime.fromJSDate(appointment.start, {
+      zone: appointment.timeZone,
+    });
+    const end = DateTime.fromJSDate(appointment.end, {
+      zone: appointment.timeZone,
+    });
+
+    const title = `${appointment.service.name} — Ascencio Tax`;
+    const description =
+      appointment.service.description.length > 0
+        ? appointment.service.description
+        : `Appointment with ${appointment.staffMember.firstName} ${appointment.staffMember.lastName}`;
+    const location = appointment.zoomMeetingId
+      ? `Virtual — Zoom meeting ID: ${appointment.zoomMeetingId}`
+      : 'Ascencio Tax Inc.';
+
+    return { title, description, location, start, end };
+  }
+
+  private buildClientCalendarEventBody(
+    appointment: Appointment,
+  ): calendar_v3.Schema$Event {
+    const { title, description, location, start, end } =
+      this.buildCalendarEventPresentation(appointment);
+
+    return {
+      summary: title,
+      description,
+      location,
+      start: {
+        dateTime: start.toISO() ?? undefined,
+        timeZone: appointment.timeZone,
+      },
+      end: {
+        dateTime: end.toISO() ?? undefined,
+        timeZone: appointment.timeZone,
+      },
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'email', minutes: 24 * 60 },
+          { method: 'popup', minutes: 10 },
+        ],
+      },
     };
   }
 }

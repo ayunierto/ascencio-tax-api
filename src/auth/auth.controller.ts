@@ -202,6 +202,38 @@ export class AuthController {
     return this.authService.signInWithGoogleIdToken(body.idToken);
   }
 
+  // Verify Apple Identity Token for mobile native sign-in
+  @Post('apple/verify')
+  @UsePipes(
+    new ZodValidationPipe(
+      z.object({
+        identityToken: z.string(),
+        fullName: z
+          .object({
+            givenName: z.string().nullable().optional(),
+            familyName: z.string().nullable().optional(),
+          })
+          .nullable()
+          .optional(),
+      }),
+    ),
+  )
+  async appleVerifyToken(
+    @Body()
+    body: {
+      identityToken: string;
+      fullName?: {
+        givenName?: string | null;
+        familyName?: string | null;
+      } | null;
+    },
+  ): Promise<SignInResponse> {
+    return this.authService.signInWithAppleIdToken(
+      body.identityToken,
+      body.fullName,
+    );
+  }
+
   @Get('google/callback')
   @UseGuards(PassportAuthGuard('google'))
   async googleCallback(@Req() req: Request, @Res() res: Response) {

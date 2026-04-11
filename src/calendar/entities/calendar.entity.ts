@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   Index,
 } from 'typeorm';
+import { CalendarActorType } from './calendar-connection.entity';
 
 export type CalendarSourceType = 'appointment' | 'manual' | 'imported' | 'api';
 export type CalendarStatus = 'confirmed' | 'cancelled';
@@ -51,6 +52,12 @@ export class CalendarEvent {
 
   @Column({ nullable: true })
   externalCalendarId?: string;
+
+  @Column({ nullable: true })
+  externalActorType?: CalendarActorType;
+
+  @Column({ nullable: true })
+  externalActorId?: string;
 
   @Column({ default: true })
   isBusy: boolean;

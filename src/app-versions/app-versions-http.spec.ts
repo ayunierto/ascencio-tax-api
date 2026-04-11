@@ -156,7 +156,7 @@ describe('AppVersions HTTP flow', () => {
 
   it('creates, fetches and updates an app version rule', async () => {
     const createResponse = await request(app.getHttpServer())
-      .post('/api/v1/app/version')
+      .post('/app/version')
       .set('Authorization', 'Bearer test-token')
       .send({
         platform: 'ios',
@@ -171,14 +171,14 @@ describe('AppVersions HTTP flow', () => {
     expect(createResponse.body.forceUpdate).toBe(true);
 
     const publicResponse = await request(app.getHttpServer())
-      .get('/api/v1/app/version?platform=ios')
+      .get('/app/version?platform=ios')
       .expect(200);
 
     expect(publicResponse.body.latestVersion).toBe('1.2.0');
     expect(publicResponse.body.forceUpdate).toBe(true);
 
     const adminListResponse = await request(app.getHttpServer())
-      .get('/api/v1/app/version/admin/all')
+      .get('/app/version/admin/all')
       .set('Authorization', 'Bearer test-token')
       .expect(200);
 
@@ -187,7 +187,7 @@ describe('AppVersions HTTP flow', () => {
     const createdId = createResponse.body.id as number;
 
     await request(app.getHttpServer())
-      .put(`/api/v1/app/version/${String(createdId)}`)
+      .put(`/app/version/${String(createdId)}`)
       .set('Authorization', 'Bearer test-token')
       .send({
         latestVersion: '1.3.0',
@@ -196,7 +196,7 @@ describe('AppVersions HTTP flow', () => {
       .expect(200);
 
     const adminDetailResponse = await request(app.getHttpServer())
-      .get(`/api/v1/app/version/admin/${String(createdId)}`)
+      .get(`/app/version/admin/${String(createdId)}`)
       .set('Authorization', 'Bearer test-token')
       .expect(200);
 
@@ -206,7 +206,7 @@ describe('AppVersions HTTP flow', () => {
 
   it('rejects invalid version ranges where minSupportedVersion is greater than latestVersion', async () => {
     const response = await request(app.getHttpServer())
-      .post('/api/v1/app/version')
+      .post('/app/version')
       .set('Authorization', 'Bearer test-token')
       .send({
         platform: 'android',

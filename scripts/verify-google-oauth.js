@@ -112,7 +112,7 @@ console.log('4. Clic en "Create Credentials" → "OAuth client ID"');
 console.log('5. Tipo de aplicación: "Web application"');
 console.log('6. Authorized redirect URIs:');
 console.log(
-  `   - ${envVars.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/v1/auth/google/callback'}`,
+  `   - ${envVars.GOOGLE_CALLBACK_URL || 'http://localhost:3000/auth/google/callback'}`,
 );
 console.log('7. Guarda el Client ID y Client Secret en tu .env');
 console.log('─'.repeat(60));

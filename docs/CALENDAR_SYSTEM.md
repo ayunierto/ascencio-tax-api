@@ -1,6 +1,6 @@
 # Sistema de Citas y Calendario — Documentación Técnica
 
-> Base URL: `https://api.ascenciotax.com/api/v1` (prod) | `http://localhost:3000/api/v1` (dev)
+> Base URL: `https://api.ascenciotax.com` (prod) | `http://localhost:3000` (dev)
 > Autenticación: `Authorization: Bearer <JWT>` en todos los endpoints marcados con 🔐
 
 ---
@@ -84,7 +84,7 @@ Google Calendar ──webhook PUSH──▶ POST /calendar/webhook/company
 ### 1. Buscar disponibilidad
 
 ```
-POST /api/v1/availability
+POST /availability
 Body: { serviceId, date, timeZone, staffId? }
 
 Response: AvailableSlot[]
@@ -111,7 +111,7 @@ disponibles. NO hacer validación adicional en el cliente.
 ### 2. Crear cita
 
 ```
-POST /api/v1/appointments   🔐 (cualquier rol)
+POST /appointments   🔐 (cualquier rol)
 Body: {
   serviceId, staffId, startTimeUTC, endTimeUTC,
   timeZone,   ← IANA, ej. "America/Toronto"
@@ -337,7 +337,7 @@ const connections = await api.get('/calendar/company/connections');
 
 // 2. Conectar (redirige al flujo OAuth de Google)
 // El admin es redirigido a la URL OAuth; al volver se guarda automáticamente
-window.location.href = '/api/v1/calendar/company/connect';
+window.location.href = '/calendar/company/connect';
 // — O en SPA —
 const { connectUrl } = await api.get('/calendar/company/connect');
 router.push(`/oauth-redirect?url=${encodeURIComponent(connectUrl)}`);
@@ -530,16 +530,12 @@ useQuery({
 
 ## Variables de Entorno
 
-### Existentes (mantener)
+### Existentes (requeridas)
 
 ```env
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
-
-# Temporalmente como fallback hasta que la empresa conecte via OAuth:
-GOOGLE_SERVICE_ACCOUNT_EMAIL=...   # deprecated (fallback)
-GOOGLE_PRIVATE_KEY=...             # deprecated (fallback)
-GOOGLE_CALENDAR_ID=...             # deprecated (fallback)
+GOOGLE_CALENDAR_CALLBACK_URL=https://api.ascenciotax.com/calendar/oauth/callback
 ```
 
 ### Nuevas Requeridas
@@ -552,10 +548,8 @@ ENCRYPTION_KEY=       # 32 bytes en hex, ej: openssl rand -hex 32
 WEBHOOK_BASE_URL=     # https://api.ascenciotax.com (prod)
                       # https://abc123.ngrok.io   (dev con ngrok)
 
-# Callbacks OAuth por actor (deben registrarse en Google Cloud Console)
-GOOGLE_COMPANY_CALENDAR_CALLBACK_URL=https://api.ascenciotax.com/api/v1/calendar/company/callback
-GOOGLE_STAFF_CALENDAR_CALLBACK_URL=https://api.ascenciotax.com/api/v1/calendar/staff/callback
-GOOGLE_CLIENT_CALENDAR_CALLBACK_URL=https://api.ascenciotax.com/api/v1/calendar/client/callback
+# URL pública de la API (usada internamente para construir callbacks y enlaces)
+API_URL=              # https://api.ascenciotax.com
 
 # Tiempo de paso de slots (minutos). También editable desde admin > configuración.
 SLOT_STEP_MINUTES_DEFAULT=15
@@ -574,7 +568,7 @@ WEBHOOK_BASE_URL=https://abc123.ngrok.io
 
 1. Ir a [console.cloud.google.com](https://console.cloud.google.com)
 2. APIs & Services → Credentials → OAuth 2.0 Client IDs
-3. Agregar a "Authorized redirect URIs" los tres `*_CALLBACK_URL` de arriba
+3. Agregar a "Authorized redirect URIs" el `GOOGLE_CALENDAR_CALLBACK_URL`
 4. Scopes necesarios para el proyecto:
    - `https://www.googleapis.com/auth/calendar` (empresa — lectura/escritura)
    - `https://www.googleapis.com/auth/calendar.readonly` (staff y cliente)
@@ -628,5 +622,5 @@ WEBHOOK_BASE_URL=https://abc123.ngrok.io
 
 ### Fase 7 — Limpieza
 
-- Eliminar service account como código principal (mantener como fallback)
+- Eliminar service account del backend de calendario
 - Eliminar console.logs y código muerto

@@ -14,6 +14,7 @@ import { DateTime } from 'luxon';
 import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
+import appleSignIn from 'apple-signin-auth';
 import type { GoogleUserProfile } from './strategies/google.strategy';
 
 import { AuthMessages, CommonMessages } from '@ascencio/shared/i18n';
@@ -228,6 +229,82 @@ export class AuthService {
     hashedPassword: string,
   ): Promise<boolean> {
     return bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  async signInWithAppleIdToken(
+    identityToken: string,
+    fullName?: { givenName?: string | null; familyName?: string | null } | null,
+  ): Promise<SignInResponse> {
+    try {
+      const appleClientId = process.env.APPLE_CLIENT_ID?.trim();
+
+      if (!appleClientId) {
+        console.error('APPLE_CLIENT_ID is not configured in environment.');
+        throw new InternalServerErrorException(
+          CommonMessages.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const appleUser = await appleSignIn.verifyIdToken(identityToken, {
+        audience: appleClientId,
+        ignoreExpiration: false,
+      });
+
+      const email = appleUser.email;
+
+      if (!email) {
+        throw new BadRequestException(
+          'Apple ID token is missing the email field.',
+        );
+      }
+
+      let user = await this.usersRepository.findOneBy({ email });
+
+      if (user && !user.isActive) {
+        throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
+      }
+
+      if (!user || user.deletedAt !== null) {
+        const passwordHash = await this.hashPassword(randomUUID());
+        user = this.usersRepository.create({
+          firstName: fullName?.givenName ?? 'User',
+          lastName: fullName?.familyName ?? '',
+          email,
+          password: passwordHash,
+          timeZone: 'UTC',
+          locale: 'en-CA',
+          isActive: true,
+          isEmailVerified: true,
+          lastLoginAt: DateTime.utc().toJSDate(),
+          imageUrl: null,
+          deletedAt: null,
+        });
+        user = await this.usersRepository.save(user);
+      }
+
+      if (!user.isEmailVerified) {
+        user.isEmailVerified = true;
+        user.verificationCode = null;
+        user.verificationCodeExpiresAt = null;
+        user = await this.usersRepository.save(user);
+      }
+
+      await this.updateLastLogin(user.id);
+
+      return {
+        access_token: await this.generateJWT(user),
+        user: UserMapper.toBasicUser(user),
+      };
+    } catch (error) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+      console.error('Error verifying Apple identity token:', error);
+      throw new UnauthorizedException('Invalid Apple identity token');
+    }
   }
 
   async hashPassword(password: string): Promise<string> {

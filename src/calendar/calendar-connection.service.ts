@@ -5,7 +5,10 @@ import {
   CalendarConnection,
   CalendarActorType,
 } from './entities/calendar-connection.entity';
-import { GoogleCalendarAdapter } from './adapters/google-calendar.adapter';
+import {
+  CalendarListItemDto,
+  GoogleCalendarAdapter,
+} from './adapters/google-calendar.adapter';
 import { EncryptionService } from './encryption.service';
 import * as crypto from 'crypto';
 import { Cron, CronExpression } from '@nestjs/schedule';
@@ -99,6 +102,14 @@ export class CalendarConnectionService {
     return this.repo.findOne({
       where: { actorType, actorId, provider: 'google' },
     });
+  }
+
+  async listCalendars(
+    actorType: CalendarActorType,
+    actorId: string,
+  ): Promise<CalendarListItemDto[]> {
+    const adapter = await this.getAdapter(actorType, actorId);
+    return adapter.listCalendars();
   }
 
   async listEventsInRangeForConnection(
@@ -211,7 +222,7 @@ export class CalendarConnectionService {
         }
 
         const newChannelId = crypto.randomUUID();
-        const webhookUrl = `${webhookBaseUrl}/api/v1/calendar/webhook/${conn.actorType}/${conn.actorId}`;
+        const webhookUrl = `${webhookBaseUrl}/calendar/webhook/${conn.actorType}/${conn.actorId}`;
         const result = await adapter.setupWebhook(
           conn.calendarId ?? 'primary',
           webhookUrl,

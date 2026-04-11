@@ -47,11 +47,11 @@ Las credenciales OAuth en `.env` no son válidas o no están autorizadas en Goog
 5. **Authorized redirect URIs**: ⚠️ **MUY IMPORTANTE**
 
    ```
-   http://localhost:3000/api/v1/auth/google/callback
+   http://localhost:3000/auth/google/callback
    ```
 
    - NO trailing slash al final
-   - NO cambiar `/api/v1/` - debe coincidir exactamente con tu backend
+   - NO cambiar `/` - debe coincidir exactamente con tu backend
    - Usa `http://` para desarrollo local, `https://` para producción
 
 6. Clic en **CREATE**
@@ -71,7 +71,7 @@ En `/ascencio-tax-api/.env`, actualiza:
 # Google OAuth (para login con Google)
 GOOGLE_CLIENT_ID="TU_CLIENT_ID.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="TU_CLIENT_SECRET"
-GOOGLE_CALLBACK_URL="http://localhost:3000/api/v1/auth/google/callback"
+GOOGLE_CALLBACK_URL="http://localhost:3000/auth/google/callback"
 
 # URL de tu frontend (para redirigir después del login)
 WEB_APP_URL="http://localhost:4000"
@@ -103,7 +103,7 @@ npm run start:dev
 
 ### Error: "redirect_uri_mismatch"
 
-- ✅ La URL en "Authorized redirect URIs" debe ser EXACTAMENTE: `http://localhost:3000/api/v1/auth/google/callback`
+- ✅ La URL en "Authorized redirect URIs" debe ser EXACTAMENTE: `http://localhost:3000/auth/google/callback`
 - ✅ Sin trailing slash
 - ✅ Protocolo correcto (`http://` para local, `https://` para producción)
 - ✅ Puerto correcto (3000 es tu API, no tu frontend)
@@ -127,7 +127,7 @@ npm run start:dev
 2. Encuentra tu OAuth 2.0 Client ID
 3. Verifica que:
    - Status: Enabled (not deleted/revoked)
-   - Authorized redirect URIs contiene: `http://localhost:3000/api/v1/auth/google/callback`
+   - Authorized redirect URIs contiene: `http://localhost:3000/auth/google/callback`
 
 ### En tu código:
 
@@ -141,7 +141,7 @@ Deberías ver:
 ```
 GOOGLE_CLIENT_ID="1234567890-xxxxx.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET=***HIDDEN***
-GOOGLE_CALLBACK_URL="http://localhost:3000/api/v1/auth/google/callback"
+GOOGLE_CALLBACK_URL="http://localhost:3000/auth/google/callback"
 ```
 
 ## Logs de Debug
@@ -153,7 +153,7 @@ Si el problema persiste, revisa los logs del servidor:
 🔐 Google OAuth Strategy Config:
    - Client ID: 1234567890-xxxxx... (primeros 20 chars)
    - Client Secret: ******* (present)
-   - Callback URL: http://localhost:3000/api/v1/auth/google/callback
+   - Callback URL: http://localhost:3000/auth/google/callback
 ✅ GoogleStrategy initialized successfully
 ```
 
@@ -165,7 +165,7 @@ Para producción, crea un nuevo OAuth Client con:
 
 ```
 Authorized redirect URIs:
-https://api.ascenciotax.com/api/v1/auth/google/callback
+https://api.ascenciotax.com/auth/google/callback
 ```
 
 Y actualiza tus variables de entorno en producción:
@@ -173,7 +173,7 @@ Y actualiza tus variables de entorno en producción:
 ```bash
 GOOGLE_CLIENT_ID="TU_CLIENT_ID_PROD"
 GOOGLE_CLIENT_SECRET="TU_CLIENT_SECRET_PROD"
-GOOGLE_CALLBACK_URL="https://api.ascenciotax.com/api/v1/auth/google/callback"
+GOOGLE_CALLBACK_URL="https://api.ascenciotax.com/auth/google/callback"
 WEB_APP_URL="https://ascenciotax.com"
 ```
 

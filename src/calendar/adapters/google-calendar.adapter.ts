@@ -16,29 +16,19 @@ interface OAuthTokens {
   tokenExpiry?: Date;
 }
 
+export interface CalendarListItemDto {
+  id: string;
+  summary: string;
+  primary: boolean;
+  accessRole?: string;
+  timeZone?: string;
+  backgroundColor?: string;
+  foregroundColor?: string;
+}
+
 @Injectable()
 export class GoogleCalendarAdapter implements ICalendarProvider {
   private readonly logger = new Logger(GoogleCalendarAdapter.name);
-
-  /**
-   * Build an adapter using a service account (company-wide, no user context).
-   */
-  static fromServiceAccount(): GoogleCalendarAdapter {
-    const clientEmail = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL ?? '';
-    const privateKey = (process.env.GOOGLE_PRIVATE_KEY ?? '').replace(
-      /\\n/g,
-      '\n',
-    );
-    const auth = new google.auth.JWT({
-      email: clientEmail,
-      key: privateKey,
-      scopes: ['https://www.googleapis.com/auth/calendar'],
-    });
-    return new GoogleCalendarAdapter(
-      google.calendar({ version: 'v3', auth }),
-      auth,
-    );
-  }
 
   /**
    * Build an adapter using per-user OAuth tokens.
@@ -61,7 +51,7 @@ export class GoogleCalendarAdapter implements ICalendarProvider {
 
   private constructor(
     private readonly calendarClient: calendar_v3.Calendar,
-    private readonly auth: Auth.JWT | Auth.OAuth2Client,
+    private readonly auth: Auth.OAuth2Client,
   ) {}
 
   async listEventsInRange(
@@ -83,6 +73,45 @@ export class GoogleCalendarAdapter implements ICalendarProvider {
       this.logger.error('listEventsInRange failed', (error as Error).message);
       return [];
     }
+  }
+
+  async listCalendars(): Promise<CalendarListItemDto[]> {
+    const items: CalendarListItemDto[] = [];
+    let pageToken: string | undefined;
+
+    do {
+      const response = await this.calendarClient.calendarList.list({
+        pageToken,
+        minAccessRole: 'reader',
+        showDeleted: false,
+        showHidden: false,
+      });
+
+      const pageItems = response.data.items ?? [];
+      items.push(
+        ...pageItems
+          .filter((calendarItem) => calendarItem.id && calendarItem.summary)
+          .map((calendarItem) => ({
+            id: calendarItem.id ?? '',
+            summary: calendarItem.summary ?? '',
+            primary: calendarItem.primary === true,
+            accessRole: calendarItem.accessRole ?? undefined,
+            timeZone: calendarItem.timeZone ?? undefined,
+            backgroundColor: calendarItem.backgroundColor ?? undefined,
+            foregroundColor: calendarItem.foregroundColor ?? undefined,
+          })),
+      );
+
+      pageToken = response.data.nextPageToken ?? undefined;
+    } while (pageToken);
+
+    return items.sort((a, b) => {
+      if (a.primary === b.primary) {
+        return a.summary.localeCompare(b.summary);
+      }
+
+      return a.primary ? -1 : 1;
+    });
   }
 
   async getEventsInRange(
@@ -213,7 +242,6 @@ export class GoogleCalendarAdapter implements ICalendarProvider {
     accessToken: string;
     expiry: Date;
   } | null> {
-    if (!(this.auth instanceof google.auth.OAuth2)) return null;
     try {
       const { credentials } = await this.auth.refreshAccessToken();
       return {

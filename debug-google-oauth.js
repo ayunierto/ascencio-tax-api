@@ -51,9 +51,9 @@ if (!clientSecret) {
 if (!callbackUrl) {
   issues.push('❌ GOOGLE_CALLBACK_URL no está configurado');
 } else {
-  if (callbackUrl !== 'http://localhost:3000/api/v1/auth/google/callback') {
+  if (callbackUrl !== 'http://localhost:3000/auth/google/callback') {
     issues.push(
-      `⚠️  GOOGLE_CALLBACK_URL debería ser: http://localhost:3000/api/v1/auth/google/callback`,
+      `⚠️  GOOGLE_CALLBACK_URL debería ser: http://localhost:3000/auth/google/callback`,
     );
     issues.push(`   Actual: ${callbackUrl}`);
   }
@@ -66,9 +66,7 @@ if (!callbackUrl) {
     issues.push(
       '❌ GOOGLE_CALLBACK_URL usa una IP privada - Google la rechazará',
     );
-    issues.push(
-      '   Cambiar a: http://localhost:3000/api/v1/auth/google/callback',
-    );
+    issues.push('   Cambiar a: http://localhost:3000/auth/google/callback');
   }
 }
 
@@ -97,7 +95,7 @@ console.log(
 console.log('   • http://localhost:4000');
 
 console.log('\n✅ Authorized redirect URIs (debe incluir):');
-console.log('   • http://localhost:3000/api/v1/auth/google/callback');
+console.log('   • http://localhost:3000/auth/google/callback');
 
 console.log('\n💡 Próximos Pasos:');
 console.log('-'.repeat(60));

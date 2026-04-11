@@ -5,7 +5,7 @@
 La autenticación de Google OAuth en la aplicación web (Next.js) estaba devolviendo un error 500 después de seleccionar la cuenta de Google. El usuario era redirigido a:
 
 ```
-http://localhost:3000/api/v1/auth/google/callback?iss=https%3A%2F%2Faccounts.google.com&code=...
+http://localhost:3000/auth/google/callback?iss=https%3A%2F%2Faccounts.google.com&code=...
 ```
 
 Y recibía:
@@ -116,7 +116,7 @@ Se actualizó el botón de "Sign in with Google" para usar el nuevo endpoint:
   type="button"
   onClick={() => {
     try {
-      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+      const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       const u = new URL(base);
       const apiBasePath = u.pathname.replace(/\/$/, '');
       const oauthUrl = `${u.origin}${apiBasePath}/auth/google/web`; // ← Cambio aquí
@@ -154,13 +154,13 @@ En **"Authorized redirect URIs"**, agrega:
 **Desarrollo Local** (ÚNICA opción válida para desarrollo):
 
 ```
-http://localhost:3000/api/v1/auth/google/callback
+http://localhost:3000/auth/google/callback
 ```
 
 **Producción:**
 
 ```
-https://api.ascenciotax.com/api/v1/auth/google/callback
+https://api.ascenciotax.com/auth/google/callback
 ```
 
 ⚠️ **Reglas importantes:**
@@ -189,10 +189,10 @@ ngrok http 3000
 # https://abc123.ngrok.io
 
 # Actualizar .env:
-GOOGLE_CALLBACK_URL="https://abc123.ngrok.io/api/v1/auth/google/callback"
+GOOGLE_CALLBACK_URL="https://abc123.ngrok.io/auth/google/callback"
 
 # Agregar en Google Cloud Console:
-# https://abc123.ngrok.io/api/v1/auth/google/callback
+# https://abc123.ngrok.io/auth/google/callback
 ```
 
 **Opción 2: Configurar dominio local (Avanzado)**
@@ -203,7 +203,7 @@ GOOGLE_CALLBACK_URL="https://abc123.ngrok.io/api/v1/auth/google/callback"
 192.168.18.29  dev.ascenciotax.local
 
 # Luego usar:
-GOOGLE_CALLBACK_URL="http://dev.ascenciotax.local:3000/api/v1/auth/google/callback"
+GOOGLE_CALLBACK_URL="http://dev.ascenciotax.local:3000/auth/google/callback"
 
 # Nota: Aún así Google puede rechazarlo si no es un dominio público
 ```
@@ -222,7 +222,7 @@ GOOGLE_CALLBACK_URL="http://dev.ascenciotax.local:3000/api/v1/auth/google/callba
 ```bash
 GOOGLE_CLIENT_ID="tu-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="tu-client-secret"
-GOOGLE_CALLBACK_URL="http://localhost:3000/api/v1/auth/google/callback"
+GOOGLE_CALLBACK_URL="http://localhost:3000/auth/google/callback"
 WEB_APP_URL="http://localhost:4000"
 MOBILE_APP_SCHEME="ascenciotaxapp"
 ```
@@ -230,7 +230,7 @@ MOBILE_APP_SCHEME="ascenciotaxapp"
 ### Web (.env)
 
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+NEXT_PUBLIC_API_URL=http://localhost:3000
 WEB_APP_URL=http://localhost:4000
 ```
 
@@ -254,10 +254,10 @@ TokenError: Unauthorized
 
    ```bash
    # En ascencio-tax-api/.env
-   GOOGLE_CALLBACK_URL="http://localhost:3000/api/v1/auth/google/callback"
+   GOOGLE_CALLBACK_URL="http://localhost:3000/auth/google/callback"
 
    # En ascencio-tax-web/.env
-   NEXT_PUBLIC_API_URL=http://localhost:3000/api/v1
+   NEXT_PUBLIC_API_URL=http://localhost:3000
    ```
 
    ⚠️ **NO uses IPs como `192.168.18.29` - Google las rechaza**
@@ -267,7 +267,7 @@ TokenError: Unauthorized
    - Edita tu OAuth 2.0 Client ID
    - En "Authorized redirect URIs", verifica que esté EXACTAMENTE:
      ```
-     http://localhost:3000/api/v1/auth/google/callback
+     http://localhost:3000/auth/google/callback
      ```
    - Guarda y espera 5-10 minutos
 
@@ -282,7 +282,7 @@ TokenError: Unauthorized
    Verifica en los logs:
 
    ```
-   ✓ Callback URL: http://localhost:3000/api/v1/auth/google/callback
+   ✓ Callback URL: http://localhost:3000/auth/google/callback
    ```
 
 4. **Probar de nuevo:**

@@ -98,7 +98,7 @@ export class AppointmentsController {
 
   @Get(':id/add-to-calendar')
   @Auth()
-  async addToCalendar(
+  async getAddToCalendarData(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Query('format') format: 'ics' | 'link' | 'json' = 'json',
     @Res() res: Response,
@@ -120,5 +120,14 @@ export class AppointmentsController {
     }
 
     return res.json(data);
+  }
+
+  @Post(':id/add-to-calendar')
+  @Auth()
+  async addToClientCalendar(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @GetUser() user: User,
+  ) {
+    return this.appointmentsService.addAppointmentToClientCalendar(id, user.id);
   }
 }

@@ -1,0 +1,5 @@
+1. Eliminar de railway las variables de entorno GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, GOOGLE_CALENDAR_ID.
+2. Revocar y rotar la clave del service account en Google Cloud IAM (si existió en uso).
+3. Confirmar en Google Cloud Console que los Authorized redirect URIs activos coincidan con:
+/auth/google/callback
+/calendar/oauth/callback

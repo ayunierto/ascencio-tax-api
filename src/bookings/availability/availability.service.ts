@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Interval } from 'luxon';
 import { Appointment } from 'src/bookings/appointments/entities/appointment.entity';
 import { CalendarService } from 'src/calendar/calendar.service';
-import { Between, In, Repository } from 'typeorm';
+import { Between, In, LessThan, MoreThan, Repository } from 'typeorm';
 import { AvailableSlot } from './interfaces/available-slot';
 import { SystemSettingsService } from 'src/system-settings/system-settings.service';
 import { ServicesService } from '../services/services.service';
@@ -36,6 +36,7 @@ export class AvailabilityService {
    */
   async searchAvailability(
     searchAvailabilityDto: SearchAvailabilityRequest,
+    userId?: string,
   ): Promise<AvailableSlot[]> {
     const {
       serviceId,
@@ -120,6 +121,26 @@ export class AvailabilityService {
     // Estructura para consolidar slots: Map<startTimeUTC, StaffMember[]>
     const consolidatedSlots = new Map<string, StaffMember[]>();
 
+    const dateStart = businessDate.startOf('day').toJSDate();
+    const dateEnd = businessDate.endOf('day').toJSDate();
+
+    const clientAppointments =
+      userId == null
+        ? []
+        : await this.appointmentsRepository.find({
+            where: {
+              user: { id: userId },
+              status: In(['pending', 'confirmed']),
+              start: LessThan(dateEnd),
+              end: MoreThan(dateStart),
+            },
+          });
+
+    const clientBusyIntervals = this.toAppointmentIntervals(
+      clientAppointments,
+      businessTimeZone,
+    );
+
     // --- 3. PROCESAR DISPONIBILIDAD POR CADA STAFF ---
     for (const staffMember of staff) {
       // a) Horarios Semanales para el día del staff
@@ -130,8 +151,6 @@ export class AvailabilityService {
       // const timeOffs = await this.getStaffTimeOff(staff.id, requestedDate);
 
       // c) Citas Confirmadas para el día
-      const dateStart = businessDate.startOf('day').toJSDate();
-      const dateEnd = businessDate.endOf('day').toJSDate();
       // Bug fix: incluir citas 'pending' para evitar race condition de doble reserva
       const appointments: Appointment[] =
         await this.appointmentsRepository.find({
@@ -156,6 +175,13 @@ export class AvailabilityService {
         appointments,
         businessTimeZone,
       );
+
+      if (clientBusyIntervals.length > 0) {
+        availableIntervals = this.subtractBusyIntervals(
+          availableIntervals,
+          clientBusyIntervals,
+        );
+      }
 
       // Bug fix: si la comprobación de calendario falla, tratar como completamente ocupado
       // para no mostrar slots que podrían solapar eventos reales.
@@ -224,8 +250,19 @@ export class AvailabilityService {
     appointments: Appointment[],
     businessTimeZone: string,
   ): Interval[] {
-    // Convertir entidades de DB a Intervalos de Luxon
-    const apptIntervals = appointments.map((appt) =>
+    const apptIntervals = this.toAppointmentIntervals(
+      appointments,
+      businessTimeZone,
+    );
+
+    return this.subtractBusyIntervals(intervals, apptIntervals);
+  }
+
+  private toAppointmentIntervals(
+    appointments: Appointment[],
+    businessTimeZone: string,
+  ): Interval[] {
+    return appointments.map((appt) =>
       Interval.fromDateTimes(
         DateTime.fromJSDate(appt.start, { zone: 'utc' }).setZone(
           businessTimeZone,
@@ -235,11 +272,18 @@ export class AvailabilityService {
         ),
       ),
     );
+  }
 
+  private subtractBusyIntervals(
+    intervals: Interval[],
+    busyIntervals: Interval[],
+  ): Interval[] {
     let result = intervals;
-    apptIntervals.forEach((appt) => {
-      result = result.flatMap((interval) => interval.difference(appt));
+
+    busyIntervals.forEach((busyInterval) => {
+      result = result.flatMap((interval) => interval.difference(busyInterval));
     });
+
     return result;
   }
 

@@ -12,6 +12,7 @@ export interface CalendarOAuthState {
   actorType: 'company' | 'staff' | 'client';
   actorId: string;
   nonce: string;
+  calendarId?: string;
   redirectUrl?: string;
 }
 
@@ -27,7 +28,7 @@ export class CalendarOauthService {
       process.env.GOOGLE_CLIENT_SECRET,
       callbackUrl ??
         process.env.GOOGLE_CALENDAR_CALLBACK_URL ??
-        `${process.env.API_URL ?? process.env.WEBHOOK_BASE_URL ?? 'http://localhost:3001'}/api/v1/calendar/oauth/callback`,
+        `${process.env.API_URL ?? process.env.WEBHOOK_BASE_URL ?? 'http://localhost:3001'}/calendar/oauth/callback`,
     );
   }
 

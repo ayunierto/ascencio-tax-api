@@ -67,14 +67,14 @@ export class CalendarController {
       ?.split(',')[0]
       ?.trim();
     const forwardedHost = req.header('x-forwarded-host')?.split(',')[0]?.trim();
-    const protocol = forwardedProto ?? req.protocol ?? 'http';
+    const protocol = forwardedProto ?? req.protocol;
     const host = forwardedHost ?? req.get('host');
 
     if (host) {
-      return `${protocol}://${host}/api/v1/calendar/oauth/callback`;
+      return `${protocol}://${host}/calendar/oauth/callback`;
     }
 
-    return `${process.env.API_URL ?? process.env.WEBHOOK_BASE_URL ?? 'http://localhost:3001'}/api/v1/calendar/oauth/callback`;
+    return `${process.env.API_URL ?? process.env.WEBHOOK_BASE_URL ?? 'http://localhost:3001'}/calendar/oauth/callback`;
   }
 
   // ─── Eventos internos ────────────────────────────────────────────────────────
@@ -133,6 +133,8 @@ export class CalendarController {
     return this.calendarService.upsertExternalEvents(events, {
       calendarId,
       defaultTimeZone: body.defaultTimeZone,
+      actorType: 'company',
+      actorId: 'company',
     });
   }
 
@@ -148,12 +150,13 @@ export class CalendarController {
     @Query(new ZodValidationPipe(calendarCompanyConnectQuerySchema))
     query: CalendarCompanyConnectQueryRequest,
   ) {
-    const { redirectUrl } = query;
+    const { calendarId, redirectUrl } = query;
     const callbackUrl = this.resolveOAuthCallbackUrl(req);
     const url = this.oauthService.generateAuthUrl(
       {
         actorType: 'company',
         actorId: 'company',
+        calendarId,
         redirectUrl,
       },
       callbackUrl,
@@ -202,12 +205,18 @@ export class CalendarController {
     @Query(new ZodValidationPipe(calendarClientConnectQuerySchema))
     query: CalendarClientConnectQueryRequest,
   ) {
+    const calendarId =
+      typeof req.query.calendarId === 'string' &&
+      req.query.calendarId.trim().length > 0
+        ? req.query.calendarId
+        : undefined;
     const { redirectUrl } = query;
     const callbackUrl = this.resolveOAuthCallbackUrl(req);
     const url = this.oauthService.generateAuthUrl(
       {
         actorType: 'client',
         actorId: user.id,
+        calendarId,
         redirectUrl,
       },
       callbackUrl,
@@ -242,7 +251,7 @@ export class CalendarController {
         throw new BadRequestException(ValidationMessages.REQUIRED);
       }
 
-      const { actorType, actorId, redirectUrl } =
+      const { actorType, actorId, calendarId, redirectUrl } =
         this.oauthService.decodeState(state);
       const callbackUrl = this.resolveOAuthCallbackUrl(req);
       const tokens = await this.oauthService.exchangeCodeForTokens(
@@ -253,10 +262,7 @@ export class CalendarController {
       const conn = await this.connectionService.saveConnection({
         actorType,
         actorId,
-        calendarId:
-          actorType === 'company'
-            ? (process.env.GOOGLE_CALENDAR_ID ?? 'primary')
-            : 'primary',
+        calendarId: calendarId ?? 'primary',
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         tokenExpiry: tokens.expiry,
@@ -272,7 +278,7 @@ export class CalendarController {
             actorId,
           );
           const channelId = crypto.randomUUID();
-          const webhookUrl = `${webhookBaseUrl}/api/v1/calendar/webhook/${actorType}/${actorId}`;
+          const webhookUrl = `${webhookBaseUrl}/calendar/webhook/${actorType}/${actorId}`;
           const webhook = await adapter.setupWebhook(
             conn.calendarId,
             webhookUrl,
@@ -349,6 +355,8 @@ export class CalendarController {
 
       const result = await this.calendarService.upsertExternalEvents(events, {
         calendarId: conn.calendarId,
+        actorType,
+        actorId,
         fallbackStaffMemberId: actorType === 'staff' ? actorId : undefined,
       });
 
@@ -384,6 +392,22 @@ export class CalendarController {
         conn.webhookExpiry > new Date(),
       updatedAt: conn.updatedAt,
     };
+  }
+
+  @ApiOperation({ summary: 'Listar calendarios disponibles de la empresa' })
+  @Auth(Role.Admin, Role.SuperUser)
+  @Get('oauth/company/calendars')
+  async companyCalendars() {
+    const conn = await this.connectionService.getConnection(
+      'company',
+      'company',
+    );
+
+    if (!conn?.isActive) {
+      return [];
+    }
+
+    return this.connectionService.listCalendars('company', 'company');
   }
 
   @ApiOperation({ summary: 'Ver estado de conexión de calendario de staff' })
@@ -424,6 +448,19 @@ export class CalendarController {
         conn.webhookExpiry > new Date(),
       updatedAt: conn.updatedAt,
     };
+  }
+
+  @ApiOperation({ summary: 'Listar calendarios disponibles del cliente' })
+  @Auth()
+  @Get('oauth/client/calendars')
+  async clientCalendars(@GetUser() user: User) {
+    const conn = await this.connectionService.getConnection('client', user.id);
+
+    if (!conn?.isActive) {
+      return [];
+    }
+
+    return this.connectionService.listCalendars('client', user.id);
   }
 
   @ApiOperation({ summary: 'Desconectar calendario' })

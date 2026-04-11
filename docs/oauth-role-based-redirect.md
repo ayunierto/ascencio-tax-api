@@ -41,8 +41,8 @@ const successPath = hasAdminAccess ? `/${locale}/admin` : `/${locale}/booking`;
 
 ## 🚀 Flujo de Autenticación
 
-1. Usuario inicia sesión con Google: `GET /api/v1/auth/google`
-2. Google redirige a: `GET /api/v1/auth/google/callback?code=...`
+1. Usuario inicia sesión con Google: `GET /auth/google`
+2. Google redirige a: `GET /auth/google/callback?code=...`
 3. El servidor:
    - Verifica el código con Google
    - Crea o actualiza el usuario en la BD
@@ -59,7 +59,7 @@ const successPath = hasAdminAccess ? `/${locale}/admin` : `/${locale}/booking`;
 # Google OAuth Credentials
 GOOGLE_CLIENT_ID="tu-client-id.apps.googleusercontent.com"
 GOOGLE_CLIENT_SECRET="tu-client-secret"
-GOOGLE_CALLBACK_URL="http://localhost:3000/api/v1/auth/google/callback"
+GOOGLE_CALLBACK_URL="http://localhost:3000/auth/google/callback"
 
 # Frontend Configuration
 WEB_APP_URL="http://localhost:4000"
@@ -71,8 +71,8 @@ WEB_APP_URL="http://localhost:4000"
 
 Asegúrate de tener configurado en **Authorized redirect URIs**:
 
-- Desarrollo: `http://localhost:3000/api/v1/auth/google/callback`
-- Producción: `https://tu-dominio.com/api/v1/auth/google/callback`
+- Desarrollo: `http://localhost:3000/auth/google/callback`
+- Producción: `https://tu-dominio.com/auth/google/callback`
 
 ## 🔐 Gestión de Roles
 
@@ -128,12 +128,12 @@ if (!user.roles.some((r) => ['admin', 'superUser'].includes(r))) {
 ## 🧪 Prueba del Flujo
 
 1. **Usuario Regular (rol: user)**
-   - Ir a: `http://localhost:3000/api/v1/auth/google`
+   - Ir a: `http://localhost:3000/auth/google`
    - Iniciar sesión con Google
    - Resultado: Redirigido a `http://localhost:4000/en/booking` o `/es/booking`
 
 2. **Administrador (rol: admin)**
-   - Ir a: `http://localhost:3000/api/v1/auth/google`
+   - Ir a: `http://localhost:3000/auth/google`
    - Iniciar sesión con Google
    - Resultado: Redirigido a `http://localhost:4000/en/admin` o `/es/admin`
 
@@ -142,7 +142,7 @@ if (!user.roles.some((r) => ['admin', 'superUser'].includes(r))) {
 Para la app móvil, el flujo usa el parámetro `oauth_mode=mobile`:
 
 ```typescript
-// GET /api/v1/auth/google/mobile
+// GET /auth/google/mobile
 // Redirige a: ascenciotaxapp://auth/google/callback?access_token=...
 ```
 

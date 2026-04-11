@@ -8,7 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { calendar_v3 } from 'googleapis';
 import { DateTime, Interval } from 'luxon';
 import { Repository, LessThan, MoreThan, IsNull } from 'typeorm';
-import { GoogleCalendarIntegrationService } from 'src/integrations/google-calendar/google-calendar.service';
+import { CalendarConnectionService } from './calendar-connection.service';
 import {
   CalendarEvent,
   CalendarSourceType,
@@ -16,18 +16,27 @@ import {
 } from './entities/calendar.entity';
 import { StaffMember } from 'src/bookings/staff-members/entities/staff-member.entity';
 import { CommonMessages, ValidationMessages } from '@ascencio/shared';
+import { CalendarActorType } from './entities/calendar-connection.entity';
 
 interface CreateEventOptions {
   staffMemberId?: string;
   serviceId?: string;
   sourceType?: CalendarSourceType;
   sourceId?: string;
+  actorType?: CalendarActorType;
+  actorId?: string;
   externalCalendarId?: string;
   isBusy?: boolean;
   sync?: boolean;
 }
 
 type UpdateEventOptions = CreateEventOptions & { status?: CalendarStatus };
+
+interface CalendarSyncTarget {
+  actorType: CalendarActorType;
+  actorId: string;
+  calendarId: string;
+}
 
 @Injectable()
 export class CalendarService {
@@ -38,33 +47,8 @@ export class CalendarService {
     private readonly eventsRepository: Repository<CalendarEvent>,
     @InjectRepository(StaffMember)
     private readonly staffRepository: Repository<StaffMember>,
-    private readonly googleCalendar: GoogleCalendarIntegrationService,
+    private readonly connectionService: CalendarConnectionService,
   ) {}
-
-  async importExternalEventsInRange(params: {
-    startDateTime: string;
-    endDateTime: string;
-    calendarId?: string;
-    defaultTimeZone?: string;
-  }): Promise<{ imported: number; updated: number; skipped: number }> {
-    const {
-      startDateTime,
-      endDateTime,
-      calendarId,
-      defaultTimeZone = 'UTC',
-    } = params;
-
-    const events = await this.googleCalendar.listEventsInRange(
-      startDateTime,
-      endDateTime,
-      calendarId,
-    );
-
-    return this.upsertExternalEvents(events, {
-      calendarId,
-      defaultTimeZone,
-    });
-  }
 
   async upsertExternalEvents(
     events: calendar_v3.Schema$Event[],
@@ -72,12 +56,16 @@ export class CalendarService {
       calendarId?: string;
       defaultTimeZone?: string;
       fallbackStaffMemberId?: string;
+      actorType?: CalendarActorType;
+      actorId?: string;
     },
   ): Promise<{ imported: number; updated: number; skipped: number }> {
     const {
       calendarId,
       defaultTimeZone = 'UTC',
       fallbackStaffMemberId,
+      actorType,
+      actorId,
     } = params;
 
     const staffMembers = await this.staffRepository.find({
@@ -141,7 +129,9 @@ export class CalendarService {
           externalCalendarId:
             calendarId ??
             existing.externalCalendarId ??
-            this.googleCalendar.getCalendarId(),
+            this.getDefaultExternalCalendarId(),
+          externalActorType: existing.externalActorType ?? actorType,
+          externalActorId: existing.externalActorId ?? actorId,
           isBusy: true,
           status: event.status === 'cancelled' ? 'cancelled' : 'confirmed',
         });
@@ -162,7 +152,9 @@ export class CalendarService {
           sourceType: 'imported',
           sourceId,
           externalEventId,
-          externalCalendarId: calendarId ?? this.googleCalendar.getCalendarId(),
+          externalCalendarId: calendarId ?? this.getDefaultExternalCalendarId(),
+          externalActorType: actorType,
+          externalActorId: actorId,
           isBusy: true,
           status: event.status === 'cancelled' ? 'cancelled' : 'confirmed',
         }),
@@ -192,6 +184,8 @@ export class CalendarService {
       serviceId: options?.serviceId,
       sourceType: options?.sourceType ?? 'appointment',
       sourceId: options?.sourceId,
+      externalActorType: options?.actorType,
+      externalActorId: options?.actorId,
       externalCalendarId: options?.externalCalendarId,
       isBusy: options?.isBusy ?? true,
       status: 'confirmed',
@@ -201,17 +195,37 @@ export class CalendarService {
 
     let externalEventId: string | undefined;
     if (options?.sync !== false) {
-      externalEventId = await this.googleCalendar.createEvent(
-        this.mapToGoogleEvent(body, timeZone, startDate, endDate),
-        options?.externalCalendarId,
-      );
+      const syncTarget = await this.resolveSyncTarget(options, saved);
 
-      if (externalEventId) {
-        await this.eventsRepository.update(saved.id, {
-          externalEventId,
-          externalCalendarId:
-            options?.externalCalendarId ?? this.googleCalendar.getCalendarId(),
-        });
+      if (!syncTarget) {
+        this.logger.warn(
+          `No active OAuth calendar connection found for event ${saved.id}. External sync skipped.`,
+        );
+      } else {
+        try {
+          const adapter = await this.connectionService.getAdapter(
+            syncTarget.actorType,
+            syncTarget.actorId,
+          );
+
+          externalEventId = await adapter.createEvent(
+            this.mapToGoogleEvent(body, timeZone, startDate, endDate),
+            syncTarget.calendarId,
+          );
+
+          if (externalEventId) {
+            await this.eventsRepository.update(saved.id, {
+              externalEventId,
+              externalCalendarId: syncTarget.calendarId,
+              externalActorType: syncTarget.actorType,
+              externalActorId: syncTarget.actorId,
+            });
+          }
+        } catch (error) {
+          this.logger.error(
+            `Failed to sync event ${saved.id} to OAuth calendar: ${(error as Error).message}`,
+          );
+        }
       }
     }
 
@@ -249,11 +263,36 @@ export class CalendarService {
     await this.eventsRepository.save(merged);
 
     if (options?.sync !== false && merged.externalEventId) {
-      await this.googleCalendar.updateEvent(
-        merged.externalEventId,
-        this.mapToGoogleEvent(eventDetails, timeZone, startDate, endDate),
-        merged.externalCalendarId ?? options?.externalCalendarId,
-      );
+      const syncTarget = await this.resolveSyncTarget(options, merged);
+
+      if (!syncTarget) {
+        this.logger.warn(
+          `No OAuth sync target found for update on event ${merged.id}. External update skipped.`,
+        );
+      } else {
+        const adapter = await this.connectionService.getAdapter(
+          syncTarget.actorType,
+          syncTarget.actorId,
+        );
+
+        await adapter.updateEvent(
+          merged.externalEventId,
+          this.mapToGoogleEvent(eventDetails, timeZone, startDate, endDate),
+          syncTarget.calendarId,
+        );
+
+        if (
+          merged.externalCalendarId !== syncTarget.calendarId ||
+          merged.externalActorType !== syncTarget.actorType ||
+          merged.externalActorId !== syncTarget.actorId
+        ) {
+          await this.eventsRepository.update(merged.id, {
+            externalCalendarId: syncTarget.calendarId,
+            externalActorType: syncTarget.actorType,
+            externalActorId: syncTarget.actorId,
+          });
+        }
+      }
     }
   }
 
@@ -268,17 +307,45 @@ export class CalendarService {
       await this.eventsRepository.save(existing);
 
       if (opts?.removeExternal !== false && existing.externalEventId) {
-        await this.googleCalendar.deleteEvent(
-          existing.externalEventId,
-          existing.externalCalendarId,
-        );
+        const syncTarget = await this.resolveSyncTarget(undefined, existing);
+
+        if (!syncTarget) {
+          this.logger.warn(
+            `No OAuth sync target found for delete on event ${existing.id}. External delete skipped.`,
+          );
+        } else {
+          const adapter = await this.connectionService.getAdapter(
+            syncTarget.actorType,
+            syncTarget.actorId,
+          );
+          await adapter.deleteEvent(
+            existing.externalEventId,
+            syncTarget.calendarId,
+          );
+        }
       }
       return;
     }
 
     // Compatibilidad: si no existe interno, intentar borrar el ID externo directo.
     if (opts?.removeExternal !== false) {
-      await this.googleCalendar.deleteEvent(eventId);
+      const companyConn = await this.connectionService.getConnection(
+        'company',
+        'company',
+      );
+
+      if (!companyConn?.isActive || !companyConn.calendarId) {
+        this.logger.warn(
+          `No active company OAuth connection available to delete external event ${eventId}.`,
+        );
+        return;
+      }
+
+      const adapter = await this.connectionService.getAdapter(
+        'company',
+        'company',
+      );
+      await adapter.deleteEvent(eventId, companyConn.calendarId);
     }
   }
 
@@ -393,6 +460,72 @@ export class CalendarService {
         ],
       },
     };
+  }
+
+  private getDefaultExternalCalendarId(): string {
+    return 'primary';
+  }
+
+  private async resolveSyncTarget(
+    options?: CreateEventOptions,
+    existing?: CalendarEvent,
+  ): Promise<CalendarSyncTarget | null> {
+    const explicitActorType = options?.actorType ?? existing?.externalActorType;
+    const explicitActorId = options?.actorId ?? existing?.externalActorId;
+
+    if (explicitActorType && explicitActorId) {
+      const explicitConn = await this.connectionService.getConnection(
+        explicitActorType,
+        explicitActorId,
+      );
+
+      if (explicitConn?.isActive && explicitConn.calendarId) {
+        return {
+          actorType: explicitActorType,
+          actorId: explicitActorId,
+          calendarId:
+            options?.externalCalendarId ??
+            existing?.externalCalendarId ??
+            explicitConn.calendarId,
+        };
+      }
+    }
+
+    const companyConn = await this.connectionService.getConnection(
+      'company',
+      'company',
+    );
+
+    if (companyConn?.isActive && companyConn.calendarId) {
+      return {
+        actorType: 'company',
+        actorId: 'company',
+        calendarId:
+          options?.externalCalendarId ??
+          existing?.externalCalendarId ??
+          companyConn.calendarId,
+      };
+    }
+
+    const staffMemberId = options?.staffMemberId ?? existing?.staffMemberId;
+    if (staffMemberId) {
+      const staffConn = await this.connectionService.getConnection(
+        'staff',
+        staffMemberId,
+      );
+      if (staffConn?.isActive && staffConn.calendarId) {
+        return {
+          actorType: 'staff',
+          actorId: staffMemberId,
+          calendarId:
+            options?.externalCalendarId ??
+            existing?.externalCalendarId ??
+            staffConn.calendarId,
+        };
+      }
+    }
+
+    return null;
   }
 
   private async findEvent(eventId: string): Promise<CalendarEvent | null> {
