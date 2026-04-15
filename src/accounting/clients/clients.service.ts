@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CommonMessages } from '@ascencio/shared/i18n';
 import { CreateClientRequest, UpdateClientRequest } from '@ascencio/shared';
-import { IsNull, Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { Client } from './entities/client.entity';
 import { PaginatedResponse } from '@ascencio/shared/interfaces';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -36,15 +36,41 @@ export class ClientsService {
   async findAll(
     paginationDto: PaginationDto,
     userId: string,
+    search?: string,
   ): Promise<PaginatedResponse<Client>> {
     const { limit = 10, offset = 0 } = paginationDto;
 
-    const [clients, total] = await this.clientRepo.findAndCount({
-      take: limit,
-      skip: offset,
-      where: { users: { id: userId }, deletedAt: IsNull() },
-      order: { createdAt: 'DESC' },
-    });
+    const normalizedSearch = search?.trim();
+
+    const queryBuilder = this.clientRepo
+      .createQueryBuilder('client')
+      .innerJoin('client.users', 'user', 'user.id = :userId', { userId })
+      .where('client.deletedAt IS NULL')
+      .orderBy('client.createdAt', 'DESC')
+      .take(limit)
+      .skip(offset);
+
+    if (normalizedSearch) {
+      queryBuilder.andWhere(
+        new Brackets((subQuery) => {
+          subQuery
+            .where('client.fullName ILIKE :search', {
+              search: `%${normalizedSearch}%`,
+            })
+            .orWhere('client.email ILIKE :search', {
+              search: `%${normalizedSearch}%`,
+            })
+            .orWhere('client.phone ILIKE :search', {
+              search: `%${normalizedSearch}%`,
+            })
+            .orWhere('client.businessNumber ILIKE :search', {
+              search: `%${normalizedSearch}%`,
+            });
+        }),
+      );
+    }
+
+    const [clients, total] = await queryBuilder.getManyAndCount();
 
     return {
       total,

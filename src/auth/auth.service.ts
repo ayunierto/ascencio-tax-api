@@ -264,7 +264,7 @@ export class AuthService {
         throw new ForbiddenException(AuthMessages.ACCOUNT_LOCKED);
       }
 
-      if (!user || user.deletedAt !== null) {
+      if (user?.deletedAt !== null) {
         const passwordHash = await this.hashPassword(randomUUID());
         user = this.usersRepository.create({
           firstName: fullName?.givenName ?? 'User',

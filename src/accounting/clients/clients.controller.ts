@@ -48,9 +48,10 @@ export class ClientsController {
   @Auth()
   findAll(
     @Query() paginationDto: PaginationDto,
+    @Query('search') search: string | undefined,
     @GetUser() user: User,
   ): Promise<PaginatedResponse<Client>> {
-    return this.clientsService.findAll(paginationDto, user.id);
+    return this.clientsService.findAll(paginationDto, user.id, search);
   }
 
   // ========================
